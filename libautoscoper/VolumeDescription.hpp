@@ -1,0 +1,115 @@
+// ----------------------------------
+// Copyright (c) 2011, Brown University
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+// 
+// (1) Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+// 
+// (2) Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+// 
+// (3) Neither the name of Brown University nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY BROWN UNIVERSITY “AS IS” WITH NO
+// WARRANTIES OR REPRESENTATIONS OF ANY KIND WHATSOEVER EITHER EXPRESS OR
+// IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTY OF DESIGN OR
+// MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, EACH OF WHICH ARE
+// SPECIFICALLY DISCLAIMED, NOR ANY WARRANTY OR REPRESENTATIONS THAT THE
+// SOFTWARE IS ERROR FREE OR THAT THE SOFTWARE WILL NOT INFRINGE ANY
+// PATENT, COPYRIGHT, TRADEMARK, OR OTHER THIRD PARTY PROPRIETARY RIGHTS.
+// IN NO EVENT SHALL BROWN UNIVERSITY BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+// OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+// ON ANY THEORY OF LIABILITY OR CAUSE OF ACTION, WHETHER IN CONTRACT,
+// STRICT LIABILITY, TORT, NEGLIGENCE OR OTHERWISE, ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE. ANY RECIPIENT OR USER OF THIS SOFTWARE ACKNOWLEDGES THE
+// FOREGOING, AND ACCEPTS ALL RISKS AND LIABILITIES THAT MAY ARISE FROM
+// THEIR USE OF THE SOFTWARE.
+// ---------------------------------
+
+/// \file VolumeDescription.hpp
+/// \author Andy Loomis
+
+#ifndef XROMM_CUDA_VOLUME_DESCRIPTION_HPP
+#define XROMM_CUDA_VOLUME_DESCRIPTION_HPP
+
+struct cudaArray;
+
+namespace xromm {
+
+class Volume;
+
+namespace cuda {
+
+class VolumeDescription
+{
+public:
+
+    VolumeDescription(const Volume& volume);
+
+    ~VolumeDescription();
+
+private:
+
+    VolumeDescription(const VolumeDescription&);
+    
+    VolumeDescription& operator=(const VolumeDescription&);
+
+public:
+
+    const float* invScale() const
+    {
+        return invScale_;
+    }
+    const float* invTrans() const
+    {
+        return invTrans_;
+    }
+
+    const int* flips() const
+    {
+        return flips_;
+    }
+
+	float minValue() const
+	{
+		return minValue_;
+	}
+
+	float maxValue() const
+	{
+		return maxValue_;
+	}
+
+    const cudaArray* array() const
+    {
+        return array_;
+    }
+
+private:
+
+	float minValue_;
+
+	float maxValue_;
+
+    float invScale_[3];
+
+    float invTrans_[3];
+
+    int flips_[3];
+
+    cudaArray* array_;
+};
+
+} } // namespace xromm::cuda
+
+#endif // XROMM_CUDA_VOLUME_DESCRIPTION_HPP
