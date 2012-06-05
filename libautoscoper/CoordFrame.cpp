@@ -1,22 +1,22 @@
 // ----------------------------------
 // Copyright (c) 2011, Brown University
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 // (1) Redistributions of source code must retain the above copyright
 // notice, this list of conditions and the following disclaimer.
-// 
+//
 // (2) Redistributions in binary form must reproduce the above copyright
 // notice, this list of conditions and the following disclaimer in the
 // documentation and/or other materials provided with the distribution.
-// 
+//
 // (3) Neither the name of Brown University nor the names of its
 // contributors may be used to endorse or promote products derived from
 // this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY BROWN UNIVERSITY “AS IS” WITH NO
 // WARRANTIES OR REPRESENTATIONS OF ANY KIND WHATSOEVER EITHER EXPRESS OR
 // IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTY OF DESIGN OR
@@ -60,15 +60,15 @@ CoordFrame::CoordFrame()
     rotation_[0] = 1.0;
     rotation_[1] = 0.0;
     rotation_[2] = 0.0;
-    
+
     rotation_[3] = 0.0;
     rotation_[4] = 1.0;
     rotation_[5] = 0.0;
-    
+
     rotation_[6] = 0.0;
     rotation_[7] = 0.0;
     rotation_[8] = 1.0;
-    
+
     translation_[0] = 0.0;
     translation_[1] = 0.0;
     translation_[2] = 0.0;
@@ -85,7 +85,7 @@ CoordFrame::CoordFrame(const CoordFrame& xcframe)
     rotation_[0] = xcframe.rotation_[0];
     rotation_[1] = xcframe.rotation_[1];
     rotation_[2] = xcframe.rotation_[2];
-    
+
     rotation_[3] = xcframe.rotation_[3];
     rotation_[4] = xcframe.rotation_[4];
     rotation_[5] = xcframe.rotation_[5];
@@ -93,7 +93,7 @@ CoordFrame::CoordFrame(const CoordFrame& xcframe)
     rotation_[6] = xcframe.rotation_[6];
     rotation_[7] = xcframe.rotation_[7];
     rotation_[8] = xcframe.rotation_[8];
-    
+
     translation_[0] = xcframe.translation_[0];
     translation_[1] = xcframe.translation_[1];
     translation_[2] = xcframe.translation_[2];
@@ -182,7 +182,7 @@ void CoordFrame::orient(const double* rotation,
     rotation_[3] = rotation[3];
     rotation_[4] = rotation[4];
     rotation_[5] = rotation[5];
-    
+
     rotation_[6] = rotation[6];
     rotation_[7] = rotation[7];
     rotation_[8] = rotation[8];
@@ -223,7 +223,7 @@ void CoordFrame::rotate(const double* caxis, double angle)
     double R[9] = {(oc*xx)+c,  (oc*xy)+sz, (oc*xz)-sy,
                    (oc*xy)-sz, (oc*yy)+c,  (oc*yz)+sx,
                    (oc*xz)+sy, (oc*yz)-sx, (oc*zz)+c};
-    
+
     double* M = rotation_;
 
     double temp[9] = {M[0]*R[0]+M[1]*R[3]+M[2]*R[6],
@@ -259,7 +259,7 @@ CoordFrame CoordFrame::inverse() const
     double rotation[9] = {rotation_[0], rotation_[3], rotation_[6],
                           rotation_[1], rotation_[4], rotation_[7],
                           rotation_[2], rotation_[5], rotation_[8]};
-    double translation[3] = {-(rotation[0]*translation_[0]+ 
+    double translation[3] = {-(rotation[0]*translation_[0]+
                                rotation[3]*translation_[1]+
                                rotation[6]*translation_[2]),
                              -(rotation[1]*translation_[0]+
@@ -342,7 +342,6 @@ CoordFrame CoordFrame::linear_extrap(const CoordFrame& x) const
         }
         else {
             cerr << "TODO: Unable to determine angle." << endl;
-            
         }
     }
     // Angle is zero, use any axis
@@ -361,7 +360,7 @@ CoordFrame CoordFrame::linear_extrap(const CoordFrame& x) const
 CoordFrame CoordFrame::operator*(const CoordFrame& xcframe) const
 {
     double rotation[9], translation[3];
-    
+
     rotation[0] = rotation_[0]*xcframe.rotation_[0]+
                   rotation_[3]*xcframe.rotation_[1]+
                   rotation_[6]*xcframe.rotation_[2];
@@ -371,7 +370,7 @@ CoordFrame CoordFrame::operator*(const CoordFrame& xcframe) const
     rotation[2] = rotation_[2]*xcframe.rotation_[0]+
                   rotation_[5]*xcframe.rotation_[1]+
                   rotation_[8]*xcframe.rotation_[2];
-    
+
     rotation[3] = rotation_[0]*xcframe.rotation_[3]+
                   rotation_[3]*xcframe.rotation_[4]+
                   rotation_[6]*xcframe.rotation_[5];
@@ -381,7 +380,7 @@ CoordFrame CoordFrame::operator*(const CoordFrame& xcframe) const
     rotation[5] = rotation_[2]*xcframe.rotation_[3]+
                   rotation_[5]*xcframe.rotation_[4]+
                   rotation_[8]*xcframe.rotation_[5];
-    
+
     rotation[6] = rotation_[0]*xcframe.rotation_[6]+
                   rotation_[3]*xcframe.rotation_[7]+
                   rotation_[6]*xcframe.rotation_[8];
@@ -391,7 +390,7 @@ CoordFrame CoordFrame::operator*(const CoordFrame& xcframe) const
     rotation[8] = rotation_[2]*xcframe.rotation_[6]+
                   rotation_[5]*xcframe.rotation_[7]+
                   rotation_[8]*xcframe.rotation_[8];
-    
+
     translation[0] = rotation_[0]*xcframe.translation_[0]+
                      rotation_[3]*xcframe.translation_[1]+
                      rotation_[6]*xcframe.translation_[2]+
@@ -413,7 +412,7 @@ CoordFrame& CoordFrame::operator=(const CoordFrame& xcframe)
     rotation_[0] = xcframe.rotation_[0];
     rotation_[1] = xcframe.rotation_[1];
     rotation_[2] = xcframe.rotation_[2];
-    
+
     rotation_[3] = xcframe.rotation_[3];
     rotation_[4] = xcframe.rotation_[4];
     rotation_[5] = xcframe.rotation_[5];
@@ -421,7 +420,7 @@ CoordFrame& CoordFrame::operator=(const CoordFrame& xcframe)
     rotation_[6] = xcframe.rotation_[6];
     rotation_[7] = xcframe.rotation_[7];
     rotation_[8] = xcframe.rotation_[8];
-    
+
     translation_[0] = xcframe.translation_[0];
     translation_[1] = xcframe.translation_[1];
     translation_[2] = xcframe.translation_[2];

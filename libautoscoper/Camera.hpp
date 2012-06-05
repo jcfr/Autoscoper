@@ -49,6 +49,10 @@
 namespace xromm
 {
 
+// Simple class encapsulating an xromm camera. This class is constructed from a
+// mayacam file, which describes the orientation and position of the camera, and
+// is created during the registration phase of the xromm matlab pipeline.
+
 class Camera
 {
 public:

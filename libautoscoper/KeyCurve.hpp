@@ -1,22 +1,22 @@
 // ----------------------------------
 // Copyright (c) 2011, Brown University
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 // (1) Redistributions of source code must retain the above copyright
 // notice, this list of conditions and the following disclaimer.
-// 
+//
 // (2) Redistributions in binary form must reproduce the above copyright
 // notice, this list of conditions and the following disclaimer in the
 // documentation and/or other materials provided with the distribution.
-// 
+//
 // (3) Neither the name of Brown University nor the names of its
 // contributors may be used to endorse or promote products derived from
 // this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY BROWN UNIVERSITY “AS IS” WITH NO
 // WARRANTIES OR REPRESENTATIONS OF ANY KIND WHATSOEVER EITHER EXPRESS OR
 // IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTY OF DESIGN OR
@@ -44,14 +44,19 @@
 
 #include <map>
 
+// This class represents a two dimensional curve that smoothly transitions from
+// one keyed value to another. Interpolation between keyed values is done using
+// biezer curves. The value at each keypoint and the derivative can be setup as
+// desired.
+
 class KeyCurve
 {
 private:
 
     class Key;
-    
+
     typedef std::map<int,Key> key_map;
-    
+
 public:
 
     enum Tangent_type { SMOOTH };
@@ -59,7 +64,7 @@ public:
     // Typedefs
 
     typedef key_map::iterator iterator;
-    
+
     typedef key_map::const_iterator const_iterator;
 
     // COnstructors and Destructor
@@ -68,75 +73,45 @@ public:
 
     ~KeyCurve() {}
 
-    // Removes all keyframes from the curve   
+    // Removes all keyframes from the curve
 
-    void clear()
-    {
-        keys.clear();
-    }
+    void clear() { keys.clear(); }
 
     // Returns true if there are no keyframes
 
-    bool empty() const
-    {
-        return keys.empty();
-    }
+    bool empty() const { return keys.empty(); }
 
     // Returns the number of keyframes
 
-    int size() const
-    {
-        return keys.size();
-    }
+    int size() const { return keys.size(); }
 
     // Insertion and deletion
 
     void insert(int time);
-    
+
     void insert(int time, float value);
 
     void erase(iterator position);
 
     // Iterators
 
-    iterator begin()
-    {
-        return keys.begin();
-    }
+    iterator begin() { return keys.begin(); }
 
-    const_iterator begin() const
-    {
-        return keys.begin();
-    }
-    
-    iterator end()
-    {
-        return keys.end();
-    }
+    const_iterator begin() const { return keys.begin(); }
 
-    const_iterator end() const
-    {
-        return keys.end();
-    }
+    iterator end() { return keys.end(); }
+
+    const_iterator end() const { return keys.end(); }
 
     // Search
 
-    iterator find(int time)
-    {
-        return keys.find(time);
-    }
+    iterator find(int time) { return keys.find(time); }
 
-    const_iterator find(int time) const
-    {
-        return keys.find(time);
-    }
+    const_iterator find(int time) const { return keys.find(time); }
 
     // Accessors and mutators
 
-    int time(const_iterator position) const
-    {
-        return position->first;
-    }
+    int time(const_iterator position) const { return position->first; }
 
     iterator set_time(iterator position, int time);
 
@@ -184,12 +159,12 @@ public:
     {
         position->second.bind_tangents = bind;
     }
-    
+
     bool in_tangent_lock(const_iterator position) const
     {
         return position->second.in_tangent_lock;
     }
-    
+
     void set_in_tangent_lock(iterator position, bool lock)
     {
         position->second.in_tangent_lock = lock;
@@ -199,17 +174,17 @@ public:
     {
         return position->second.out_tangent_lock;
     }
-    
+
     void set_out_tangent_lock(iterator position, bool lock)
     {
         position->second.out_tangent_lock = lock;
     }
-    
+
     float in_tangent(const_iterator position) const
     {
         return position->second.in_tangent;
     }
-   
+
     void set_in_tangent(iterator position, float tangent)
     {
         position->second.in_tangent = tangent;
@@ -220,12 +195,12 @@ public:
         }
         key_changed(position);
     }
- 
+
     float out_tangent(const_iterator position) const
     {
         return position->second.out_tangent;
     }
-    
+
     void set_out_tangent(iterator position, float tangent)
     {
         position->second.out_tangent = tangent;
