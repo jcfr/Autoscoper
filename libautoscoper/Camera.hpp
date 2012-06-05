@@ -65,10 +65,6 @@ public:
 
     double aspect_ratio() const { return aspect_ratio_; }
 
-    double near_clip() const { return near_clip_; }
-
-    double far_clip() const { return far_clip_; }
-
     const CoordFrame& coord_frame() const { return coord_frame_; }
 
     const double* image_plane() const { return image_plane_; }
@@ -77,15 +73,11 @@ public:
 
 private:
 
-    std::string mayacam_;
+    std::string mayacam_; // filename
 
     double field_of_view_; // horizontal
 
     double aspect_ratio_; // width / height
-
-    double near_clip_;
-
-    double far_clip_;
 
     CoordFrame coord_frame_;
 

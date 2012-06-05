@@ -186,8 +186,6 @@ Camera::Camera(const string& mayacam) : mayacam_(mayacam)
 
     field_of_view_   = 360.0/M_PI*atan(max_height/fabs(image_plane_trans[2]));
     aspect_ratio_ = max_width/max_height;
-    near_clip_  = 1.0;
-    far_clip_   = 2.0*distance;
 }
 
 } // namespace XROMM
