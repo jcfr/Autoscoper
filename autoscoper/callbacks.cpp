@@ -1802,7 +1802,7 @@ draw_view(const ViewData* view)
         modelview.inverse().to_matrix_row_order(imv);
         tracker.view(view->cameraid)->drrRenderer()->setInvModelView(imv);
 
-        float temp = 2.0f*sqrt(5)*sin(M_PI*view->fovy/360.0);
+        float temp = 2.0f*sqrt(5.0)*sin(M_PI*view->fovy/360.0);
         float width = temp/view->zoom, height = temp/view->zoom;
         float x = view->zoom_x-width/2.0f, y = view->zoom_y-height/2.0f;
 
