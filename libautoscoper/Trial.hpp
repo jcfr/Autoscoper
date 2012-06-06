@@ -53,6 +53,10 @@
 
 namespace xromm
 {
+// The trial class contains all of the state information for an autoscoper run.
+// It should eventually become an in-memory representation of the xromm
+// autoscoper file format. Currently that file format does not however hold the
+// tracking information.
 
 class Trial
 {

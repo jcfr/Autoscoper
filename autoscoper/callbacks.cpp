@@ -645,8 +645,9 @@ static void update_viewport(ViewData* view)
 
     // Clamp the viewport width and height to the maximum viewport dimensions
     // supported by this opengl implementation.
-    /* XXX This seams to be unecessary??? Maybe the maximum viewport dims
-     * only applies to the maximum renderable window size...
+    /* TODO: This effectively limits the maximum amount of zoom. If we do not do
+     * this then the manipulator will not be drawn correctly at extreme scales.
+     * We need a between solution to this problem.
     if (view->viewport_width > max_viewport_dims[0]) {
         view->viewport_width = max_viewport_dims[0];
         view->zoom = (float)view->viewport_width/(float)view->window_width;
@@ -663,9 +664,9 @@ static void update_viewport(ViewData* view)
     // They determine the location of the window in the viewport. They are
     // clamped so that the window never moves outside of the viewport.
     view->viewport_x = -(int)(view->viewport_width/2.0f*
-                             (1.0f+view->zoom_x-1.0f/view->zoom));
+                             (1.0+view->zoom_x-1.0/view->zoom));
     view->viewport_y = -(int)(view->viewport_height/2.0f*
-                             (1.0f+view->zoom_y-1.0f/view->zoom));
+                             (1.0+view->zoom_y-1.0/view->zoom));
 
     int min_viewport_x = view->window_width-view->viewport_width;
     int max_viewport_x = 0;
@@ -1801,7 +1802,8 @@ draw_view(const ViewData* view)
         modelview.inverse().to_matrix_row_order(imv);
         tracker.view(view->cameraid)->drrRenderer()->setInvModelView(imv);
 
-        float width = 2.0f/view->zoom, height = 2.0f/view->zoom;
+        float temp = 2.0f*sqrt(5)*sin(M_PI*view->fovy/360.0);
+        float width = temp/view->zoom, height = temp/view->zoom;
         float x = view->zoom_x-width/2.0f, y = view->zoom_y-height/2.0f;
 
         tracker.view(view->cameraid)->drrRenderer()->setViewport(
@@ -1846,7 +1848,9 @@ draw_view(const ViewData* view)
         glMatrixMode(GL_MODELVIEW);
         glLoadMatrixd(m);
 
+        enable_headlight();
         draw_manip_from_view(view);
+        glDisable(GL_LIGHTING);
 
         return;
     }
@@ -3037,6 +3041,10 @@ on_xromm_markerless_tracking_drawingarea1_toolbar_combo_box_changed
     drawingarea1_view.viewport_width = drawingarea1_view.window_width;
     drawingarea1_view.viewport_height = drawingarea1_view.window_height;
 
+    // XXX: The field of view for the drr is pretty small--we should decrease the
+    // default accordingly, but this causes problems with the zoom.
+    //drawingarea1_view.fovy = drawingarea1_view.cameraid == DEFAULT_CAMERA? 53.13: 15;
+
     redraw_drawingarea(drawingarea1);
 }
 
@@ -3066,6 +3074,10 @@ on_xromm_markerless_tracking_drawingarea2_toolbar_combo_box_changed
     drawingarea2_view.viewport_y = 0;
     drawingarea2_view.viewport_width = drawingarea2_view.window_width;
     drawingarea2_view.viewport_height = drawingarea2_view.window_height;
+
+    // XXX: The field of view for the drr is pretty small--we should decrease the
+    // default accordingly, but this causes problems with the zoom.
+    //drawingarea2_view.fovy = drawingarea2_view.cameraid == DEFAULT_CAMERA? 53.13: 15;
 
     redraw_drawingarea(drawingarea2);
 }

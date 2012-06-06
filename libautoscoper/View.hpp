@@ -56,6 +56,11 @@ class RayCaster;
 class RadRenderer;
 class Filter;
 
+// This class encapsulates everything related to the rendering of the drrs and
+// radiographs. It contains the cameras, renderers, adn filters. The renderers
+// and filters have quite a few parameters that effect how the rendering looks,
+// and those can be modified at any time by the front end application.
+
 class View
 {
 public:
@@ -110,6 +115,10 @@ public:
 
     void render(unsigned int pbo, size_t width, size_t height);
 
+    bool drr_enabled;
+
+    bool rad_enabled;
+
 private:
 
     void init();
@@ -119,8 +128,6 @@ private:
                 float* output,
                 size_t width,
                 size_t height);
-
-private:
 
     Camera*              camera_;
 
@@ -145,12 +152,6 @@ private:
     float*               radFilterBuffer_;
 
     float*               filterBuffer_;
-
-public:
-
-    bool                 drr_enabled;
-
-    bool                 rad_enabled;
 };
 
 } } //namespace xromm::cuda

@@ -58,43 +58,22 @@
 #include "RadRenderer.hpp"
 
 using namespace std;
-/*
-#include "CImg.h"
-using namespace cimg_library;
 
-static void saveCudaImg(const char* filename, float* data, int w, int h, int d)
-{
-    float* h_data = new float[w*h*d];
-
-    cutilSafeCall(cudaMemcpy(h_data, data, w*h*d*sizeof(float),
-                             cudaMemcpyDeviceToHost));
-
-    for (int k = 0; k < w*h*d; k++) {
-        h_data[k] *= 255.0f;
-    }
-
-    CImg<float> img(h_data, w, h, 1, d);
-    img.save(filename);
-
-    delete[] h_data;
-
-}
-*/
 namespace xromm { namespace cuda
 {
 
 View::View(Camera& camera) : camera_(&camera),
-                                   drrRenderer_(new RayCaster()),
-                                   radRenderer_(new RadRenderer()),
-                                   drrBuffer_(0),
-                                   drrFilterBuffer_(0),
-                                   radBuffer_(0),
-                                   radFilterBuffer_(0),
-                                   filterBuffer_(0),
-                                   maxWidth_(1024),
-                                   maxHeight_(1024),
-                                   drr_enabled(true),
-                                   rad_enabled(true)
+                             drrRenderer_(new RayCaster()),
+                             radRenderer_(new RadRenderer()),
+                             drrBuffer_(0),
+                             drrFilterBuffer_(0),
+                             radBuffer_(0),
+                             radFilterBuffer_(0),
+                             filterBuffer_(0),
+                             maxWidth_(2048),
+                             maxHeight_(2048),
+                             drr_enabled(true),
+                             rad_enabled(true)
 {
 }
 
