@@ -1,22 +1,22 @@
 // ----------------------------------
 // Copyright (c) 2011, Brown University
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 // (1) Redistributions of source code must retain the above copyright
 // notice, this list of conditions and the following disclaimer.
-// 
+//
 // (2) Redistributions in binary form must reproduce the above copyright
 // notice, this list of conditions and the following disclaimer in the
 // documentation and/or other materials provided with the distribution.
-// 
+//
 // (3) Neither the name of Brown University nor the names of its
 // contributors may be used to endorse or promote products derived from
 // this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY BROWN UNIVERSITY “AS IS” WITH NO
 // WARRANTIES OR REPRESENTATIONS OF ANY KIND WHATSOEVER EITHER EXPRESS OR
 // IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTY OF DESIGN OR
@@ -68,7 +68,7 @@ int tiffImageReadMeta(TIFF* tif, TiffImage* img)
         printf("Invalid TIFF handle.\n");
         return 0;
     }
-   
+
     if (!img) {
         printf("Invalid TiffImage pointer.\n");
         return 0;
@@ -81,13 +81,13 @@ int tiffImageReadMeta(TIFF* tif, TiffImage* img)
         !TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &img->height)) {
         return 0;
     }
-    
+
     TIFFGetFieldDefaulted(tif, TIFFTAG_BITSPERSAMPLE, &img->bitsPerSample);
 
     if (!TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &img->photometric)) {
         return 0;
     }
-    
+
     TIFFGetFieldDefaulted(tif, TIFFTAG_ORIENTATION, &img->orientation);
     TIFFGetFieldDefaulted(tif, TIFFTAG_SAMPLESPERPIXEL, &img->samplesPerPixel);
     TIFFGetFieldDefaulted(tif, TIFFTAG_PLANARCONFIG, &img->planarConfig);
@@ -95,7 +95,7 @@ int tiffImageReadMeta(TIFF* tif, TiffImage* img)
 
     // Read in extended TIFF tags.
     TIFFGetFieldDefaulted(tif, TIFFTAG_SAMPLEFORMAT, &img->sampleFormat);
-   
+
     return 1;
 }
 
@@ -311,13 +311,13 @@ static int tiffWriteContigStrippedData(TIFF* tif, uint8* data, uint32 width,
     // Write out one strip at a time.
     uint32 y;
     for (y = 0; y < height; y += rowsPerStrip) {
-    
+
         // The number of visible rows in this strip
         uint32 numRows = y+rowsPerStrip > height? height-y: rowsPerStrip;
-    
+
         // The number of bytes in this strip
         tsize_t stripSize = TIFFVStripSize(tif, numRows);
-        
+
         // Write out the strip.
         if (TIFFWriteEncodedStrip(tif, strip++, data, stripSize) < 0) {
             return 0;
@@ -374,7 +374,7 @@ static int tiffWriteContigTiledData(TIFF* tif, uint8* data, uint32 width,
                        data+i*scanlineSize+byteOffset,
                        rowSize);
             }
-            
+
             // Write out the tile data.
             if (TIFFWriteTile(tif, (tdata_t)tileBuf, x, y, 0, 0) < 0) {
                 _TIFFfree(tileBuf);

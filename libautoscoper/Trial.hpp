@@ -64,7 +64,6 @@ public:
 
     void save(const std::string& filename);
 
-
     std::vector<Camera> cameras;
     std::vector<Video>  videos;
     std::vector<Volume> volumes;

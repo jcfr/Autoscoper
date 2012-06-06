@@ -1,22 +1,22 @@
 // ----------------------------------
 // Copyright (c) 2011, Brown University
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 // (1) Redistributions of source code must retain the above copyright
 // notice, this list of conditions and the following disclaimer.
-// 
+//
 // (2) Redistributions in binary form must reproduce the above copyright
 // notice, this list of conditions and the following disclaimer in the
 // documentation and/or other materials provided with the distribution.
-// 
+//
 // (3) Neither the name of Brown University nor the names of its
 // contributors may be used to endorse or promote products derived from
 // this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY BROWN UNIVERSITY “AS IS” WITH NO
 // WARRANTIES OR REPRESENTATIONS OF ANY KIND WHATSOEVER EITHER EXPRESS OR
 // IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTY OF DESIGN OR
@@ -66,7 +66,7 @@ Volume::Volume(const string& filename)
     }
 
     // Determine the size and format of each slice
-    TiffImage img; 
+    TiffImage img;
     tiffImageReadMeta(tif, &img);
 
     if (img.samplesPerPixel != 1 || img.sampleFormat != 1) {
@@ -97,10 +97,10 @@ Volume::Volume(const string& filename)
         }
 
         memcpy(dp, img.data, width_*height_*(bps_/8));
-        tiffImageFree(&img); 
+        tiffImageFree(&img);
         dp += width_*height_*(bps_/8);
     }
-   
+
     TIFFClose(tif);
 }
 
@@ -142,7 +142,7 @@ Volume::operator=(const Volume& volume)
     flipX_ = volume.flipX_;
     flipY_ = volume.flipY_;
     flipZ_ = volume.flipZ_;
-    
+
     delete[] reinterpret_cast<char*>(data_);
     size_t size = width_*height_*depth_*(bps_/8);
     data_ = new char[size];

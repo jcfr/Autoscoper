@@ -54,8 +54,12 @@
 using namespace std;
 
 template <class T>
-void cropVolume(const T* data, int width, int height, int depth,
-        int* min, int* max)
+void cropVolume(const T* data,
+                int width,
+                int height,
+                int depth,
+                int* min,
+                int* max)
 {
     min[0] = width;
     min[1] = height;
@@ -100,16 +104,16 @@ void cropVolume(const T* data, int width, int height, int depth,
     }
 }
 
-    template <class T>
+template <class T>
 void copyVolume(T* dest,
-        const T* src,
-        int width,
-        int height,
-        int depth,
-        const int* min,
-        const int* max,
-        T* minVal,
-        T* maxVal)
+                const T* src,
+                int width,
+                int height,
+                int depth,
+                const int* min,
+                const int* max,
+                T* minVal,
+                T* maxVal)
 {
     *minVal = numeric_limits<T>::max();
     *maxVal = numeric_limits<T>::min();

@@ -53,9 +53,7 @@ namespace cuda
 {
 
 class RayCaster;
-
 class RadRenderer;
-
 class Filter;
 
 class View

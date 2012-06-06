@@ -1,22 +1,22 @@
 // ----------------------------------
 // Copyright (c) 2011, Brown University
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 // (1) Redistributions of source code must retain the above copyright
 // notice, this list of conditions and the following disclaimer.
-// 
+//
 // (2) Redistributions in binary form must reproduce the above copyright
 // notice, this list of conditions and the following disclaimer in the
 // documentation and/or other materials provided with the distribution.
-// 
+//
 // (3) Neither the name of Brown University nor the names of its
 // contributors may be used to endorse or promote products derived from
 // this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY BROWN UNIVERSITY “AS IS” WITH NO
 // WARRANTIES OR REPRESENTATIONS OF ANY KIND WHATSOEVER EITHER EXPRESS OR
 // IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTY OF DESIGN OR
@@ -50,6 +50,11 @@ class Volume;
 
 namespace cuda {
 
+// The VolumeDescription class provides an abstraction between the volume as it
+// is stored in CPU memory and the volume as it is stored in GPU memory. When it
+// is created from a Volume, it automatically crops the volume to a minimal axis
+// aligned bounding box so that as little GPU memory is wasted as possible.
+
 class VolumeDescription
 {
 public:
@@ -61,45 +66,28 @@ public:
 private:
 
     VolumeDescription(const VolumeDescription&);
-    
+
     VolumeDescription& operator=(const VolumeDescription&);
 
 public:
 
-    const float* invScale() const
-    {
-        return invScale_;
-    }
-    const float* invTrans() const
-    {
-        return invTrans_;
-    }
+    const float* invScale() const { return invScale_; }
 
-    const int* flips() const
-    {
-        return flips_;
-    }
+    const float* invTrans() const { return invTrans_; }
 
-	float minValue() const
-	{
-		return minValue_;
-	}
+    const int* flips() const { return flips_; }
 
-	float maxValue() const
-	{
-		return maxValue_;
-	}
+    float minValue() const { return minValue_; }
 
-    const cudaArray* array() const
-    {
-        return array_;
-    }
+    float maxValue() const { return maxValue_; }
+
+    const cudaArray* array() const { return array_; }
 
 private:
 
-	float minValue_;
+    float minValue_;
 
-	float maxValue_;
+    float maxValue_;
 
     float invScale_[3];
 

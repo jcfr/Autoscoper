@@ -1,22 +1,22 @@
 // ----------------------------------
 // Copyright (c) 2011, Brown University
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 // (1) Redistributions of source code must retain the above copyright
 // notice, this list of conditions and the following disclaimer.
-// 
+//
 // (2) Redistributions in binary form must reproduce the above copyright
 // notice, this list of conditions and the following disclaimer in the
 // documentation and/or other materials provided with the distribution.
-// 
+//
 // (3) Neither the name of Brown University nor the names of its
 // contributors may be used to endorse or promote products derived from
 // this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY BROWN UNIVERSITY “AS IS” WITH NO
 // WARRANTIES OR REPRESENTATIONS OF ANY KIND WHATSOEVER EITHER EXPRESS OR
 // IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTY OF DESIGN OR
@@ -74,7 +74,7 @@ void sum_kernel(float* f, float* sums, unsigned int n);
 
 __global__
 void cuda_ncc_kernel(float* f, float meanF, float* g, float meanG,
-                     float* nums, float* den1s, float* den2s, 
+                     float* nums, float* den1s, float* den2s,
                      unsigned int n);
 
 
@@ -122,7 +122,7 @@ float ncc(float* f, float* g, unsigned int n)
 
     unsigned int numThreads, numBlocks, sizeMem;
     get_device_params(n, g_maxNumThreads, numThreads, numBlocks, sizeMem);
-    
+
     cuda_ncc_kernel<<<numBlocks, numThreads, sizeMem>>>(f, meanF, g, meanG,
                                                         d_nums, d_den1s,
                                                         d_den2s, n);
@@ -157,14 +157,14 @@ float sum(float* f, unsigned int n)
 {
     unsigned int numThreads, numBlocks, sizeMem;
     get_device_params(n, g_maxNumThreads, numThreads, numBlocks, sizeMem);
-  
+
     while (n > 1) {
         sum_kernel<<<numBlocks, numThreads, sizeMem>>>(f, d_sums, n);
         n = numBlocks;
         get_device_params(n, g_maxNumThreads, numThreads, numBlocks, sizeMem);
         f = d_sums;
     }
-    
+
     float h_sum;
     cutilSafeCall(cudaMemcpy(&h_sum,
                              d_sums,
@@ -189,7 +189,7 @@ void sum_kernel(float* f, float* sums, unsigned int n)
         }
         __syncthreads();
     }
-    
+
     if (threadIdx.x == 0) {
         sums[blockIdx.x] = sdata[0];
     }
@@ -205,7 +205,7 @@ void cuda_ncc_kernel(float* f, float meanF, float* g, float meanG,
     if (i < n) {
         float fMinusMean = f[i]-meanF;
         float gMinusMean = g[i]-meanG;
-        
+
         nums[i] = fMinusMean*gMinusMean;
         den1s[i] = fMinusMean*fMinusMean;
         den2s[i] = gMinusMean*gMinusMean;

@@ -1,22 +1,22 @@
 // ----------------------------------
 // Copyright (c) 2011, Brown University
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 // (1) Redistributions of source code must retain the above copyright
 // notice, this list of conditions and the following disclaimer.
-// 
+//
 // (2) Redistributions in binary form must reproduce the above copyright
 // notice, this list of conditions and the following disclaimer in the
 // documentation and/or other materials provided with the distribution.
-// 
+//
 // (3) Neither the name of Brown University nor the names of its
 // contributors may be used to endorse or promote products derived from
 // this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY BROWN UNIVERSITY “AS IS” WITH NO
 // WARRANTIES OR REPRESENTATIONS OF ANY KIND WHATSOEVER EITHER EXPRESS OR
 // IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTY OF DESIGN OR
@@ -73,21 +73,23 @@ public:
     ~Tracker();
 
     void init();
-    
+
     void load(const Trial& trial);
+
+    Trial* trial() { return &trial_; }
+
 
     void optimize(int frame, int dframe, int repeats = 1);
 
     double minimizationFunc(const double* values) const;
 
-    Trial* trial() { return &trial_; }
 
     std::vector<cuda::View*>& views() { return views_; }
-    
+
     const std::vector<cuda::View*>& views() const { return views_; }
-    
+
     cuda::View* view(size_t i) { return views_.at(i); }
-    
+
     const cuda::View* view(size_t i) const { return views_.at(i); }
 
 private:
@@ -99,6 +101,10 @@ private:
     cuda::VolumeDescription* volumeDescription_;
 
     std::vector<cuda::View*> views_;
+
+    float* rendered_drr_;
+
+    float* rendered_rad_;
 };
 
 } // namespace XROMM

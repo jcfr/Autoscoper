@@ -53,27 +53,21 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#include <cutil_inline.h>
 #include "CudaWrap.hpp"
 #include "Compositor_kernels.h"
-#include "ContrastFilter_kernels.h" //XXX
-#include "ContrastFilter.hpp"
-#include "RayCaster.hpp"
-#include "SobelFilter_kernels.h" //XXX
-#include "SobelFilter.hpp"
 #include "Ncc_kernels.h"
 #include "VolumeDescription.hpp"
 #include "Video.hpp"
 #include "View.hpp"
-
 #include "Filter.hpp"
 #include "DownhillSimplex.hpp"
-#include "Trial.hpp"
 #include "Camera.hpp"
 #include "CoordFrame.hpp"
 
 using namespace std;
 
+/* XXX This is used only for debugging--probably should be deleted...
+#include <cutil_inline.h>
 void save_cuda_image(float* dev_image, int width, int height)
 {
     static int count = 0;
@@ -101,17 +95,19 @@ void save_cuda_image(float* dev_image, int width, int height)
     delete[] uchar_image;
     delete[] host_image;
 }
+*/
 
 // XXX
 // These variables should probably live somewhere else.
 
+/*
 int maxWidth = 2048;
 int maxHeight = 2048;
 
 float* rendered_drr = 0;
 float* rendered_rad = 0;
-
-struct cudaGraphicsResource *pboCudaResource;
+*/
+//struct cudaGraphicsResource *pboCudaResource;
 static bool firstRun = true;
 
 // XXX
@@ -125,7 +121,9 @@ double FUNC(double* P) { return g_markerless->minimizationFunc(P+1); }
 namespace xromm {
 
 Tracker::Tracker()
-    : volumeDescription_(0)
+    : volumeDescription_(0),
+      rendered_drr_(0),
+      rendered_rad_(0)
 {
     g_markerless = this;
 }
@@ -133,20 +131,6 @@ Tracker::Tracker()
 Tracker::~Tracker()
 {
 }
-
-static void initCudaMem()
-{
-    if (!firstRun) {
-        return;
-    }
-
-    cuda::cudaMallocWrap(rendered_drr,maxWidth*maxHeight*sizeof(float));
-    cuda::cudaMallocWrap(rendered_rad,maxWidth*maxHeight*sizeof(float));
-
-    xromm::cuda::ncc_init(maxWidth*maxHeight);
-    firstRun = false;
-}
-
 
 void Tracker::init()
 {
@@ -165,6 +149,11 @@ void Tracker::load(const Trial& trial)
 
     delete volumeDescription_;
     volumeDescription_ = new cuda::VolumeDescription(trial_.volumes.front());
+
+    cuda::cudaMallocWrap(rendered_drr_,trial_.render_width*trial_.render_height*sizeof(float));
+    cuda::cudaMallocWrap(rendered_rad_,trial_.render_width*trial_.render_height*sizeof(float));
+
+    xromm::cuda::ncc_init(trial_.render_width*trial_.render_height);
 
     for (unsigned int i = 0; i < trial_.cameras.size(); ++i) {
 
@@ -196,8 +185,6 @@ void Tracker::optimize(int frame, int dFrame, int repeats)
         cerr << "Tracker::optimize(): Invalid frame." << endl;
         return;
     }
-
-    initCudaMem();
 
     int NDIM = 6;       // Number of dimensions to optimize over.
     double FTOL = 0.01; // Tolerance for the optimization.
@@ -354,11 +341,11 @@ double Tracker::minimizationFunc(const double* values) const
                                                viewport[2],viewport[3]);
 
         // Render the DRR and Radiograph
-        views_[i]->renderDrr(rendered_drr,render_width,render_height);
-        views_[i]->renderRad(rendered_rad,render_width,render_height);
+        views_[i]->renderDrr(rendered_drr_,render_width,render_height);
+        views_[i]->renderRad(rendered_rad_,render_width,render_height);
 
         // Calculate the correlation
-        correlations[i] = 1.0-cuda::ncc(rendered_drr,rendered_rad,
+        correlations[i] = 1.0-cuda::ncc(rendered_drr_,rendered_rad_,
                                         render_width*render_height);
 
         //save_cuda_image(rendered_drr,render_width,render_height);
