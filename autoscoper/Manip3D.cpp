@@ -858,7 +858,8 @@ void Manip3D::move_gimbal(const Ray<double>& ray)
     // Calculate the angle and axis of rotation
 
     double theta = safe_acos(dot(point1_,point2_)/len(point1_)/len(point2_));
-    Vec3d axis = unit(cross(point1_,point2_));
+
+    Vec3d axis = theta < 1e-6?  Vec3d(1.0,0.0,0.0): unit(cross(point1_,point2_));
 
     transform2_ = Mat4d(Mat3d::rot(theta,axis));
 }
