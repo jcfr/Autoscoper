@@ -54,7 +54,8 @@ public:
     {
         XROMM_CUDA_CONTRAST_FILTER,
         XROMM_CUDA_SOBEL_FILTER,
-        XROMM_CUDA_MEDIAN_FILTER
+        XROMM_CUDA_MEDIAN_FILTER,
+	XROMM_CUDA_GAUSSIAN_FILTER
     };
 
     Filter(int type, const std::string& name)

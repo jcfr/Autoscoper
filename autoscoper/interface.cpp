@@ -1770,6 +1770,77 @@ create_xromm_contrast_properties_dialog (void)
 }
 
 GtkWidget*
+create_xromm_gaussian_properties_dialog (void)
+{
+  GtkWidget *xromm_gaussian_properties_dialog;
+  GtkWidget *vbox25;
+  GtkWidget *vbox26;
+  GtkWidget *table4;
+  GtkWidget *label36;
+  GtkWidget *xromm_gaussian_properties_dialog_radius_scale;
+  GtkWidget *hbuttonbox2;
+  GtkWidget *button2;
+
+  xromm_gaussian_properties_dialog = gtk_dialog_new ();
+  gtk_container_set_border_width (GTK_CONTAINER (xromm_gaussian_properties_dialog), 1);
+  gtk_window_set_title (GTK_WINDOW (xromm_gaussian_properties_dialog), _("Gaussian Filter Properties"));
+  gtk_window_set_resizable (GTK_WINDOW (xromm_gaussian_properties_dialog), FALSE);
+  gtk_window_set_type_hint (GTK_WINDOW (xromm_gaussian_properties_dialog), GDK_WINDOW_TYPE_HINT_DIALOG);
+
+  vbox25 = GTK_DIALOG (xromm_gaussian_properties_dialog)->vbox;
+  gtk_widget_show (vbox25);
+
+  vbox26 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox26);
+  gtk_box_pack_start (GTK_BOX (vbox25), vbox26, TRUE, TRUE, 0);
+
+  table4 = gtk_table_new (1, 2, FALSE);
+  gtk_widget_show (table4);
+  gtk_box_pack_start (GTK_BOX (vbox26), table4, TRUE, TRUE, 0);
+
+  label36 = gtk_label_new (_("Radius"));
+  gtk_widget_show (label36);
+  gtk_table_attach (GTK_TABLE (table4), label36, 0, 1, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label36), 0, 0.5);
+  gtk_misc_set_padding (GTK_MISC (label36), 5, 0);
+
+  xromm_gaussian_properties_dialog_radius_scale = gtk_hscale_new (GTK_ADJUSTMENT (gtk_adjustment_new (1, 0, 10, 0, 0, 0)));
+  gtk_widget_show (xromm_gaussian_properties_dialog_radius_scale);
+  gtk_table_attach (GTK_TABLE (table4), xromm_gaussian_properties_dialog_radius_scale, 1, 2, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+  gtk_widget_set_size_request (xromm_gaussian_properties_dialog_radius_scale, 256, 36);
+  gtk_scale_set_value_pos (GTK_SCALE (xromm_gaussian_properties_dialog_radius_scale), GTK_POS_RIGHT);
+
+  hbuttonbox2 = GTK_DIALOG (xromm_gaussian_properties_dialog)->action_area;
+  gtk_widget_show (hbuttonbox2);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox2), GTK_BUTTONBOX_END);
+
+  button2 = gtk_button_new_from_stock ("gtk-close");
+  gtk_widget_show (button2);
+  gtk_dialog_add_action_widget (GTK_DIALOG (xromm_gaussian_properties_dialog), button2, GTK_RESPONSE_CLOSE);
+  GTK_WIDGET_SET_FLAGS (button2, GTK_CAN_DEFAULT);
+
+  g_signal_connect_swapped ((gpointer) button2, "clicked",
+                            G_CALLBACK (gtk_widget_destroy),
+                            GTK_OBJECT (xromm_gaussian_properties_dialog));
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (xromm_gaussian_properties_dialog, xromm_gaussian_properties_dialog, "xromm_gaussian_properties_dialog");
+  GLADE_HOOKUP_OBJECT_NO_REF (xromm_gaussian_properties_dialog, vbox25, "vbox25");
+  GLADE_HOOKUP_OBJECT (xromm_gaussian_properties_dialog, vbox26, "vbox26");
+  GLADE_HOOKUP_OBJECT (xromm_gaussian_properties_dialog, table4, "table4");
+  GLADE_HOOKUP_OBJECT (xromm_gaussian_properties_dialog, label36, "label36");
+  GLADE_HOOKUP_OBJECT (xromm_gaussian_properties_dialog, xromm_gaussian_properties_dialog_radius_scale, "xromm_gaussian_properties_dialog_radius_scale");
+  GLADE_HOOKUP_OBJECT_NO_REF (xromm_gaussian_properties_dialog, hbuttonbox2, "hbuttonbox2");
+  GLADE_HOOKUP_OBJECT (xromm_gaussian_properties_dialog, button2, "button2");
+
+  return xromm_gaussian_properties_dialog;
+}
+
+GtkWidget*
 create_export_tracking_options_dialog (void)
 {
   GtkWidget *export_tracking_options_dialog;
