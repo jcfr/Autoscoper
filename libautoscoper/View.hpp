@@ -103,17 +103,17 @@ public:
 
     // Rendering functions
 
-    void renderRad(float* buffer, size_t width, size_t height);
+    void renderRad(float* buffer, unsigned width, unsigned height);
 
-    void renderRad(unsigned int pbo, size_t width, size_t height);
+    void renderRad(unsigned int pbo, unsigned width, unsigned height);
 
-    void renderDrr(float* buffer, size_t width, size_t height);
+    void renderDrr(float* buffer, unsigned width, unsigned height);
 
-    void renderDrr(unsigned int pbo, size_t width, size_t height);
+    void renderDrr(unsigned int pbo, unsigned width, unsigned height);
 
-    void render(float* buffer, size_t width, size_t height);
+    void render(float* buffer, unsigned width, unsigned height);
 
-    void render(unsigned int pbo, size_t width, size_t height);
+    void render(unsigned int pbo, unsigned width, unsigned height);
 
     bool drr_enabled;
 
@@ -126,8 +126,8 @@ private:
     void filter(const std::vector<Filter*>& filters,
                 const float* input,
                 float* output,
-                size_t width,
-                size_t height);
+                unsigned width,
+                unsigned height);
 
     Camera*              camera_;
 
@@ -139,9 +139,9 @@ private:
 
     std::vector<Filter*> radFilters_;
 
-    size_t               maxWidth_;
+    unsigned               maxWidth_;
 
-    size_t               maxHeight_;
+    unsigned               maxHeight_;
 
     float*               drrBuffer_;
 

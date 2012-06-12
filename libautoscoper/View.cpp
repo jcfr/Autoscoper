@@ -99,7 +99,7 @@ View::~View()
 }
 
 void
-View::renderRad(float* buffer, size_t width, size_t height)
+View::renderRad(float* buffer, unsigned width, unsigned height)
 {
     init();
 
@@ -118,14 +118,14 @@ View::renderRad(float* buffer, size_t width, size_t height)
 }
 
 void
-View::renderRad(unsigned int pbo, size_t width, size_t height)
+View::renderRad(unsigned int pbo, unsigned width, unsigned height)
 {
     struct cudaGraphicsResource* pboCudaResource;
     cutilSafeCall(cudaGraphicsGLRegisterBuffer(&pboCudaResource, pbo,
         cudaGraphicsMapFlagsWriteDiscard));
 
     float* buffer = NULL;
-    size_t numOfBytes;
+    unsigned numOfBytes;
     cutilSafeCall(cudaGraphicsMapResources(1, &pboCudaResource, 0));
     cutilSafeCall(cudaGraphicsResourceGetMappedPointer((void**)&buffer,
                                                        &numOfBytes,
@@ -143,7 +143,7 @@ View::renderRad(unsigned int pbo, size_t width, size_t height)
 }
 
 void
-View::renderDrr(float* buffer, size_t width, size_t height)
+View::renderDrr(float* buffer, unsigned width, unsigned height)
 {
     init();
 
@@ -162,14 +162,14 @@ View::renderDrr(float* buffer, size_t width, size_t height)
 }
 
 void
-View::renderDrr(unsigned int pbo, size_t width, size_t height)
+View::renderDrr(unsigned int pbo, unsigned width, unsigned height)
 {
     struct cudaGraphicsResource* pboCudaResource;
     cutilSafeCall(cudaGraphicsGLRegisterBuffer(&pboCudaResource, pbo,
         cudaGraphicsMapFlagsWriteDiscard));
 
     float* buffer = NULL;
-    size_t numOfBytes;
+    unsigned numOfBytes;
     cutilSafeCall(cudaGraphicsMapResources(1, &pboCudaResource, 0));
     cutilSafeCall(cudaGraphicsResourceGetMappedPointer((void**)&buffer,
                                                        &numOfBytes,
@@ -187,7 +187,7 @@ View::renderDrr(unsigned int pbo, size_t width, size_t height)
 }
 
 void
-View::render(float* buffer, size_t width, size_t height)
+View::render(float* buffer, unsigned width, unsigned height)
 {
     init();
 
@@ -213,14 +213,14 @@ View::render(float* buffer, size_t width, size_t height)
 }
 
 void
-View::render(unsigned int pbo, size_t width, size_t height)
+View::render(unsigned int pbo, unsigned width, unsigned height)
 {
     struct cudaGraphicsResource* pboCudaResource;
 	cutilSafeCall(cudaGraphicsGLRegisterBuffer(&pboCudaResource, pbo,
         cudaGraphicsMapFlagsWriteDiscard));
 
     float* buffer = NULL;
-    size_t numOfBytes;
+    unsigned numOfBytes;
     cutilSafeCall(cudaGraphicsMapResources(1, &pboCudaResource, 0));
     cutilSafeCall(cudaGraphicsResourceGetMappedPointer((void**)&buffer,
                                                        &numOfBytes,
@@ -253,8 +253,8 @@ void
 View::filter(const std::vector<Filter*>& filters,
              const float* input,
              float* output,
-             size_t width,
-             size_t height)
+             unsigned width,
+             unsigned height)
 {
     // If there are no filters simply copy the input to the output
     if (filters.size() == 0) {
