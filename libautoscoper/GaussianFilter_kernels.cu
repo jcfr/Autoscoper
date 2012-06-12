@@ -1,22 +1,22 @@
 // ----------------------------------
 // Copyright (c) 2011, Brown University
 // All rights reserved.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
-//
+// 
 // (1) Redistributions of source code must retain the above copyright
 // notice, this list of conditions and the following disclaimer.
-//
+// 
 // (2) Redistributions in binary form must reproduce the above copyright
 // notice, this list of conditions and the following disclaimer in the
 // documentation and/or other materials provided with the distribution.
-//
+// 
 // (3) Neither the name of Brown University nor the names of its
 // contributors may be used to endorse or promote products derived from
 // this software without specific prior written permission.
-//
+// 
 // THIS SOFTWARE IS PROVIDED BY BROWN UNIVERSITY “AS IS” WITH NO
 // WARRANTIES OR REPRESENTATIONS OF ANY KIND WHATSOEVER EITHER EXPRESS OR
 // IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTY OF DESIGN OR
@@ -36,55 +36,68 @@
 // THEIR USE OF THE SOFTWARE.
 // ---------------------------------
 
-/// \file Filter.hpp
+/// \file GaussianFilter_kernels.cu
 /// \author Andy Loomis
 
-#ifndef XROMM_CUDA_FILTER_HPP
-#define XROMM_CUDA_FILTER_HPP
+#include "GaussianFilter_kernels.h"
 
-#include <string>
+__global__
+void gaussian_filter_kernel(const float* input, float* output,
+                            int width, int height,
+                            float alpha, float beta, int size);
 
 namespace xromm { namespace cuda {
 
-class Filter
+void gaussian_filter_apply(const float* input, float* output,
+                           int width, int height,
+                           float alpha, float beta, int size)
 {
-public:
-
-    enum
-    {
-        XROMM_CUDA_CONTRAST_FILTER,
-        XROMM_CUDA_SOBEL_FILTER,
-        XROMM_CUDA_MEDIAN_FILTER,
-	XROMM_CUDA_GAUSSIAN_FILTER
-    };
-
-    Filter(int type, const std::string& name)
-        : type_(type), name_(name), enabled_(true) {}
-
-    virtual void apply(const float* input,
-                       float* output,
-                       int width,
-                       int height) = 0;
-
-    int type() const { return type_; }
-
-    const std::string& name() const { return name_; }
-
-    void set_name(const std::string& name) { name_ = name; }
-
-    bool enabled() const { return enabled_; }
-
-    void set_enabled(bool enabled) { enabled_ = enabled; }
-
-protected:
-
-    int type_;
-
-    std::string name_;
-
-    bool enabled_;
-};
+    dim3 blockDim(16, 16);
+    dim3 gridDim((width+blockDim.x-1)/blockDim.x,
+                 (height+blockDim.y-1)/blockDim.y);
+    
+    gaussian_filter_kernel<<<gridDim, blockDim>>>(input, output,
+                                                  width, height,
+                                                  alpha, beta, size);
+}
 
 } } // namespace xromm::cuda
 
-#endif // XROMM_CUDA_FILTER_HPP
+static __device__
+float average(const float* input, int width, int height, int x, int y, int size)
+{
+    float n = 0.0f;
+    float sum = 0.0f;
+    int minI = max(y-size/2, 0);
+    int maxI = min(y+(size+1)/2, height);
+    int minJ = max(x-size/2, 0);
+    int maxJ = min(x+(size+1)/2, width);
+    for (int i = minI; i < maxI; ++i) {
+        for (int j = minJ; j < maxJ; ++j) {
+            n += 1.0f;
+            sum += input[i*width+j];
+        }
+    }
+    return sum/n;
+}
+
+__global__
+void gaussian_filter_kernel(const float* input, float* output,
+                            int width, int height,
+                            float alpha, float beta, int size)
+{
+    short x = blockIdx.x*blockDim.x+threadIdx.x;
+    short y = blockIdx.y*blockDim.y+threadIdx.y;
+
+    if (x > width-1 || y > height-1) {
+        return;
+    }
+
+    float fxy = input[y*width+x];
+    float axy = average(input, width, height, x, y, size);
+    float gxy = 0.0f;
+    if (axy > 0.01f) {
+        gxy = pow(axy,alpha-beta)*pow(fxy,beta);
+    }
+    output[y*width+x] = gxy;
+}

@@ -48,6 +48,7 @@
 #include <View.hpp>
 #include <SobelFilter.hpp>
 #include <ContrastFilter.hpp>
+#include <GaussianFilter.hpp>
 #include <RayCaster.hpp>
 #include <RadRenderer.hpp>
 
@@ -319,6 +320,33 @@ properties_activate_filter(GtkWidget* menu_item, gpointer data)
 
             break;
         }
+        case Filter::XROMM_CUDA_GAUSSIAN_FILTER: {
+            GaussianFilter* gaussian_filter = (GaussianFilter*)filter;
+
+            GtkWidget* properties_dialog =
+                create_xromm_gaussian_properties_dialog();
+
+            gtk_window_set_title(GTK_WINDOW(properties_dialog),title_stream.str().c_str());
+
+            GtkWidget* radius_scale = lookup_widget(properties_dialog,
+                                                   "xromm_gaussian_properties_"
+                                                   "dialog_radius_scale");
+
+            // Set the intensity and cutoff values.
+            gtk_range_set_value(GTK_RANGE(radius_scale),
+                                gaussian_filter->alpha());
+
+            // Connect the signals.
+            g_signal_connect(radius_scale,
+                             "value-changed",
+                             G_CALLBACK(on_xromm_gaussian_properties_dialog_radius_scale_value_changed),
+                             data);
+
+            // Display the dialog
+            gtk_widget_show(properties_dialog);
+            
+            break;
+        }
         default: return;
     }
 }
@@ -410,11 +438,15 @@ xromm_gtk_tree_view_on_button_press(GtkWidget* tree_view,
                     gtk_menu_item_new_with_label("Sobel");
                 GtkWidget* contrast_menu_item =
                     gtk_menu_item_new_with_label("Contrast");
+                GtkWidget* gaussian_menu_item =
+                    gtk_menu_item_new_with_label("Gaussian");
 
                 gtk_menu_shell_append(GTK_MENU_SHELL(new_filter_menu),
                                       sobel_menu_item);
                 gtk_menu_shell_append(GTK_MENU_SHELL(new_filter_menu),
                                       contrast_menu_item);
+                gtk_menu_shell_append(GTK_MENU_SHELL(new_filter_menu),
+                                      gaussian_menu_item);
 
                 gtk_menu_item_set_submenu(GTK_MENU_ITEM(new_filter_menu_item),
                                           new_filter_menu);
@@ -424,6 +456,10 @@ xromm_gtk_tree_view_on_button_press(GtkWidget* tree_view,
                                  G_CALLBACK(on_new_filter_activate),
                                  iter_vector);
                 g_signal_connect(contrast_menu_item,
+                                 "activate",
+                                 G_CALLBACK(on_new_filter_activate),
+                                 iter_vector);
+                g_signal_connect(gaussian_menu_item,
                                  "activate",
                                  G_CALLBACK(on_new_filter_activate),
                                  iter_vector);
@@ -446,11 +482,15 @@ xromm_gtk_tree_view_on_button_press(GtkWidget* tree_view,
                     gtk_menu_item_new_with_label("Sobel");
                 GtkWidget* contrast_menu_item =
                     gtk_menu_item_new_with_label("Contrast");
+                GtkWidget* gaussian_menu_item =
+                    gtk_menu_item_new_with_label("Gaussian");
 
                 gtk_menu_shell_append(GTK_MENU_SHELL(new_filter_menu),
                                       sobel_menu_item);
                 gtk_menu_shell_append(GTK_MENU_SHELL(new_filter_menu),
                                       contrast_menu_item);
+                gtk_menu_shell_append(GTK_MENU_SHELL(new_filter_menu),
+                                      gaussian_menu_item);
 
                 gtk_menu_item_set_submenu(GTK_MENU_ITEM(new_filter_menu_item),
                                           new_filter_menu);
@@ -460,6 +500,10 @@ xromm_gtk_tree_view_on_button_press(GtkWidget* tree_view,
                                  G_CALLBACK(on_new_filter_activate),
                                  iter_vector);
                 g_signal_connect(contrast_menu_item,
+                                 "activate",
+                                 G_CALLBACK(on_new_filter_activate),
+                                 iter_vector);
+                g_signal_connect(gaussian_menu_item,
                                  "activate",
                                  G_CALLBACK(on_new_filter_activate),
                                  iter_vector);

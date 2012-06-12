@@ -83,6 +83,11 @@ on_xromm_contrast_properties_dialog_beta_scale_value_changed
                                          gpointer       data);
 
 void
+on_xromm_gaussian_properties_dialog_radius_scale_value_changed
+                                        (GtkRange*      range,
+                                         gpointer       data);
+
+void
 on_new_filter_activate                  (GtkWidget*     menu_item,
                                          gpointer       data);
 

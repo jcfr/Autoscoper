@@ -7,6 +7,7 @@ GtkWidget* create_xromm_markerless_tracking_tracking_dialog (void);
 GtkWidget* create_xromm_drr_renderer_properties_dialog (void);
 GtkWidget* create_xromm_sobel_properties_dialog (void);
 GtkWidget* create_xromm_contrast_properties_dialog (void);
+GtkWidget* create_xromm_gaussian_properties_dialog (void);
 GtkWidget* create_export_tracking_options_dialog (void);
 GtkWidget* create_frame_range_dialog (void);
 GtkWidget* create_frame_range_dialog2 (void);
