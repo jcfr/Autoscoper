@@ -36,55 +36,62 @@
 // THEIR USE OF THE SOFTWARE.
 // ---------------------------------
 
-/// \file GaussianFilter_kernels.cu
-/// \author Andy Loomis
+/// \file SharpenFilter_kernels.cu
+/// \author Emily Fu
 
-#include "GaussianFilter_kernels.h"
+#include "SharpenFilter_kernels.h"
+#include "stdlib.h"
+#include "math.h"
 
 __global__
-void gaussian_filter_kernel(const float* input, float* output,
-                            int width, int height,
-                            float alpha, float beta, int size);
+void sharpen_filter_kernel(const float* input, float* output,
+                            int width, int height, 
+                float* filter, int filterSize, float contrast, float threshold);
 
 namespace xromm { namespace cuda {
 
-void gaussian_filter_apply(const float* input, float* output,
-                           int width, int height,
-                           float alpha, float beta, int size)
+void sharpen_filter_apply(const float* input, float* output,
+                           int width, int height, float* sharpen, int filterSize, float contrast, float threshold)
 {
     dim3 blockDim(16, 16);
     dim3 gridDim((width+blockDim.x-1)/blockDim.x,
                  (height+blockDim.y-1)/blockDim.y);
-    
-    gaussian_filter_kernel<<<gridDim, blockDim>>>(input, output,
-                                                  width, height,
-                                                  alpha, beta, size);
+
+
+    sharpen_filter_kernel<<<gridDim, blockDim>>>(input, output,
+                                                  width, height, 
+                                              sharpen, filterSize, contrast, threshold);
+
 }
 
 } } // namespace xromm::cuda
 
 static __device__
-float average(const float* input, int width, int height, int x, int y, int size)
+float filterConvolution(const float* input, int width, int height, int x, int y, float* filter, int filterSize) //returns blurred pixel for comparison with original
 {
-    float n = 0.0f;
-    float sum = 0.0f;
-    int minI = max(y-size/2, 0);
-    int maxI = min(y+(size+1)/2, height);
-    int minJ = max(x-size/2, 0);
-    int maxJ = min(x+(size+1)/2, width);
-    for (int i = minI; i < maxI; ++i) {
-        for (int j = minJ; j < maxJ; ++j) {
-            n += 1.0f;
-            sum += input[i*width+j];
+
+    float centerValue=0.0f;
+    int filterRadius = (filterSize - 1) / 2;
+
+    for(int i = 0; i < filterSize; ++i){
+        for(int j = 0; j < filterSize; ++j){
+            
+            int a = x - filterRadius + i;
+            int b = y - filterRadius + j;            
+                        
+            if(!(a < 0 || a >=width || b < 0 || b >= height))
+                 centerValue = centerValue + (filter[i*filterSize + j])*(input[b*width + a]); 
         }
     }
-    return sum/n;
+    
+    
+    return centerValue;
 }
 
 __global__
-void gaussian_filter_kernel(const float* input, float* output,
-                            int width, int height,
-                            float alpha, float beta, int size)
+void sharpen_filter_kernel(const float* input, float* output,
+                            int width, int height, 
+                    float* filter, int filterSize, float contrast, float threshold)
 {
     short x = blockIdx.x*blockDim.x+threadIdx.x;
     short y = blockIdx.y*blockDim.y+threadIdx.y;
@@ -92,12 +99,20 @@ void gaussian_filter_kernel(const float* input, float* output,
     if (x > width-1 || y > height-1) {
         return;
     }
+    
+    float blur = filterConvolution(input, width, height, x, y, filter, filterSize);
 
-    float fxy = input[y*width+x];
-    float axy = average(input, width, height, x, y, size);
-    float gxy = 0.0f;
-    if (axy > 0.01f) {
-        gxy = pow(axy,alpha-beta)*pow(fxy,beta);
+//if original pixel and blurred pixel differ by more than threshold, difference is adjusted by contrast and added to original, else no change  
+    if(abs(input[y*width+x] - blur) > threshold)
+    {
+          output[y*width + x] = input[y*width+x] + contrast*(input[y*width + x] - blur);
+          
+         if(output[y*width + x]  > 1)
+                output[y*width + x] = 1;
+         if(output[y*width + x]  < 0)
+             output[y*width + x] = 0;
     }
-    output[y*width+x] = gxy;
+    else
+         output[y*width + x] = input[y*width + x];
+    
 }

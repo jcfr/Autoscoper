@@ -76,6 +76,7 @@
 #include <RayCaster.hpp>
 #include <SobelFilter.hpp>
 #include <ContrastFilter.hpp>
+#include <SharpenFilter.hpp>
 #include <GaussianFilter.hpp>
 #include <Filter.hpp>
 #include <Trial.hpp>
@@ -2133,7 +2134,31 @@ on_xromm_gaussian_properties_dialog_radius_scale_value_changed
                                          gpointer       data)
 {
     GaussianFilter* gaussianFilter = (GaussianFilter*)data;
-    gaussianFilter->set_alpha(gtk_range_get_value(range));
+    gaussianFilter->set_radius(gtk_range_get_value(range));
+
+    redraw_drawingarea(drawingarea1);
+    redraw_drawingarea(drawingarea2);
+}
+
+void
+on_xromm_sharpen_properties_dialog_radius_scale_value_changed
+                                        (GtkRange*      range,
+                                         gpointer       data)
+{
+    SharpenFilter* sharpenFilter = (SharpenFilter*)data;
+    sharpenFilter->set_radius(gtk_range_get_value(range));
+
+    redraw_drawingarea(drawingarea1);
+    redraw_drawingarea(drawingarea2);
+}
+
+void
+on_xromm_sharpen_properties_dialog_contrast_scale_value_changed
+                                        (GtkRange*      range,
+                                         gpointer       data)
+{
+    SharpenFilter* sharpenFilter = (SharpenFilter*)data;
+    sharpenFilter->set_contrast(gtk_range_get_value(range));
 
     redraw_drawingarea(drawingarea1);
     redraw_drawingarea(drawingarea2);
@@ -2206,6 +2231,9 @@ on_new_filter_activate(GtkWidget* menu_item, gpointer data)
     }
     else if (new_filter_name.compare("Gaussian") == 0) {
         filters->push_back(new GaussianFilter());
+    }
+    else if (new_filter_name.compare("Sharpen") == 0) {
+        filters->push_back(new SharpenFilter());
     }
 
     fill_notebook();

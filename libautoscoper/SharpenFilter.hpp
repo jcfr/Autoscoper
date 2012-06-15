@@ -36,22 +36,58 @@
 // THEIR USE OF THE SOFTWARE.
 // ---------------------------------
 
-/// \file ContrastFilter_kernels.h
-/// \author Andy Loomis
+/// \file SharpenFilter.hpp
+/// \author Emily Fu
 
-#ifndef XROMM_CUDA_GAUSSIAN_FILTER_KERNELS_H
-#define XROMM_CUDA_GAUSSIAN_FILTER_KERNELS_H
+#ifndef XROMM_CUDA_SHARPEN_FILTER_HPP
+#define XROMM_CUDA_SHARPEN_FILTER_HPP
+
+#include <string>
+
+#include "Filter.hpp"
 
 namespace xromm { namespace cuda {
 
-void gaussian_filter_apply(const float* input,
-                           float* output,
-                           int width,
-                           int height,
-                           float alpha,
-                           float beta,
-                           int size);
+class SharpenFilter : public Filter
+{
+public:
+
+    SharpenFilter();
+    
+    virtual
+    ~SharpenFilter();
+
+    // Apply the filter to the input image
+
+    virtual
+    void apply(const float* input, float* output, int width, int height);
+
+    // Accessors and mutators
+
+    float radius() const { return radius_; }
+ 
+    void set_radius(float radius);
+
+    float contrast() const { return contrast_; }
+
+    void set_contrast(float contrast);
+    
+    float threshold() const {return threshold_; }
+    
+    void set_threshold(float threshold);
+    
+private:
+
+    float radius_; 
+    float contrast_;   
+    float threshold_; 
+ 
+    float* sharpen_;
+    int filterSize_;
+    
+    void makeFilter();
+};
 
 } } // namespace xromm::cuda
 
-#endif // XROMM_CUDA_GAUSSIAN_FILTER_KERNELS_H
+#endif // XROMM_CUDA_SHARPEN_FILTER_HPP

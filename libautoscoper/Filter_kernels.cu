@@ -1,22 +1,22 @@
 // ----------------------------------
 // Copyright (c) 2011, Brown University
 // All rights reserved.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
-//
+// 
 // (1) Redistributions of source code must retain the above copyright
 // notice, this list of conditions and the following disclaimer.
-//
+// 
 // (2) Redistributions in binary form must reproduce the above copyright
 // notice, this list of conditions and the following disclaimer in the
 // documentation and/or other materials provided with the distribution.
-//
+// 
 // (3) Neither the name of Brown University nor the names of its
 // contributors may be used to endorse or promote products derived from
 // this software without specific prior written permission.
-//
+// 
 // THIS SOFTWARE IS PROVIDED BY BROWN UNIVERSITY “AS IS” WITH NO
 // WARRANTIES OR REPRESENTATIONS OF ANY KIND WHATSOEVER EITHER EXPRESS OR
 // IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTY OF DESIGN OR
@@ -36,56 +36,76 @@
 // THEIR USE OF THE SOFTWARE.
 // ---------------------------------
 
-/// \file Filter.hpp
-/// \author Andy Loomis
+/// \file Filter_kernels.cu
+/// \author Emily Fu
 
-#ifndef XROMM_CUDA_FILTER_HPP
-#define XROMM_CUDA_FILTER_HPP
+#include "Filter_kernels.h"
+#include "stdlib.h"
 
-#include <string>
+__global__
+void filter_kernel(const float* input, float* output,
+                            int width, int height, 
+                float* filter, int filterSize );
 
 namespace xromm { namespace cuda {
 
-class Filter
+void filter_apply(const float* input, float* output,
+                           int width, int height, float* filter, int filterSize)
 {
-public:
+    dim3 blockDim(16, 16);
+    dim3 gridDim((width+blockDim.x-1)/blockDim.x,
+                 (height+blockDim.y-1)/blockDim.y);
 
-    enum
-    {
-        XROMM_CUDA_CONTRAST_FILTER,
-        XROMM_CUDA_SOBEL_FILTER,
-        XROMM_CUDA_MEDIAN_FILTER,
-	XROMM_CUDA_GAUSSIAN_FILTER,
-	XROMM_CUDA_SHARPEN_FILTER
-    };
 
-    Filter(int type, const std::string& name)
-        : type_(type), name_(name), enabled_(true) {}
+    filter_kernel<<<gridDim, blockDim>>>(input, output,
+                                                  width, height, 
+                                              filter, filterSize);
 
-    virtual void apply(const float* input,
-                       float* output,
-                       int width,
-                       int height) = 0;
-
-    int type() const { return type_; }
-
-    const std::string& name() const { return name_; }
-
-    void set_name(const std::string& name) { name_ = name; }
-
-    bool enabled() const { return enabled_; }
-
-    void set_enabled(bool enabled) { enabled_ = enabled; }
-
-protected:
-
-    int type_;
-
-    std::string name_;
-
-    bool enabled_;
-};
+}
 
 } } // namespace xromm::cuda
 
-#endif // XROMM_CUDA_FILTER_HPP
+
+//convolves filter by setting (x,y) to sum of neighboring values multiplied by corresponding filter values
+
+static __device__
+float filterConvolution(const float* input, int width, int height, int x, int y, float* filter, int filterSize)
+{
+
+    float centerValue=0.0f;
+    int filterRadius = (filterSize - 1) / 2;
+
+    for(int i = 0; i < filterSize; ++i){
+        for(int j = 0; j < filterSize; ++j){
+            
+            int a = x - filterRadius + i;
+            int b = y - filterRadius + j;            
+                        
+            if(!(a < 0 || a >=width || b < 0 || b >= height))
+                 centerValue = centerValue + (filter[i*filterSize + j])*(input[b*width + a]);
+        }
+    }
+    
+    if(centerValue > 1)
+        centerValue = 1;
+    if(centerValue < 0)
+        centerValue = 0;
+
+   return centerValue;
+   
+}
+
+__global__
+void filter_kernel(const float* input, float* output,
+                            int width, int height, 
+                    float* filter, int filterSize)
+{
+    short x = blockIdx.x*blockDim.x+threadIdx.x;
+    short y = blockIdx.y*blockDim.y+threadIdx.y;
+
+    if (x > width-1 || y > height-1) {
+        return;
+    }
+
+     output[y*width+x] = filterConvolution(input, width, height, x, y, filter, filterSize);
+}

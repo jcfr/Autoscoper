@@ -37,7 +37,7 @@
 // ---------------------------------
 
 /// \file GaussianFilter.hpp
-/// \author Andy Loomis
+/// \author Emily Fu
 
 #ifndef XROMM_CUDA_GAUSSIAN_FILTER_HPP
 #define XROMM_CUDA_GAUSSIAN_FILTER_HPP
@@ -53,6 +53,9 @@ class GaussianFilter : public Filter
 public:
 
     GaussianFilter();
+    
+    virtual
+    ~GaussianFilter();
 
     // Apply the filter to the input image
 
@@ -61,21 +64,15 @@ public:
 
     // Accessors and mutators
 
-    float alpha() const { return alpha_; }
+    float radius() const { return radius_; }
 
-    void set_alpha(float alpha) { alpha_ = alpha; }
-
-    float beta() const { return beta_; }
-
-    void set_beta(float beta) { beta_ = beta; }
-
+    void set_radius(float radius);
+    
 private:
 
-    float alpha_;
-
-    float beta_;
-
-    int size_;
+    float radius_;
+    float* gaussian_;
+    int filterSize_;
 };
 
 } } // namespace xromm::cuda
