@@ -1,26 +1,31 @@
 TARGET = autoscoper
 
 CXX = g++
-CXXFLAGS = -Wall -g -export-dynamic
+CXXFLAGS = -Wall -g -m64 -D_MACOSX
+LDFLAGS =
+
+LDFLAGS += -framework OpenGL -framework GLUT -framework Cocoa
 
 CXXFILES = $(shell ls *.cpp)
 
+GTK_PACKAGE=gtkglext-quartz-1.0
+
 INCLUDES = \
-	$(shell pkg-config --cflags-only-I gtkglext-x11-1.0) \
+	$(shell pkg-config --cflags-only-I $(GTK_PACKAGE)) \
 	-I../libautoscoper \
 	-I../math
 
 LIBDIRS = \
-	$(shell pkg-config --libs-only-L gtkglext-x11-1.0) \
+	$(shell pkg-config --libs-only-L $(GTK_PACKAGE)) \
 	-L../libautoscoper \
-    -L/usr/local/cuda/lib64
+	-L/Developer/NVIDIA/CUDA-5.0/lib \
+	-L/System/Library/Frameworks/OpenGL.framework/Libraries
 
 LIBS = \
-	$(shell pkg-config --libs gtkglext-x11-1.0) \
+	$(shell pkg-config --libs-only-l $(GTK_PACKAGE)) \
 	-lautoscoper \
 	-ltiff \
 	-lcudart \
-	-lglut \
 	-lGLEW
 
 OBJDIR = obj

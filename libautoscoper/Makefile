@@ -1,8 +1,8 @@
 TARGET = libautoscoper.a
 
 CXX = g++
-CXXFLAGS = -Wall -g -O2
-NVCC = nvcc
+CXXFLAGS = -Wall -g -O2 -fPIC -m64
+NVCC = nvcc -m64
 NVCCFLAGS =
 AR = ar
 ARFLAGS = -cq
@@ -15,7 +15,7 @@ OBJS = \
 	$(CXXFILES:%.cpp=$(OBJDIR)/%.cpp.o) \
 	$(CUFILES:%.cu=$(OBJDIR)/%.cu.o)
 
-INCLUDES = -I. -Icutil -I/usr/local/cuda/include
+INCLUDES = -I. -Icutil -I/Developer/NVIDIA/CUDA-5.0/include
 
 $(TARGET) : $(OBJS)
 	@ echo $(OBJS)
@@ -23,7 +23,7 @@ $(TARGET) : $(OBJS)
 
 $(OBJDIR)/%.cpp.o: %.cpp
 	mkdir -p $(OBJDIR)
-	$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 $(OBJDIR)/%.cu.o: %.cu
 	mkdir -p $(OBJDIR)

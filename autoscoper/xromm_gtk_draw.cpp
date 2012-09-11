@@ -50,7 +50,12 @@
 #endif
 
 #define GL_GLEXT_PROTOTYPES 1
+
+#ifdef _MACOSX
+#include <OpenGL/gl.h>
+#else
 #include <GL/gl.h>
+#endif
 
 void
 draw_gradient(const float* top_color, const float* bot_color)

@@ -1,6 +1,6 @@
 all:
-	cd libautoscoper; make -j 4;
-	cd autoscoper; make -j 4;
+	cd libautoscoper; make -j 2;
+	cd autoscoper; make -j 2;
 
 clean:
 	cd libautoscoper; make clean;

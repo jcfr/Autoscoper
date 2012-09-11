@@ -43,3 +43,12 @@ Some limited testing has been done building the autoscoper under windows. The
 testing was done on Windows 7 using Visual C++ 2010. The solution files can be
 found in the win32/autoscoper subdirectory. It is likely that these files will
 need to be modified to get this to build on other systems.
+
+~~~~~~~~ 4. Building on OS X 10.8 ~~~~~~~~
+
+Install XQuartz.
+Install prerequisites with Homebrew:
+
+ brew install gtk+ gtkglext glew
+
+

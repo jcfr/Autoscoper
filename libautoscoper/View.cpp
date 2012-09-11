@@ -125,7 +125,7 @@ View::renderRad(unsigned int pbo, unsigned width, unsigned height)
         cudaGraphicsMapFlagsWriteDiscard));
 
     float* buffer = NULL;
-    unsigned numOfBytes;
+    size_t numOfBytes;
     cutilSafeCall(cudaGraphicsMapResources(1, &pboCudaResource, 0));
     cutilSafeCall(cudaGraphicsResourceGetMappedPointer((void**)&buffer,
                                                        &numOfBytes,
@@ -169,7 +169,7 @@ View::renderDrr(unsigned int pbo, unsigned width, unsigned height)
         cudaGraphicsMapFlagsWriteDiscard));
 
     float* buffer = NULL;
-    unsigned numOfBytes;
+    size_t numOfBytes;
     cutilSafeCall(cudaGraphicsMapResources(1, &pboCudaResource, 0));
     cutilSafeCall(cudaGraphicsResourceGetMappedPointer((void**)&buffer,
                                                        &numOfBytes,
@@ -220,7 +220,7 @@ View::render(unsigned int pbo, unsigned width, unsigned height)
         cudaGraphicsMapFlagsWriteDiscard));
 
     float* buffer = NULL;
-    unsigned numOfBytes;
+    size_t numOfBytes;
     cutilSafeCall(cudaGraphicsMapResources(1, &pboCudaResource, 0));
     cutilSafeCall(cudaGraphicsResourceGetMappedPointer((void**)&buffer,
                                                        &numOfBytes,

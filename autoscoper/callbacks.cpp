@@ -59,7 +59,12 @@
 
 #define GL_GLEXT_PROTOTYPES 1
 #include <GL/glew.h>
+
+#ifdef _MACOSX
+#include <GLUT/glut.h>
+#else
 #include <GL/glut.h>
+#endif
 
 #include <gtk/gtk.h>
 #include <gtk/gtkgl.h>
