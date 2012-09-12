@@ -2,52 +2,52 @@ TARGET = autoscoper
 
 CXX = g++
 CXXFLAGS = -Wall -g -m64
-LDFLAGS =
+
+GTK_PACKAGE := gtkglext-quartz-1.0
+GTK_PACKAGE_TEST = $(shell pkg-config --print-errors $(GTK_PACKAGE); echo $$?)
+
+INCLUDES = \
+	$(shell pkg-config --cflags $(GTK_PACKAGE)) \
+	-I../libautoscoper \
+	-I../math
+
+LIBS = \
+	$(shell pkg-config --libs $(GTK_PACKAGE)) \
+	-L../libautoscoper -lautoscoper \
+	-ltiff \
+	-lGLEW
 
 # Test OS
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
 CXXFLAGS += -D_MACOSX
-LDFLAGS += -framework OpenGL -framework GLUT -framework Cocoa
+LIBS += -framework GLUT -L$(CUDA_DIR)/lib -lcudart
+else
+LIBS += -L$(CUDA_DIR)/lib64 -lcudart
 endif
-
-# Test for GTK
-GTK_PACKAGE := gtkglext-quartz-1.0
-GTK_PACKAGE_TEST = $(shell pkg-config --print-errors $(GTK_PACKAGE); echo $$?)
-
-INCLUDES = \
-	$(shell pkg-config --cflags-only-I $(GTK_PACKAGE)) \
-	-I../libautoscoper \
-	-I../math
-
-LIBDIRS = \
-	$(shell pkg-config --libs-only-L $(GTK_PACKAGE)) \
-	-L../libautoscoper \
-	-L/Developer/NVIDIA/CUDA-5.0/lib
-
-LIBS = \
-	$(shell pkg-config --libs-only-l $(GTK_PACKAGE)) \
-	-lautoscoper \
-	-ltiff \
-	-lcudart \
-	-lGLEW
 
 OBJDIR = obj
 CXXFILES = $(shell ls *.cpp)
 OBJS = $(CXXFILES:%.cpp=$(OBJDIR)/%.cpp.o)
 
-all:	$(TARGET)
+.PHONE:	check-gtk check-cuda clean
 
-.PHONE:	check-gtk clean
+all:	$(TARGET)
 
 check-gtk:
 ifeq ($(GTK_PACKAGE_TEST), 1)
 	$(error pkg-config could not find GTK with gtkglext support)
 endif
 
+check-cuda:
+ifndef CUDA_DIR
+	$(error CUDA_DIR is undefined)
+endif
+	@ echo "CUDA_DIR = $(CUDA_DIR)"
+
 $(TARGET) : check-gtk $(OBJS)
 	@ echo $(OBJS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBDIRS) $(LIBS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 
 $(OBJDIR)/%.cpp.o: %.cpp
 	mkdir -p $(OBJDIR)
