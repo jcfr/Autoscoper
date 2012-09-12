@@ -6,13 +6,16 @@ CXXFLAGS = -Wall -g -m64
 GTK_PACKAGE := gtkglext-quartz-1.0
 GTK_PACKAGE_TEST = $(shell pkg-config --print-errors $(GTK_PACKAGE); echo $$?)
 
+GTHREAD_PACKAGE := gthread-2.0
+GTHREAD_PACKAGE_TEST = $(shell pkg-config --print-errors $(GTHREAD_PACKAGE); echo $$?)
+
 INCLUDES = \
-	$(shell pkg-config --cflags $(GTK_PACKAGE)) \
+	$(shell pkg-config --cflags $(GTK_PACKAGE) $(GTHREAD_PACKAGE)) \
 	-I../libautoscoper \
 	-I../math
 
 LIBS = \
-	$(shell pkg-config --libs $(GTK_PACKAGE)) \
+	$(shell pkg-config --libs $(GTK_PACKAGE) $(GTHREAD_PACKAGE)) \
 	-L../libautoscoper -lautoscoper \
 	-ltiff \
 	-lGLEW
@@ -38,6 +41,9 @@ check-gtk:
 ifeq ($(GTK_PACKAGE_TEST), 1)
 	$(error pkg-config could not find GTK with gtkglext support)
 endif
+ifeq ($(GTHREAD_PACKAGE), 1)
+	$(error pkg-config could not find the gthread library from glib)
+endif
 
 check-cuda:
 ifndef CUDA_DIR
@@ -45,7 +51,7 @@ ifndef CUDA_DIR
 endif
 	@ echo "CUDA_DIR = $(CUDA_DIR)"
 
-$(TARGET) : check-gtk $(OBJS)
+$(TARGET) : check-gtk check-cuda $(OBJS)
 	@ echo $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 

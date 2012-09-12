@@ -77,8 +77,12 @@ int main(int argc, char *argv[])
     GtkWidget *drawingarea2;
     GtkWidget *graph_drawingarea;
 
-    GdkGLConfig *glconfig;
-    //GdkGLContext *glcontext = 0;
+    GdkGLConfig *glconfig = NULL;
+	//GdkGLContext *glcontext = 0;
+
+	g_thread_init(NULL);
+	gdk_threads_init();
+	gdk_threads_enter();
 
     gtk_set_locale();
     gtk_init(&argc, &argv);
@@ -104,6 +108,7 @@ int main(int argc, char *argv[])
     gtk_widget_add_events(window,
                         GDK_KEY_PRESS_MASK|
                         GDK_KEY_RELEASE_MASK);
+
 
     drawingarea1 = lookup_widget(window,"xromm_markerless_tracking_drawingarea1");
     drawingarea2 = lookup_widget(window,"xromm_markerless_tracking_drawingarea2");
@@ -146,6 +151,8 @@ int main(int argc, char *argv[])
     gtk_widget_show (window);
 
     gtk_main();
+
+	gdk_threads_leave();
 
     return EXIT_SUCCESS;
 }
