@@ -18,8 +18,7 @@ INCLUDES = \
 LIBDIRS = \
 	$(shell pkg-config --libs-only-L $(GTK_PACKAGE)) \
 	-L../libautoscoper \
-	-L/Developer/NVIDIA/CUDA-5.0/lib \
-	-L/System/Library/Frameworks/OpenGL.framework/Libraries
+	-L/Developer/NVIDIA/CUDA-5.0/lib
 
 LIBS = \
 	$(shell pkg-config --libs-only-l $(GTK_PACKAGE)) \

@@ -2,8 +2,8 @@ TARGET = libautoscoper.a
 
 CXX = g++
 CXXFLAGS = -Wall -g -O2 -fPIC -m64
-NVCC = nvcc -m64
-NVCCFLAGS =
+NVCC = nvcc
+NVCCFLAGS = -m64
 AR = ar
 ARFLAGS = -cq
 
@@ -15,9 +15,19 @@ OBJS = \
 	$(CXXFILES:%.cpp=$(OBJDIR)/%.cpp.o) \
 	$(CUFILES:%.cu=$(OBJDIR)/%.cu.o)
 
-INCLUDES = -I. -Icutil -I/Developer/NVIDIA/CUDA-5.0/include
+INCLUDES = -I. -Icutil -I$(CUDA_DIR)/include
 
-$(TARGET) : $(OBJS)
+.PHONY:	check-cuda clean
+
+all:	$(TARGET)
+
+check-cuda:
+ifndef CUDA_DIR
+	$(error CUDA_DIR is undefined)
+endif
+	@ echo "CUDA_DIR = $(CUDA_DIR)"
+
+$(TARGET) : check-cuda $(OBJS)
 	@ echo $(OBJS)
 	$(AR) $(ARFLAGS) $(TARGET) $(OBJS)
 
