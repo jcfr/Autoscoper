@@ -40,6 +40,7 @@
 /// \author Mark Howison
 
 #include <cstring>
+#include <string>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -56,9 +57,68 @@
 using namespace std;
 using namespace xromm;
 
-float* gpuInput;
-float* gpuOutput;
+static TiffImage img;
+static size_t npixels;
 
+static unsigned char* input;
+static unsigned char* output;
+
+static float* fInput;
+static float* fOutput;
+
+static float* gpuInput;
+static float* gpuOutput;
+
+void copyToGpu()
+{
+	cutilSafeCall(cudaMemcpy(gpuInput, fInput, npixels*sizeof(float),
+				cudaMemcpyHostToDevice));
+}
+
+void writeOutput(const char* name)
+
+{
+	cutilSafeCall(cudaThreadSynchronize());
+	cutilSafeCall(cudaGetLastError());
+
+	cutilSafeCall(cudaMemcpy(fOutput, gpuOutput, npixels*sizeof(float),
+				cudaMemcpyDeviceToHost));
+
+	/* convert to char */	
+	string filename(TESTFILE ".");
+	filename.append(name);
+	filename.append(".txt");
+	FILE* outputLog = fopen(filename.c_str(), "w");
+	for (size_t i=0; i<npixels; i++) {
+		output[i] = (unsigned char)(fOutput[i] * 255.f);
+		fprintf(outputLog, "%f\n", fOutput[i]);
+	}
+	fclose(outputLog);
+
+	filename.assign(TESTFILE ".");
+	filename.append(name);
+	filename.append(".tiff");
+    TIFF* tif = TIFFOpen(filename.c_str(), "w");
+    if (!tif) {
+        throw runtime_error("Unable to open test image: " TESTFILE);
+    }
+
+    memcpy(img.data, output, npixels);
+	tiffImageWrite(tif, &img);
+	TIFFClose(tif);
+}
+
+void testSobel()
+{
+
+	cuda::SobelFilter* filter = new cuda::SobelFilter();
+
+	copyToGpu();
+	filter->apply(gpuInput, gpuOutput, img.width, img.height);
+	writeOutput("sobel");
+
+	delete filter;
+}
 
 int main(int argc, char** argv)
 {
@@ -68,20 +128,21 @@ int main(int argc, char** argv)
         throw runtime_error("Unable to open test image: " TESTFILE);
     }
 
-    TiffImage img;
     tiffImageReadMeta(tif, &img);
 
     if (img.samplesPerPixel != 1 || img.bitsPerSample != 8) {
         throw runtime_error("Unsupported image format");
     }
 
-	size_t npixels = img.width * img.height;
+	cout << "Image dimensions: " << img.width << " x " << img.height << "\n";
+	npixels = img.width * img.height;
+	cout << "Image size: " << npixels << endl;
 
 	/* allocated buffers */
-    unsigned char* input = new unsigned char[npixels];
-	float* fInput = new float[npixels];
-	float* fOutput = new float[npixels];
-	unsigned char* output = new unsigned char[npixels];
+	input = new unsigned char[npixels];
+	fInput = new float[npixels];
+	fOutput = new float[npixels];
+	output = new unsigned char[npixels];
 
 	/* load image */
 	if (tiffImageRead(tif, &img) != 1) {
@@ -91,7 +152,7 @@ int main(int argc, char** argv)
     TIFFClose(tif);
 
 	/* convert to float */
-	FILE* inputLog = fopen(TESTFILE ".in.log", "w");
+	FILE* inputLog = fopen(TESTFILE ".txt", "w");
 	float scale = 1.f / 255.f;
 	for (size_t i=0; i<npixels; i++) {
 		fInput[i] = (float)input[i] * scale;
@@ -99,57 +160,10 @@ int main(int argc, char** argv)
 	}
 	fclose(inputLog);
 
-	cuda::SobelFilter* filter;
-
 	cutilSafeCall(cudaMalloc((void**)&gpuInput, npixels*sizeof(float)));
 	cutilSafeCall(cudaMalloc((void**)&gpuOutput, npixels*sizeof(float)));
 
-	cutilSafeCall(cudaMemcpy(gpuInput, fInput, npixels*sizeof(float),
-				cudaMemcpyHostToDevice));
-
-	filter = new cuda::SobelFilter();
-	//filter->setScale(1.f);
-	//filter->setBlend(1.f);
-	filter->apply(gpuInput, gpuOutput, img.width, img.height);
-	delete filter;
-
-	cutilSafeCall(cudaThreadSynchronize());
-	cutilSafeCall(cudaGetLastError());
-
-	cutilSafeCall(cudaMemcpy(fOutput, gpuOutput, npixels*sizeof(float),
-				cudaMemcpyDeviceToHost));
-
-	/* convert to char */	
-	FILE* outputLog = fopen(TESTFILE ".out.log", "w");
-	for (size_t i=0; i<npixels; i++) {
-		output[i] = (unsigned char)(fOutput[i] * 255.f);
-		fprintf(outputLog, "%f\n", fOutput[i]);
-	}
-	fclose(outputLog);
-
-    tif = TIFFOpen(TESTFILE ".sobel.tiff", "w");
-    if (!tif) {
-        throw runtime_error("Unable to open test image: " TESTFILE);
-    }
-
-#if 0
-	TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, img.width);
-	TIFFSetField(tif, TIFFTAG_IMAGELENGTH, img.height);
-	TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
-	TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8);
-
-	tsize_t linebytes = width;
-	unsigned char *buf = new unsigned char[TIFFScanlineSize(tif)];
-	TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, TIFFDefaultStripSize(tif, width));
-
-	for (size_t row=0; row < height; row++) {
-		TIFFWriteScanline(tif, 
-	}
-	delete buf;
-#endif
-    memcpy(img.data, output, npixels);
-	tiffImageWrite(tif, &img);
-	TIFFClose(tif);
+	testSobel();
 
 	delete input;
 	delete fInput;
