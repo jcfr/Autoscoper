@@ -46,7 +46,6 @@
 #include <stdexcept>
 
 #include <cutil_inline.h>
-#include <cutil_gl_inline.h>
 
 #include "TiffImage.h"
 #include "Filter.hpp"
@@ -80,8 +79,7 @@ void copyToGpu()
 void writeOutput(const char* name)
 
 {
-	cutilSafeCall(cudaThreadSynchronize());
-	cutilSafeCall(cudaGetLastError());
+	cutilSafeThreadSync();
 
 	cutilSafeCall(cudaMemcpy(fOutput, gpuOutput, npixels*sizeof(float),
 				cudaMemcpyDeviceToHost));
@@ -182,6 +180,13 @@ int main(int argc, char** argv)
 		fprintf(inputLog, "%f\n", fInput[i]);
 	}
 	fclose(inputLog);
+
+	size_t gpuMemFree = 0;
+	size_t gpuMemTotal = 0;
+	cutilSafeCall(cudaSetDevice(0));
+	cutilSafeCall(cudaMemGetInfo(&gpuMemFree, &gpuMemTotal));
+	cout << "GPU memory: " << (double)gpuMemFree / 1048576.0
+		<< " / " << (double)gpuMemTotal / 1048576.0 << " MB free" << endl;
 
 	cutilSafeCall(cudaMalloc((void**)&gpuInput, npixels*sizeof(float)));
 	cutilSafeCall(cudaMalloc((void**)&gpuOutput, npixels*sizeof(float)));
