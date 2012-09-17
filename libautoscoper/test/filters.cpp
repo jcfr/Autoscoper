@@ -51,6 +51,8 @@
 #include "TiffImage.h"
 #include "Filter.hpp"
 #include "SobelFilter.hpp"
+#include "ContrastFilter.hpp"
+#include "SharpenFilter.hpp"
 
 #define TESTFILE "noisy-taj-mahal"
 
@@ -110,12 +112,33 @@ void writeOutput(const char* name)
 
 void testSobel()
 {
-
 	cuda::SobelFilter* filter = new cuda::SobelFilter();
 
 	copyToGpu();
 	filter->apply(gpuInput, gpuOutput, img.width, img.height);
 	writeOutput("sobel");
+
+	delete filter;
+}
+
+void testContrast()
+{
+	cuda::ContrastFilter* filter = new cuda::ContrastFilter();
+
+	copyToGpu();
+	filter->apply(gpuInput, gpuOutput, img.width, img.height);
+	writeOutput("contrast");
+
+	delete filter;
+}
+
+void testSharpen()
+{
+	cuda::SharpenFilter* filter = new cuda::SharpenFilter();
+
+	copyToGpu();
+	filter->apply(gpuInput, gpuOutput, img.width, img.height);
+	writeOutput("sharpen");
 
 	delete filter;
 }
@@ -164,6 +187,8 @@ int main(int argc, char** argv)
 	cutilSafeCall(cudaMalloc((void**)&gpuOutput, npixels*sizeof(float)));
 
 	testSobel();
+	testContrast();
+	testSharpen();
 
 	delete input;
 	delete fInput;
