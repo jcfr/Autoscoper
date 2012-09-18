@@ -52,6 +52,7 @@
 #include "SobelFilter.hpp"
 #include "ContrastFilter.hpp"
 #include "SharpenFilter.hpp"
+#include "GaussianFilter.hpp"
 
 #define TESTFILE "noisy-taj-mahal"
 
@@ -141,6 +142,17 @@ void testSharpen()
 	delete filter;
 }
 
+void testGaussian()
+{
+	cuda::GaussianFilter* filter = new cuda::GaussianFilter();
+
+	copyToGpu();
+	filter->apply(gpuInput, gpuOutput, img.width, img.height);
+	writeOutput("gaussian");
+
+	delete filter;
+}
+
 int main(int argc, char** argv)
 {
     TIFFSetWarningHandler(0);
@@ -194,6 +206,7 @@ int main(int argc, char** argv)
 	testSobel();
 	testContrast();
 	testSharpen();
+	testGaussian();
 
 	delete input;
 	delete fInput;
