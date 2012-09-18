@@ -36,20 +36,76 @@
 // THEIR USE OF THE SOFTWARE.
 // ---------------------------------
 
-/// \file Filter_kernels.h
+/// \file Filter_kernels.cu
 /// \author Emily Fu
 
-#ifndef XROMM_CUDA_FILTER_KERNELS_H
-#define XROMM_CUDA_FILTER_KERNELS_H
+#include "GaussianFilter_kernels.h"
+#include "stdlib.h"
+
+__global__
+void filter_kernel(const float* input, float* output,
+                            int width, int height, 
+                float* filter, int filterSize );
 
 namespace xromm { namespace cuda {
 
-void filter_apply(const float* input,
-                           float* output,
-                           int width,
-                           int height,
-                           float* filter, int filterSize);
+void gaussian_filter_apply(const float* input, float* output,
+                           int width, int height, float* filter, int filterSize)
+{
+    dim3 blockDim(16, 16);
+    dim3 gridDim((width+blockDim.x-1)/blockDim.x,
+                 (height+blockDim.y-1)/blockDim.y);
+
+
+    filter_kernel<<<gridDim, blockDim>>>(input, output,
+                                                  width, height, 
+                                              filter, filterSize);
+
+}
 
 } } // namespace xromm::cuda
 
-#endif // XROMM_CUDA_FILTER_KERNELS_H
+
+//convolves filter by setting (x,y) to sum of neighboring values multiplied by corresponding filter values
+
+static __device__
+float filterConvolution(const float* input, int width, int height, int x, int y, float* filter, int filterSize)
+{
+
+    float centerValue=0.0f;
+    int filterRadius = (filterSize - 1) / 2;
+
+    for(int i = 0; i < filterSize; ++i){
+        for(int j = 0; j < filterSize; ++j){
+            
+            int a = x - filterRadius + i;
+            int b = y - filterRadius + j;            
+                        
+            if(!(a < 0 || a >=width || b < 0 || b >= height))
+                 centerValue = centerValue + (filter[i*filterSize + j])*(input[b*width + a]);
+        }
+    }
+    
+    if(centerValue > 1)
+        centerValue = 1;
+    if(centerValue < 0)
+        centerValue = 0;
+
+   return centerValue;
+   
+}
+
+__global__
+void filter_kernel(const float* input, float* output,
+                            int width, int height, 
+                    float* filter, int filterSize)
+{
+    short x = blockIdx.x*blockDim.x+threadIdx.x;
+    short y = blockIdx.y*blockDim.y+threadIdx.y;
+
+    if (x > width-1 || y > height-1) {
+        return;
+    }
+
+     output[y*width+x] = filterConvolution(input, width, height, x, y, filter, filterSize);
+}

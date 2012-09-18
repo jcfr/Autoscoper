@@ -40,7 +40,7 @@
 /// \author Emily Fu
 
 #include "GaussianFilter.hpp"
-#include "Filter_kernels.h"
+#include "GaussianFilter_kernels.h"
 
 #include <sstream>
 #include "stdlib.h"
@@ -131,7 +131,7 @@ GaussianFilter::apply(const float* input,
     if(filterSize_ == 1 ) //if filterSize_ = 1, image is unchanged
        cudaMemcpy(output, input, (sizeof(float )*(filterSize_*filterSize_)), cudaMemcpyDeviceToDevice);
     else
-       filter_apply(input,output,width,height,gaussian_, filterSize_);
+       gaussian_filter_apply(input,output,width,height,gaussian_, filterSize_);
 }
 
 } } // namespace xromm::cuda
