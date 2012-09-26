@@ -1,4 +1,4 @@
-TARGETS = filters
+TARGETS = filters render
 
 CXX = g++
 CXXFLAGS = -Wall -g -O2 -fPIC -m64
@@ -17,6 +17,9 @@ endif
 
 filters: check-cuda filters.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) filters.cpp -o $@ $(LIBS)
+
+render: check-cuda render.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) render.cpp -o $@ $(LIBS)
 
 clean:
 	rm -f $(TARGET) $(OBJDIR)/*.o

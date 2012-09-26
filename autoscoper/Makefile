@@ -2,8 +2,9 @@ TARGET = autoscoper
 
 CXX = g++
 CXXFLAGS = -Wall -g -m64
+LDFLAGS =
 
-GTK_PACKAGE := gtkglext-quartz-1.0
+GTK_PACKAGE := gtkglext-x11-1.0
 GTK_PACKAGE_TEST = $(shell pkg-config --print-errors $(GTK_PACKAGE); echo $$?)
 
 GTHREAD_PACKAGE := gthread-2.0
@@ -24,7 +25,8 @@ LIBS = \
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
 CXXFLAGS += -D_MACOSX
-LIBS += -framework GLUT -L$(CUDA_DIR)/lib -lcudart
+LDFLAGS += -L/System/Library/Frameworks/OpenGL.framework/Libraries -framework GLUT
+LIBS += -L$(CUDA_DIR)/lib -lcudart -L/opt/X11/lib
 else
 LIBS += -L$(CUDA_DIR)/lib64 -lcudart
 endif
