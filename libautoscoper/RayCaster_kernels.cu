@@ -114,6 +114,8 @@ void volume_render(float* buffer, size_t width, size_t height,
     // Call the kernel
     cuda_volume_render_kernel<<<gridDim, blockDim>>>(buffer, width, height,
                                                 step, intensity, cutoff);
+    cutilSafeCall(cudaThreadSynchronize());
+    cutilSafeCall(cudaGetLastError());
 }
 
 } // namespace cuda

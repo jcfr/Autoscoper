@@ -73,6 +73,9 @@ struct TiffImage
 // image. It returns 1 on success and 0 on failure.
 int tiffImageReadMeta(TIFF* tif, TiffImage* img);
 
+// This function dumps a summary of the metadata to stdout.
+int tiffImageDumpMeta(TiffImage* img);
+
 // This function reads in the metadata and image data associated with a
 // particular TIFF image. It returns 1 on success and 0 on failure.
 int tiffImageRead(TIFF* tif, TiffImage* img);

@@ -43,6 +43,7 @@
 
 #include <cstring>
 #include <cstdlib>
+#include <iostream>
 
 // Helper Functions
 
@@ -97,6 +98,23 @@ int tiffImageReadMeta(TIFF* tif, TiffImage* img)
     TIFFGetFieldDefaulted(tif, TIFFTAG_SAMPLEFORMAT, &img->sampleFormat);
 
     return 1;
+}
+
+int tiffImageDumpMeta(TiffImage* img)
+{
+    if (!img) {
+        printf("Invalid TiffImage pointer.\n");
+        return 0;
+    }
+    std::cout << "width: " << img->width << "\n";
+    std::cout << "height: " << img->height << "\n";
+    std::cout << "bitsPerSample: " << img->bitsPerSample << "\n";
+    std::cout << "photometric: " << img->photometric << "\n";
+    std::cout << "orientation: " << img->orientation << "\n";
+    std::cout << "samplesPerPixel: " << img->samplesPerPixel << "\n";
+    std::cout << "planarConfig: " << img->planarConfig << "\n";
+    std::cout << "compression: " << img->compression << "\n";
+    std::cout << "sampleFormat: " << img->sampleFormat << std::endl;
 }
 
 int tiffImageRead(TIFF* tif, TiffImage* img)

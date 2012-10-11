@@ -51,6 +51,8 @@
 #include "RayCaster.hpp"
 
 #define TESTFILE "XMC3_13735"
+#define W 512
+#define H 512
 
 using namespace std;
 using namespace xromm;
@@ -62,28 +64,31 @@ int main(int argc, char** argv)
 	cuda::RayCaster rc;
 	rc.setVolume(volumeDesc);
 
-	float* buffer = new float[512*512];
-	rc.render(buffer, 512, 512);
+	float* buffer = new float[W*H];
+	rc.render(buffer, W, H);
 
     TIFF* tif = TIFFOpen(TESTFILE ".render.tiff", "w");
     if (!tif) {
         throw runtime_error("Unable to open test image: " TESTFILE ".render.tiff");
     }
 
-	unsigned char* cbuffer = new unsigned char[512*512];
+	unsigned char* cbuffer = new unsigned char[W*H];
 	float m = 0.;
-	for (size_t i=0; i<512*512; i++) m = max(m, buffer[i]);
+	for (size_t i=0; i<W*H; i++) m = max(m, buffer[i]);
 	float norm = 255.f / m;
-	for (size_t i=0; i<512*512; i++) cbuffer[i] = (unsigned char)(norm*buffer[i]);
+	for (size_t i=0; i<W*H; i++) cbuffer[i] = (unsigned char)(norm*buffer[i]);
 
 	TiffImage img;
-	img.width = 512;
-	img.height = 512;
+	img.width = W;
+	img.height = H;
 	img.bitsPerSample = 8;
 	img.orientation = 1;
 	img.samplesPerPixel = 1;
+	img.planarConfig = 1;
 	img.data = cbuffer;
+	img.sampleFormat = 1;
 	img.compression = 1;
+	img.photometric = 1;
 
 	tiffImageWrite(tif, &img);
 

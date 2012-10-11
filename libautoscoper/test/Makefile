@@ -22,4 +22,4 @@ render: check-cuda render.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) render.cpp -o $@ $(LIBS)
 
 clean:
-	rm -f $(TARGET) $(OBJDIR)/*.o
+	rm -f $(TARGETS) $(OBJDIR)/*.o

@@ -162,6 +162,7 @@ int main(int argc, char** argv)
     }
 
     tiffImageReadMeta(tif, &img);
+	tiffImageDumpMeta(&img);
 
     if (img.samplesPerPixel != 1 || img.bitsPerSample != 8) {
         throw runtime_error("Unsupported image format");
