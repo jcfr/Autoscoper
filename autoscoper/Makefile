@@ -28,7 +28,7 @@ CXXFLAGS += -D_MACOSX
 LDFLAGS += -L/System/Library/Frameworks/OpenGL.framework/Libraries -framework GLUT
 LIBS += -L$(CUDA_DIR)/lib -lcudart -L/opt/X11/lib
 else
-LIBS += -L$(CUDA_DIR)/lib64 -lcudart
+LIBS += -lglut -L$(CUDA_DIR)/lib64 -lcudart
 endif
 
 OBJDIR = obj
