@@ -3,7 +3,16 @@ TARGETS = filters render
 CXX = g++
 CXXFLAGS = -Wall -g -O2 -fPIC -m64
 INCLUDES = -I../ -I../cutil -I$(CUDA_DIR)/include
-LIBS = ../libautoscoper.a -ltiff -L$(CUDA_DIR)/lib -lcudart
+LIBS = ../libautoscoper.a -ltiff
+
+# Test OS
+UNAME := $(shell uname)
+ifeq ($(UNAME), Darwin)
+CXXFLAGS += -D_MACOSX
+LIBS += -L$(CUDA_DIR)/lib -lcudart
+else
+LIBS += -L$(CUDA_DIR)/lib64 -lcudart
+endif
 
 .PHONY:	check-cuda clean
 
