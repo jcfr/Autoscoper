@@ -50,7 +50,7 @@
 #include "VolumeDescription.hpp"
 #include "RayCaster.hpp"
 
-#define TESTFILE "XMC3_13735"
+#define TESTFILE "volume"
 #define W 512
 #define H 512
 
