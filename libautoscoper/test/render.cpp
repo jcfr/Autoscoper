@@ -45,6 +45,8 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <cutil_inline.h>
+
 #include "TiffImage.h"
 #include "Volume.hpp"
 #include "VolumeDescription.hpp"
@@ -64,19 +66,31 @@ int main(int argc, char** argv)
 	cuda::RayCaster rc;
 	rc.setVolume(volumeDesc);
 
+	float* gpu_buffer;
+	cutilSafeCall(cudaMalloc((void**)&gpu_buffer, W*H*sizeof(float)));
+	rc.render(gpu_buffer, W, H);
+
 	float* buffer = new float[W*H];
-	rc.render(buffer, W, H);
+	cutilSafeCall(cudaMemcpy(buffer, gpu_buffer, W*H*sizeof(float),
+		cudaMemcpyDeviceToHost));
+	cutilSafeCall(cudaFree(gpu_buffer));
 
     TIFF* tif = TIFFOpen(TESTFILE ".render.tiff", "w");
     if (!tif) {
         throw runtime_error("Unable to open test image: " TESTFILE ".render.tiff");
     }
 
-	unsigned char* cbuffer = new unsigned char[W*H];
 	float m = 0.;
 	for (size_t i=0; i<W*H; i++) m = max(m, buffer[i]);
 	float norm = 255.f / m;
-	for (size_t i=0; i<W*H; i++) cbuffer[i] = (unsigned char)(norm*buffer[i]);
+
+	unsigned char* cbuffer = new unsigned char[W*H];
+	FILE* outputLog = fopen(TESTFILE ".render.txt", "w");
+	for (size_t i=0; i<W*H; i++) {
+		fprintf(outputLog, "%f\n", buffer[i]);
+		cbuffer[i] = (unsigned char)(norm*buffer[i]);
+	}
+	fclose(outputLog);
 
 	TiffImage img;
 	img.width = W;
