@@ -50,7 +50,6 @@ using namespace std;
 namespace xromm { namespace opencl {
 
 static int num_sobel_filters = 0;
-static OpenCL* opencl = NULL;
 
 SobelFilter::SobelFilter() : Filter(XROMM_CUDA_SOBEL_FILTER,""),
                              scale_(1.0f),
@@ -64,20 +63,19 @@ SobelFilter::SobelFilter() : Filter(XROMM_CUDA_SOBEL_FILTER,""),
 void
 SobelFilter::apply(cl::Buffer input, cl::Buffer output, int width, int height)
 {
-    if (opencl == NULL) opencl = new OpenCL(KERNEL_FILE, KERNEL_NAME, CL_DEVICE_TYPE_GPU);
+	Kernel kernel = program_.compile(KERNEL_FILE, KERNEL_NAME);
 
-    opencl->block2d(16, 16);
-    opencl->grid2d(width, height);
+    kernel->block2d(16, 16);
+    kernel->grid2d(width, height);
 
-    opencl->bind(input, sizeof(input));
-    opencl->bind(output, sizeof(output));
-    opencl->bind(width, sizeof(width));
-    opencl->bind(height, sizeof(height));
-    opencl->bind(scale, sizeof(scale));
-    opencl->bind(blend, sizeof(blend));
+    kernel->bind(input, sizeof(input));
+    kernel->bind(output, sizeof(output));
+    kernel->bind(width, sizeof(width));
+    kernel->bind(height, sizeof(height));
+    kernel->bind(scale_, sizeof(scale_));
+    kernel->bind(blend_, sizeof(blend_));
 
-    opencl->launch();
-}
+    kernel->launch();
 }
 
 } } // namespace xromm::opencl

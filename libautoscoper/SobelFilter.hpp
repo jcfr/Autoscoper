@@ -81,6 +81,8 @@ private:
     float scale_;
 
     float blend_;
+
+	static Program program_;
 };
 
 } } // namespace xromm::opencl

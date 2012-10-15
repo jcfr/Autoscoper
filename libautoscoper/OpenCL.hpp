@@ -4,28 +4,35 @@
 
 #include "cl.hpp"
 
-class OpenCL
+namespace xromm { namespace opencl {
+
+void init();
+
+class Program
 {
 public:
-	OpenCL(const char* filename, const char* kernel, cl_device_type type);
+	Program() {};
+	void compile(const char* filename, const char* kernel);
+protected:
+	cl::Program program_;
+	bool compiled_ = false;
+}
+
+class Kernel
+{
+public:
+	Kernel(const char* name);
 	grid2d(size_t X, size_t Y);
 	block2d(size_t X, size_t Y);
 	bind(const void* value, size_t size);
 	launch();
 protected:
-	getPlatform(cl_device_type type);
-	buildProgram(const char* filename);
-
-	cl::Context _context;
-	cl::Program _program;
-	cl::CommandQueue _queue;
-	cl::Kernel _kernel;
-
-	cl_uint arg_index = 0;
-
-	cl::NDRange grid;
-	cl_uint grid_dim = 0;
-
-	cl::NDRange block;
-	cl_uint blockd_dim = 0;
+	cl::Kernel kernel_;
+	cl_uint arg_index_ = 0;
+	cl::NDRange grid_;
+	cl_uint grid_dim_ = 0;
+	cl::NDRange block_;
+	cl_uint blockd_dim_ = 0;
 }
+
+} } // namespace xromm::opencl
