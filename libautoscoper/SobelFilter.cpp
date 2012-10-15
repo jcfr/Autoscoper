@@ -38,18 +38,19 @@
 
 /// \file SobelFilter.cpp
 /// \author Andy Loomis
-
+//
+#include <sstream>
 #include "SobelFilter.hpp"
 
-#include "SobelFilter_kernels.h"
-
-#include <sstream>
+#define KERNEL_FILE "SobelFilter.cl"
+#define KERNEL_NAME "sobel_filter_kernel"
 
 using namespace std;
 
-namespace xromm { namespace cuda {
+namespace xromm { namespace opencl {
 
 static int num_sobel_filters = 0;
+static OpenCL* opencl = NULL;
 
 SobelFilter::SobelFilter() : Filter(XROMM_CUDA_SOBEL_FILTER,""),
                              scale_(1.0f),
@@ -61,17 +62,22 @@ SobelFilter::SobelFilter() : Filter(XROMM_CUDA_SOBEL_FILTER,""),
 }
 
 void
-SobelFilter::apply(const float* input,
-                   float* output,
-                   int width,
-                   int height)
+SobelFilter::apply(cl::Buffer input, cl::Buffer output, int width, int height)
 {
-    sobel_filter_blend(input,
-                       output,
-                       width,
-                       height,
-                       scale_,
-                       blend_);
+    if (opencl == NULL) opencl = new OpenCL(KERNEL_FILE, KERNEL_NAME, CL_DEVICE_TYPE_GPU);
+
+    opencl->block2d(16, 16);
+    opencl->grid2d(width, height);
+
+    opencl->bind(input, sizeof(input));
+    opencl->bind(output, sizeof(output));
+    opencl->bind(width, sizeof(width));
+    opencl->bind(height, sizeof(height));
+    opencl->bind(scale, sizeof(scale));
+    opencl->bind(blend, sizeof(blend));
+
+    opencl->launch();
+}
 }
 
-} } // namespace xromm::cuda
+} } // namespace xromm::opencl

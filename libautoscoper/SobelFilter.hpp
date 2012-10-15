@@ -44,18 +44,19 @@
 
 #include <string>
 
-#include "Filter.hpp"
+#include "Filter2.hpp"
+#include "OpenCL.hpp"
 
-namespace xromm { namespace cuda {
+namespace xromm { namespace opencl {
 
-class SobelFilter : public Filter
+class SobelFilter : public Filter2
 {
 public:
 
     SobelFilter();
 
-    virtual void apply(const float* input,
-                       float* output,
+    virtual void apply(cl::Buffer& input,
+                       cl::Buffer& output,
                        int width,
                        int height);
 
@@ -82,6 +83,6 @@ private:
     float blend_;
 };
 
-} } // namespace xromm::cuda
+} } // namespace xromm::opencl
 
 #endif // XROMM_CUDA_SOBEL_FILTER_HPP
