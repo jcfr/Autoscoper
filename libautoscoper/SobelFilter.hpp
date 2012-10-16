@@ -40,7 +40,7 @@
 /// \author Andy Loomis
 
 #ifndef XROMM_CUDA_SOBEL_FILTER_HPP
-#define XROMM_CUDA_SOBEL_HPP
+#define XROMM_CUDA_SOBEL_FILTER_HPP
 
 #include <string>
 
@@ -55,8 +55,8 @@ public:
 
     SobelFilter();
 
-    virtual void apply(cl::Buffer& input,
-                       cl::Buffer& output,
+    virtual void apply(cl::Buffer* input,
+                       cl::Buffer* output,
                        int width,
                        int height);
 
@@ -81,8 +81,6 @@ private:
     float scale_;
 
     float blend_;
-
-	static Program program_;
 };
 
 } } // namespace xromm::opencl

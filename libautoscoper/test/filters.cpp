@@ -71,6 +71,9 @@ static float* fOutput;
 static float* gpuInput;
 static float* gpuOutput;
 
+static cl::Buffer* clInput;
+static cl::Buffer* clOutput;
+
 void copyToGpu()
 {
 	cutilSafeCall(cudaMemcpy(gpuInput, fInput, npixels*sizeof(float),
@@ -111,11 +114,31 @@ void writeOutput(const char* name)
 
 void testSobel()
 {
-	cuda::SobelFilter* filter = new cuda::SobelFilter();
+	opencl::SobelFilter* filter = new opencl::SobelFilter();
 
-	copyToGpu();
-	filter->apply(gpuInput, gpuOutput, img.width, img.height);
-	writeOutput("sobel");
+	opencl::copy_to_device(clInput, (const void*)fInput, npixels*sizeof(float));
+
+	filter->apply(clInput, clOutput, img.width, img.height);
+
+	opencl::copy_from_device((void*)fOutput, clOutput, npixels*sizeof(float));
+
+	/* convert to char */	
+	string filename(TESTFILE ".sobel.txt");
+	FILE* outputLog = fopen(filename.c_str(), "w");
+	for (size_t i=0; i<npixels; i++) {
+		output[i] = (unsigned char)(fOutput[i] * 255.f);
+		fprintf(outputLog, "%f\n", fOutput[i]);
+	}
+	fclose(outputLog);
+
+    TIFF* tif = TIFFOpen(TESTFILE ".sobel.tiff", "w");
+    if (!tif) {
+        throw runtime_error("Unable to open test image: " TESTFILE);
+    }
+
+    memcpy(img.data, output, npixels);
+	tiffImageWrite(tif, &img);
+	TIFFClose(tif);
 
 	delete filter;
 }
@@ -204,15 +227,22 @@ int main(int argc, char** argv)
 	cutilSafeCall(cudaMalloc((void**)&gpuInput, npixels*sizeof(float)));
 	cutilSafeCall(cudaMalloc((void**)&gpuOutput, npixels*sizeof(float)));
 
+	clInput = opencl::device_alloc(npixels*sizeof(float), CL_MEM_READ_ONLY);
+	clOutput = opencl::device_alloc(npixels*sizeof(float), CL_MEM_WRITE_ONLY);
+
 	testSobel();
 	testContrast();
 	testSharpen();
 	testGaussian();
 
 	delete input;
+	delete output;
+
 	delete fInput;
 	delete fOutput;
-	delete output;
+
+	delete clInput;
+	delete clOutput;
 
 	tiffImageFree(&img);
 }

@@ -9,7 +9,7 @@ LIBS = ../libautoscoper.a -ltiff
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
 CXXFLAGS += -D_MACOSX
-LIBS += -L$(CUDA_DIR)/lib -lcudart
+LIBS += -L$(CUDA_DIR)/lib -lcudart -framework OpenCL
 else
 LIBS += -L$(CUDA_DIR)/lib64 -lcudart
 endif
