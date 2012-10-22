@@ -45,14 +45,12 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <cutil_inline.h>
-
 #include "TiffImage.h"
-#include "Filter.hpp"
+//#include "Filter.hpp"
 #include "SobelFilter.hpp"
-#include "ContrastFilter.hpp"
-#include "SharpenFilter.hpp"
-#include "GaussianFilter.hpp"
+//#include "ContrastFilter.hpp"
+//#include "SharpenFilter.hpp"
+//#include "GaussianFilter.hpp"
 
 #define TESTFILE "noisy-taj-mahal"
 
@@ -68,12 +66,10 @@ static unsigned char* output;
 static float* fInput;
 static float* fOutput;
 
-static float* gpuInput;
-static float* gpuOutput;
-
 static cl::Buffer* clInput;
 static cl::Buffer* clOutput;
 
+#if 0
 void copyToGpu()
 {
 	cutilSafeCall(cudaMemcpy(gpuInput, fInput, npixels*sizeof(float),
@@ -112,6 +108,8 @@ void writeOutput(const char* name)
 	TIFFClose(tif);
 }
 
+#endif
+
 void testSobel()
 {
 	opencl::SobelFilter* filter = new opencl::SobelFilter();
@@ -131,18 +129,19 @@ void testSobel()
 	}
 	fclose(outputLog);
 
-    TIFF* tif = TIFFOpen(TESTFILE ".sobel.tiff", "w");
-    if (!tif) {
-        throw runtime_error("Unable to open test image: " TESTFILE);
-    }
+	TIFF* tif = TIFFOpen(TESTFILE ".sobel.tiff", "w");
+	if (!tif) {
+		throw runtime_error("Unable to open test image: " TESTFILE);
+	}
 
-    memcpy(img.data, output, npixels);
+	memcpy(img.data, output, npixels);
 	tiffImageWrite(tif, &img);
 	TIFFClose(tif);
 
 	delete filter;
 }
 
+#if 0
 void testContrast()
 {
 	cuda::ContrastFilter* filter = new cuda::ContrastFilter();
@@ -175,21 +174,22 @@ void testGaussian()
 
 	delete filter;
 }
+#endif
 
 int main(int argc, char** argv)
 {
-    TIFFSetWarningHandler(0);
-    TIFF* tif = TIFFOpen(TESTFILE ".tiff", "r");
-    if (!tif) {
-        throw runtime_error("Unable to open test image: " TESTFILE);
-    }
+	TIFFSetWarningHandler(0);
+	TIFF* tif = TIFFOpen(TESTFILE ".tiff", "r");
+	if (!tif) {
+		throw runtime_error("Unable to open test image: " TESTFILE);
+	}
 
-    tiffImageReadMeta(tif, &img);
+	tiffImageReadMeta(tif, &img);
 	tiffImageDumpMeta(&img);
 
-    if (img.samplesPerPixel != 1 || img.bitsPerSample != 8) {
-        throw runtime_error("Unsupported image format");
-    }
+	if (img.samplesPerPixel != 1 || img.bitsPerSample != 8) {
+		throw runtime_error("Unsupported image format");
+	}
 
 	cout << "Image dimensions: " << img.width << " x " << img.height << "\n";
 	npixels = img.width * img.height;
@@ -205,8 +205,8 @@ int main(int argc, char** argv)
 	if (tiffImageRead(tif, &img) != 1) {
 		throw runtime_error("Unable to read image");
 	}
-    memcpy(input, img.data, npixels);
-    TIFFClose(tif);
+	memcpy(input, img.data, npixels);
+	TIFFClose(tif);
 
 	/* convert to float */
 	FILE* inputLog = fopen(TESTFILE ".txt", "w");
@@ -217,23 +217,13 @@ int main(int argc, char** argv)
 	}
 	fclose(inputLog);
 
-	size_t gpuMemFree = 0;
-	size_t gpuMemTotal = 0;
-	cutilSafeCall(cudaSetDevice(0));
-	cutilSafeCall(cudaMemGetInfo(&gpuMemFree, &gpuMemTotal));
-	cout << "GPU memory: " << (double)gpuMemFree / 1048576.0
-		<< " / " << (double)gpuMemTotal / 1048576.0 << " MB free" << endl;
-
-	cutilSafeCall(cudaMalloc((void**)&gpuInput, npixels*sizeof(float)));
-	cutilSafeCall(cudaMalloc((void**)&gpuOutput, npixels*sizeof(float)));
-
 	clInput = opencl::device_alloc(npixels*sizeof(float), CL_MEM_READ_ONLY);
 	clOutput = opencl::device_alloc(npixels*sizeof(float), CL_MEM_WRITE_ONLY);
 
 	testSobel();
-	testContrast();
-	testSharpen();
-	testGaussian();
+	//testContrast();
+	//testSharpen();
+	//testGaussian();
 
 	delete input;
 	delete output;

@@ -5,7 +5,7 @@ CXXFLAGS = -Wall -g -O2 -fPIC -m64
 NVCC = nvcc
 NVCCFLAGS = -m64
 AR = ar
-ARFLAGS = -cq
+ARFLAGS = cr
 
 CXXFILES = $(shell ls *.cpp)
 CUFILES = $(shell ls *.cu)

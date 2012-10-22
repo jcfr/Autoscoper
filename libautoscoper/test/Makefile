@@ -11,7 +11,7 @@ ifeq ($(UNAME), Darwin)
 CXXFLAGS += -D_MACOSX
 LIBS += -L$(CUDA_DIR)/lib -lcudart -framework OpenCL
 else
-LIBS += -L$(CUDA_DIR)/lib64 -lcudart
+LIBS += -L$(CUDA_DIR)/lib64 -lcudart -lOpenCL
 endif
 
 .PHONY:	check-cuda clean
