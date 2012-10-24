@@ -18,7 +18,8 @@ class Program
 {
 public:
 	Program();
-	Kernel* compile(const char* filename, const char* kernel);
+    Kernel* compile(const char* code, const char* kernel);
+	Kernel* compileFile(const char* filename, const char* kernel);
 protected:
 	cl::Program program_;
 	bool compiled_;

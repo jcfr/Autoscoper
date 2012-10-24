@@ -1,0 +1,10 @@
+#!/bin/bash
+
+SRC=${1-"-"}
+DST=${2-"&1"}
+
+#echo "namespace xromm { namespace opencl {" >>$DST
+xxd -i $SRC | sed -n -e '1s/unsigned/const/' -e '/};/q' -e p >$DST
+#echo ", 0x00 }; } }" >>$DST
+echo ", 0x00 };" >>$DST
+

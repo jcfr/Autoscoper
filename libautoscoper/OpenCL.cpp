@@ -149,7 +149,29 @@ void copy_from_device(void* dst, const cl::Buffer* src, size_t size)
 
 Program::Program() { init(); compiled_ = false; }
 
-Kernel* Program::compile(const char* filename, const char* kernel)
+Kernel* Program::compile(const char* code, const char* kernel)
+{
+	if (!compiled_) {
+		cl::Program::Sources src(1, std::make_pair(code, strlen(code)+1));
+		program_ = cl::Program(context_, src);
+
+		// Build program for these specific devices
+		try {
+			program_.build(devices_);
+		} catch(cl::Error e) {
+			if (e.err() == CL_BUILD_PROGRAM_FAILURE) {
+				std::cerr << "Build log:\n" << program_.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device_) << std::endl;
+			}
+			CL_ERROR(e);
+		} 
+
+		compiled_ = true;
+	}
+
+	return new Kernel(program_, kernel);
+}
+
+Kernel* Program::compileFile(const char* filename, const char* kernel)
 {
 	if (!compiled_) {
 		std::ifstream srcFile(filename);
@@ -213,7 +235,11 @@ void Kernel::launch()
 		throw cl::Error(1, "Grid dimension is unset");
 	else if (block_dim_ != grid_dim_)
 		throw cl::Error(1, "Block dimension doesn't match grid dimension");
+	try {
 	queue_.enqueueNDRangeKernel(kernel_, cl::NullRange, grid_, block_);
+	} catch(cl::Error e) {
+			CL_ERROR(e);
+		}
 }
 
 } } // namespace xromm::opencl

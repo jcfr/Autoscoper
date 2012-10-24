@@ -42,8 +42,9 @@
 #include <sstream>
 #include "SobelFilter.hpp"
 
-#define KERNEL_FILE "SobelFilter.cl"
+#define KERNEL_CODE SobelFilter_cl
 #define KERNEL_NAME "sobel_filter_kernel"
+extern const char* KERNEL_CODE;
 
 using namespace std;
 
@@ -64,9 +65,9 @@ SobelFilter::SobelFilter() : Filter2(XROMM_CUDA_SOBEL_FILTER,""),
 void
 SobelFilter::apply(cl::Buffer* input, cl::Buffer* output, int width, int height)
 {
-	Kernel* kernel = sobel_program_.compile(KERNEL_FILE, KERNEL_NAME);
+	Kernel* kernel = sobel_program_.compile(KERNEL_CODE, KERNEL_NAME);
 
-    kernel->block2d(16, 16);
+    kernel->block2d(10, 10);
     kernel->grid2d(width, height);
 
     kernel->bind(input, sizeof(input));
@@ -76,7 +77,7 @@ SobelFilter::apply(cl::Buffer* input, cl::Buffer* output, int width, int height)
     kernel->bind(&scale_, sizeof(scale_));
     kernel->bind(&blend_, sizeof(blend_));
 
-    kernel->launch();
+	kernel->launch();
 
 	delete kernel;
 }

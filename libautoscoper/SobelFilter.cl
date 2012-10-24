@@ -1,6 +1,6 @@
 __kernel
-void sobel_filter_kernel(const float* input,
-                         float* output,
+void sobel_filter_kernel(__global const float* input,
+                         __global float* output,
                          int width,
                          int height,
                          float scale,
