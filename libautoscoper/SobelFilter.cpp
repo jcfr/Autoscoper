@@ -42,13 +42,14 @@
 #include <sstream>
 #include "SobelFilter.hpp"
 
-#define KERNEL_CODE SobelFilter_cl
-#define KERNEL_NAME "sobel_filter_kernel"
-extern const char* KERNEL_CODE;
-
 using namespace std;
 
 namespace xromm { namespace opencl {
+
+#define KERNEL_CODE SobelFilter_cl
+#define KERNEL_NAME "sobel_filter_kernel"
+static const char KERNEL_CODE[] =
+#include "SobelFilter.cl.h"
 
 static int num_sobel_filters = 0;
 static Program sobel_program_;

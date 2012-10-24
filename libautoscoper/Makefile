@@ -1,25 +1,25 @@
 TARGET = libautoscoper.a
 
-CC = gcc
 CXX = g++
-CFLAGS = -Wall -g -O2 -fPIC -m64
-CXXFLAGS = $(CFLAGS)
+CXXFLAGS = -Wall -g -O2 -fPIC
 NVCC = nvcc
 NVCCFLAGS = -m64
 AR = ar
-ARFLAGS = cr
+ARFLAGS = cru
 
 CXXFILES = $(shell ls *.cpp)
 CUFILES = $(shell ls *.cu)
 CLFILES = $(shell ls *.cl)
 
+CLDIR = cl
+KERNELS = $(CLFILES:%.cl=$(CLDIR)/%.cl.h)
+
 OBJDIR = obj
 OBJS = \
 	$(CXXFILES:%.cpp=$(OBJDIR)/%.cpp.o) \
-	$(CUFILES:%.cu=$(OBJDIR)/%.cu.o) \
-	$(CLFILES:%.cl=$(OBJDIR)/%.cl.o)
+	$(CUFILES:%.cu=$(OBJDIR)/%.cu.o)
 
-INCLUDES = -I. -Icutil -I$(CUDA_DIR)/include
+INCLUDES = -I. -I$(CLDIR) -Icutil -I$(CUDA_DIR)/include
 
 .PHONY:	check-cuda clean
 
@@ -31,8 +31,7 @@ ifndef CUDA_DIR
 endif
 	@ echo "CUDA_DIR = $(CUDA_DIR)"
 
-$(TARGET) : check-cuda $(OBJS)
-	@ echo $(OBJS)
+$(TARGET) : check-cuda $(KERNELS) $(OBJS)
 	$(AR) $(ARFLAGS) $(TARGET) $(OBJS)
 
 $(OBJDIR)/%.cpp.o: %.cpp
@@ -43,11 +42,10 @@ $(OBJDIR)/%.cu.o: %.cu
 	mkdir -p $(OBJDIR)
 	$(NVCC) $(NVCCFLAGS) $(INCLUDES) -c $< -o $@
 
-$(OBJDIR)/%.cl.o: %.cl
-	mkdir -p $(OBJDIR)
-	./cl-compile $< $(OBJDIR)/$<.c
-	$(CC) $(CFLAGS) -c $(OBJDIR)/$<.c -o $@
+$(CLDIR)/%.cl.h: %.cl
+	mkdir -p $(CLDIR)
+	./cl-compile $< $@
 
 clean:
-	rm -f $(TARGET) $(OBJDIR)/*
+	rm -f $(TARGET) $(OBJDIR)/*.o $(CLDIR)/*.h
 

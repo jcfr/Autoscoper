@@ -1,10 +1,9 @@
 #!/bin/bash
 
 SRC=${1-"-"}
-DST=${2-"&1"}
+DST=${2-"/dev/stdout"}
 
-#echo "namespace xromm { namespace opencl {" >>$DST
-xxd -i $SRC | sed -n -e '1s/unsigned/const/' -e '/};/q' -e p >$DST
-#echo ", 0x00 }; } }" >>$DST
+echo "{" >$DST
+xxd -i $SRC | sed -n -e '/};/q' -e '2,$p' >>$DST
 echo ", 0x00 };" >>$DST
 

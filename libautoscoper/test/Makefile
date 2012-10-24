@@ -1,7 +1,7 @@
 TARGETS = filters render
 
 CXX = g++
-CXXFLAGS = -Wall -g -O2 -fPIC -m64
+CXXFLAGS = -Wall -g -O2 -fPIC
 INCLUDES = -I../ -I../cutil -I$(CUDA_DIR)/include
 LIBS = ../libautoscoper.a -ltiff
 

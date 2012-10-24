@@ -39,9 +39,8 @@
 /// \file test/filters.cpp
 /// \author Mark Howison
 
-#include <cstring>
+#include <cstdio>
 #include <string>
-#include <fstream>
 #include <iostream>
 #include <stdexcept>
 
