@@ -45,11 +45,10 @@
 #include <stdexcept>
 
 #include "TiffImage.h"
-//#include "Filter.hpp"
 #include "SobelFilter.hpp"
-//#include "ContrastFilter.hpp"
-//#include "SharpenFilter.hpp"
-//#include "GaussianFilter.hpp"
+#include "ContrastFilter.hpp"
+#include "SharpenFilter.hpp"
+#include "GaussianFilter.hpp"
 
 #define TESTFILE "noisy-taj-mahal"
 
@@ -68,21 +67,10 @@ static float* fOutput;
 static cl::Buffer* clInput;
 static cl::Buffer* clOutput;
 
-#if 0
-void copyToGpu()
-{
-	cutilSafeCall(cudaMemcpy(gpuInput, fInput, npixels*sizeof(float),
-				cudaMemcpyHostToDevice));
-}
-
 void writeOutput(const char* name)
-
 {
-	cutilSafeThreadSync();
-
-	cutilSafeCall(cudaMemcpy(fOutput, gpuOutput, npixels*sizeof(float),
-				cudaMemcpyDeviceToHost));
-
+	opencl::copy_from_device((void*)fOutput, clOutput, npixels*sizeof(float));
+	
 	/* convert to char */	
 	string filename(TESTFILE ".");
 	filename.append(name);
@@ -107,73 +95,41 @@ void writeOutput(const char* name)
 	TIFFClose(tif);
 }
 
-#endif
-
 void testSobel()
 {
 	opencl::SobelFilter* filter = new opencl::SobelFilter();
-
 	opencl::copy_to_device(clInput, (const void*)fInput, npixels*sizeof(float));
-
 	filter->apply(clInput, clOutput, img.width, img.height);
-
-	opencl::copy_from_device((void*)fOutput, clOutput, npixels*sizeof(float));
-
-	/* convert to char */	
-	string filename(TESTFILE ".sobel.txt");
-	FILE* outputLog = fopen(filename.c_str(), "w");
-	for (size_t i=0; i<npixels; i++) {
-		output[i] = (unsigned char)(fOutput[i] * 255.f);
-		fprintf(outputLog, "%f\n", fOutput[i]);
-	}
-	fclose(outputLog);
-
-	TIFF* tif = TIFFOpen(TESTFILE ".sobel.tiff", "w");
-	if (!tif) {
-		throw runtime_error("Unable to open test image: " TESTFILE);
-	}
-
-	memcpy(img.data, output, npixels);
-	tiffImageWrite(tif, &img);
-	TIFFClose(tif);
-
+	writeOutput("sobel");
 	delete filter;
 }
 
-#if 0
 void testContrast()
 {
-	cuda::ContrastFilter* filter = new cuda::ContrastFilter();
-
-	copyToGpu();
-	filter->apply(gpuInput, gpuOutput, img.width, img.height);
+	opencl::ContrastFilter* filter = new opencl::ContrastFilter();
+	opencl::copy_to_device(clInput, (const void*)fInput, npixels*sizeof(float));
+	filter->apply(clInput, clOutput, img.width, img.height);
 	writeOutput("contrast");
-
 	delete filter;
 }
 
 void testSharpen()
 {
-	cuda::SharpenFilter* filter = new cuda::SharpenFilter();
-
-	copyToGpu();
-	filter->apply(gpuInput, gpuOutput, img.width, img.height);
+	opencl::SharpenFilter* filter = new opencl::SharpenFilter();
+	opencl::copy_to_device(clInput, (const void*)fInput, npixels*sizeof(float));
+	filter->apply(clInput, clOutput, img.width, img.height);
 	writeOutput("sharpen");
-
 	delete filter;
 }
 
 void testGaussian()
 {
-	cuda::GaussianFilter* filter = new cuda::GaussianFilter();
-
-	copyToGpu();
-	filter->apply(gpuInput, gpuOutput, img.width, img.height);
+	opencl::GaussianFilter* filter = new opencl::GaussianFilter();
+	opencl::copy_to_device(clInput, (const void*)fInput, npixels*sizeof(float));
+	filter->apply(clInput, clOutput, img.width, img.height);
 	writeOutput("gaussian");
-
 	delete filter;
 }
-#endif
 
 int main(int argc, char** argv)
 {
@@ -220,9 +176,9 @@ int main(int argc, char** argv)
 	clOutput = opencl::device_alloc(npixels*sizeof(float), CL_MEM_WRITE_ONLY);
 
 	testSobel();
-	//testContrast();
-	//testSharpen();
-	//testGaussian();
+	testContrast();
+	testSharpen();
+	testGaussian();
 
 	delete input;
 	delete output;

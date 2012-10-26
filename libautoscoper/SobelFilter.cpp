@@ -46,6 +46,8 @@ using namespace std;
 
 namespace xromm { namespace opencl {
 
+#define KERNEL_X 16
+#define KERNEL_Y 16
 #define KERNEL_CODE SobelFilter_cl
 #define KERNEL_NAME "sobel_filter_kernel"
 static const char KERNEL_CODE[] =
@@ -54,7 +56,7 @@ static const char KERNEL_CODE[] =
 static int num_sobel_filters = 0;
 static Program sobel_program_;
 
-SobelFilter::SobelFilter() : Filter2(XROMM_CUDA_SOBEL_FILTER,""),
+SobelFilter::SobelFilter() : Filter(XROMM_OPENCL_SOBEL_FILTER,""),
                              scale_(1.0f),
                              blend_(0.5f)
 {
@@ -64,19 +66,23 @@ SobelFilter::SobelFilter() : Filter2(XROMM_CUDA_SOBEL_FILTER,""),
 }
 
 void
-SobelFilter::apply(cl::Buffer* input, cl::Buffer* output, int width, int height)
+SobelFilter::apply(
+		const cl::Buffer* input,
+		cl::Buffer* output,
+		int width,
+		int height)
 {
 	Kernel* kernel = sobel_program_.compile(KERNEL_CODE, KERNEL_NAME);
 
-    kernel->block2d(10, 10);
-    kernel->grid2d(width, height);
+    kernel->block2d(KERNEL_X, KERNEL_Y);
+    kernel->grid2d((width-1)/KERNEL_X+1, (height-1)/KERNEL_Y+1);
 
-    kernel->bind(input, sizeof(input));
-    kernel->bind(output, sizeof(output));
-    kernel->bind(&width, sizeof(width));
-    kernel->bind(&height, sizeof(height));
-    kernel->bind(&scale_, sizeof(scale_));
-    kernel->bind(&blend_, sizeof(blend_));
+    kernel->addArg(input);
+    kernel->addArg(output);
+    kernel->addArg(width);
+    kernel->addArg(height);
+    kernel->addArg(scale_);
+    kernel->addArg(blend_);
 
 	kernel->launch();
 

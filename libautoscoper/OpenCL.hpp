@@ -11,6 +11,7 @@ namespace xromm { namespace opencl {
 cl::Buffer* device_alloc(size_t size, cl_mem_flags flags);
 void copy_to_device(cl::Buffer* dst, const void* src, size_t size);
 void copy_from_device(void* dst, const cl::Buffer* src, size_t size);
+void copy_on_device(cl::Buffer* dst, const cl::Buffer* src, size_t size);
 
 class Kernel;
 
@@ -18,8 +19,8 @@ class Program
 {
 public:
 	Program();
-    Kernel* compile(const char* code, const char* kernel);
-	Kernel* compileFile(const char* filename, const char* kernel);
+    Kernel* compile(const char* code, const char* func);
+	Kernel* compileFile(const char* filename, const char* func);
 protected:
 	cl::Program program_;
 	bool compiled_;
@@ -28,11 +29,17 @@ protected:
 class Kernel
 {
 public:
-	Kernel(cl::Program& program, const char* name);
+	Kernel(cl::Program& program, const char* func);
 	void grid2d(size_t X, size_t Y);
 	void block2d(size_t X, size_t Y);
-	void bind(void* value, size_t size);
 	void launch();
+
+	template<typename T>
+	void addArg(T value)
+	{
+		kernel_.setArg(arg_index_++, value);
+	}
+
 protected:
 	cl::Kernel kernel_;
 	cl_uint arg_index_;

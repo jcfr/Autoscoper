@@ -39,8 +39,8 @@
 /// \file Filter.hpp
 /// \author Andy Loomis
 
-#ifndef XROMM_OPENCL_FILTER2_HPP
-#define XROMM_OPENCL_FILTER2_HPP
+#ifndef XROMM_OPENCL_FILTER_HPP
+#define XROMM_OPENCL_FILTER_HPP
 
 #include <string>
 
@@ -48,23 +48,23 @@
 
 namespace xromm { namespace opencl {
 
-class Filter2
+class Filter
 {
 public:
 
     enum
     {
-        XROMM_CUDA_CONTRAST_FILTER,
-        XROMM_CUDA_SOBEL_FILTER,
-        XROMM_CUDA_MEDIAN_FILTER,
-        XROMM_CUDA_GAUSSIAN_FILTER,
-        XROMM_CUDA_SHARPEN_FILTER
+        XROMM_OPENCL_CONTRAST_FILTER,
+        XROMM_OPENCL_SOBEL_FILTER,
+        XROMM_OPENCL_MEDIAN_FILTER,
+        XROMM_OPENCL_GAUSSIAN_FILTER,
+        XROMM_OPENCL_SHARPEN_FILTER
     };
 
-    Filter2(int type, const std::string& name)
+    Filter(int type, const std::string& name)
         : type_(type), name_(name), enabled_(true) {}
 
-    virtual void apply(cl::Buffer* input,
+    virtual void apply(const cl::Buffer* input,
                        cl::Buffer* output,
                        int width,
                        int height) = 0;
@@ -90,4 +90,4 @@ protected:
 
 } } // namespace xromm::opencl
 
-#endif // XROMM_OPENCL_FILTER2_HPP
+#endif // XROMM_OPENCL_FILTER_HPP

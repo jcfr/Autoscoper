@@ -39,8 +39,8 @@
 /// \file SobelFilter.hpp
 /// \author Andy Loomis
 
-#ifndef XROMM_CUDA_SOBEL_FILTER_HPP
-#define XROMM_CUDA_SOBEL_FILTER_HPP
+#ifndef XROMM_OPENCL_SOBEL_FILTER_HPP
+#define XROMM_OPENCL_SOBEL_FILTER_HPP
 
 #include <string>
 
@@ -49,13 +49,13 @@
 
 namespace xromm { namespace opencl {
 
-class SobelFilter : public Filter2
+class SobelFilter : public Filter
 {
 public:
 
     SobelFilter();
 
-    virtual void apply(cl::Buffer* input,
+    virtual void apply(const cl::Buffer* input,
                        cl::Buffer* output,
                        int width,
                        int height);
@@ -85,4 +85,4 @@ private:
 
 } } // namespace xromm::opencl
 
-#endif // XROMM_CUDA_SOBEL_FILTER_HPP
+#endif // XROMM_OPENCL_SOBEL_FILTER_HPP

@@ -39,14 +39,15 @@
 /// \file ContrastFilter.hpp
 /// \author Andy Loomis
 
-#ifndef XROMM_CUDA_CONTRAST_FILTER_HPP
-#define XROMM_CUDA_CONTRAST_FILTER_HPP
+#ifndef XROMM_OPENCL_CONTRAST_FILTER_HPP
+#define XROMM_OPENCL_CONTRAST_FILTER_HPP
 
 #include <string>
 
-#include "Filter.hpp"
+#include "Filter2.hpp"
+#include "OpenCL.hpp"
 
-namespace xromm { namespace cuda {
+namespace xromm { namespace opencl {
 
 class ContrastFilter : public Filter
 {
@@ -57,7 +58,7 @@ public:
     // Apply the filter to the input image
 
     virtual
-    void apply(const float* input, float* output, int width, int height);
+    void apply(const cl::Buffer* input, cl::Buffer* output, int width, int height);
 
     // Accessors and mutators
 
@@ -78,6 +79,6 @@ private:
     int size_;
 };
 
-} } // namespace xromm::cuda
+} } // namespace xromm::opencl
 
-#endif // XROMM_CUDA_CONTRAST_FILTER_HPP
+#endif // XROMM_OPENCL_CONTRAST_FILTER_HPP

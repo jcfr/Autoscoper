@@ -39,14 +39,15 @@
 /// \file GaussianFilter.hpp
 /// \author Emily Fu
 
-#ifndef XROMM_CUDA_GAUSSIAN_FILTER_HPP
-#define XROMM_CUDA_GAUSSIAN_FILTER_HPP
+#ifndef XROMM_OPENCL_GAUSSIAN_FILTER_HPP
+#define XROMM_OPENCL_GAUSSIAN_FILTER_HPP
 
 #include <string>
 
-#include "Filter.hpp"
+#include "Filter2.hpp"
+#include "OpenCL.hpp"
 
-namespace xromm { namespace cuda {
+namespace xromm { namespace opencl {
 
 class GaussianFilter : public Filter
 {
@@ -60,7 +61,7 @@ public:
     // Apply the filter to the input image
 
     virtual
-    void apply(const float* input, float* output, int width, int height);
+    void apply(const cl::Buffer* input, cl::Buffer* output, int width, int height);
 
     // Accessors and mutators
 
@@ -71,10 +72,10 @@ public:
 private:
 
     float radius_;
-    float* gaussian_;
+	cl::Buffer* gaussian_;
     int filterSize_;
 };
 
-} } // namespace xromm::cuda
+} } // namespace xromm::opencl
 
-#endif // XROMM_CUDA_GAUSSIAN_FILTER_HPP
+#endif // XROMM_OPENCL_GAUSSIAN_FILTER_HPP

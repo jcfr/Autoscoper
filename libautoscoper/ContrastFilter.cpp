@@ -39,21 +39,25 @@
 /// \file ContrastFilter.cpp
 /// \author Andy Loomis
 
-#include "ContrastFilter.hpp"
-#include "ContrastFilter_kernels.h"
-
 #include <sstream>
+#include "ContrastFilter.hpp"
 
 using namespace std;
 
-namespace xromm { namespace cuda {
+namespace xromm { namespace opencl {
 
-// Unique identifier for each contrast filter
+#define KERNEL_X 16
+#define KERNEL_Y 16
+#define KERNEL_CODE ContrastFilter_cl
+#define KERNEL_NAME "contrast_filter_kernel"
+static const char KERNEL_CODE[] =
+#include "ContrastFilter.cl.h"
 
 static int num_contrast_filters = 0;
+static Program contrast_program_;
 
 ContrastFilter::ContrastFilter()
-    : Filter(XROMM_CUDA_CONTRAST_FILTER,""),
+    : Filter(XROMM_OPENCL_CONTRAST_FILTER,""),
       alpha_(1.0f),
       beta_(1.0f),
       size_(3)
@@ -64,12 +68,28 @@ ContrastFilter::ContrastFilter()
 }
 
 void
-ContrastFilter::apply(const float* input,
-                      float* output,
-                      int width,
-                      int height)
+ContrastFilter::apply(
+		const cl::Buffer* input,
+		cl::Buffer* output,
+		int width,
+		int height)
 {
-    contrast_filter_apply(input,output,width,height,alpha_,beta_,size_);
+	Kernel* kernel = contrast_program_.compile(KERNEL_CODE, KERNEL_NAME);
+
+    kernel->block2d(KERNEL_X, KERNEL_Y);
+    kernel->grid2d((width-1)/KERNEL_X+1, (height-1)/KERNEL_Y+1);
+
+    kernel->addArg(input);
+    kernel->addArg(output);
+    kernel->addArg(width);
+    kernel->addArg(height);
+    kernel->addArg(alpha_);
+    kernel->addArg(beta_);
+    kernel->addArg(size_);
+
+	kernel->launch();
+
+	delete kernel;
 }
 
-} } // namespace xromm::cuda
+} } // namespace xromm::opencl

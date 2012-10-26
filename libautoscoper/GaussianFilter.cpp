@@ -39,99 +39,118 @@
 /// \file GaussianFilter.cpp
 /// \author Emily Fu
 
-#include "GaussianFilter.hpp"
-#include "GaussianFilter_kernels.h"
-
 #include <sstream>
-#include "stdlib.h"
-#include "math.h"
-#include <cuda.h>
-#include <cuda_runtime.h>
+#include <cmath>
+#include "GaussianFilter.hpp"
 
 using namespace std;
 
-namespace xromm { namespace cuda {
+namespace xromm { namespace opencl {
 
-// Unique identifier for each contrast filter
+#define KERNEL_X 16
+#define KERNEL_Y 16
+#define KERNEL_CODE GaussianFilter_cl
+#define KERNEL_NAME "gaussian_filter_kernel"
+static const char KERNEL_CODE[] =
+#include "GaussianFilter.cl.h"
 
 static int num_gaussian_filters = 0;
+static Program gaussian_program_;
 
 GaussianFilter::GaussianFilter()
-    : Filter(XROMM_CUDA_GAUSSIAN_FILTER,""),
-      gaussian_(NULL)
+	: Filter(XROMM_OPENCL_GAUSSIAN_FILTER,""),
+	  gaussian_(NULL)
 {
-    stringstream name_stream;
-    name_stream << "GaussianFilter" << (++num_gaussian_filters);
-    name_ = name_stream.str();
-    
-    set_radius(1);
+	stringstream name_stream;
+	name_stream << "GaussianFilter" << (++num_gaussian_filters);
+	name_ = name_stream.str();
+	
+	set_radius(1);
 }
 
 GaussianFilter::~GaussianFilter()
 {
-     cudaFree(gaussian_);
+	 if (gaussian_ != NULL) delete gaussian_;
 }
 
 void GaussianFilter::set_radius(float radius)
 { 
-    if (radius < 0)
-        radius = 0;
+	if (radius < 0)
+		radius = 0;
 
-//filter is (filterSize_*filterSize_) pixels with each radius being 3 stdevs (3*radius_) of the Gaussian
-        
-    radius_ = radius;
-    int filterRadius = 3*radius_;
-    filterSize_ = 2*filterRadius+1;
-    
-    if(filterSize_ == 1)
-        return;
+	/* filter is (filterSize_*filterSize_) pixels with each radius being 3
+	 * stdevs (3*radius_) of the Gaussian */
+		
+	radius_ = radius;
+	int filterRadius = 3*radius_;
+	filterSize_ = 2*filterRadius+1;
+	
+	if(filterSize_ == 1)
+		return;
 
-    float* gaussian = (float *)malloc(sizeof(float )*(filterSize_*filterSize_));
+	size_t nBytes = sizeof(float) * filterSize_ * filterSize_;
+	float* gaussian = new float[nBytes];
 
-    float sum = 0.0f;
+	float sum = 0.0f;
 
-    for(int i = 0; i < filterSize_; ++i){
-        for(int j = 0; j < filterSize_ ; ++j){
-            gaussian[i*filterSize_+j] = pow(2.71828, (-( pow((i-filterRadius),2) +pow((j-filterRadius), 2) ) / (2* radius_))); //equation for a gaussian with stdev radius_
-            sum = sum +  gaussian[i*filterSize_ +j];
-        }
-    }
-    
-    float temp = 0.0f;
+	for(int i = 0; i < filterSize_; ++i){
+		for(int j = 0; j < filterSize_ ; ++j){
+			/* equation for a gaussian with stdev radius_ */
+			gaussian[i*filterSize_+j] = exp((
+						(i-filterRadius)*(i-filterRadius)+
+						(j-filterRadius)*(j-filterRadius)) / (-2.0*radius_));
+			sum = sum + gaussian[i*filterSize_ +j];
+		}
+	}
+	
+	float temp = 0.0f;
 
-//normalize the filter
+	/* normalize the filter */
 
-    for(int i = 0 ; i < filterSize_; ++i){
-        for(int j = 0 ; j < filterSize_; ++j) {
-            temp = gaussian[i*filterSize_ +j];
-            gaussian[i*filterSize_ + j] = temp / sum;
-         }
-    }
-    
-//copies gaussian filter over to GPU
-
-    float * gaussianGPU;
-    cudaMalloc(&gaussianGPU, sizeof(float )*(filterSize_*filterSize_));
-    cudaMemcpy(gaussianGPU, gaussian, (sizeof(float )*(filterSize_*filterSize_)),cudaMemcpyHostToDevice);
+	for(int i = 0 ; i < filterSize_; ++i){
+		for(int j = 0 ; j < filterSize_; ++j) {
+			temp = gaussian[i*filterSize_ +j];
+			gaussian[i*filterSize_ + j] = temp / sum;
+		 }
+	}
+	
+	/* copies gaussian filter over to GPU */
+	if (gaussian_ != NULL) delete gaussian_;
+	gaussian_ = device_alloc(nBytes, CL_MEM_READ_ONLY);
+	copy_to_device(gaussian_, (void*)gaussian, nBytes);
  
-    free(gaussian);
-    cudaFree(gaussian_);
-    
-    gaussian_ = gaussianGPU;
-
+	delete gaussian;
 }
 
 void
-
-GaussianFilter::apply(const float* input,
-                      float* output,
-                      int width,
-                      int height)
+GaussianFilter::apply(const cl::Buffer* input,
+					  cl::Buffer* output,
+					  int width,
+					  int height)
 {
-    if(filterSize_ == 1 ) //if filterSize_ = 1, image is unchanged
-       cudaMemcpy(output, input, (sizeof(float )*(filterSize_*filterSize_)), cudaMemcpyDeviceToDevice);
-    else
-       gaussian_filter_apply(input,output,width,height,gaussian_, filterSize_);
+	if (filterSize_ == 1 )
+	{
+		/* if filterSize_ = 1, filter does not change image */
+		copy_on_device(output, input, sizeof(float) * width * height);
+	}
+	else
+	{
+		Kernel* kernel = gaussian_program_.compile(KERNEL_CODE, KERNEL_NAME);
+
+		kernel->block2d(KERNEL_X, KERNEL_Y);
+		kernel->grid2d((width-1)/KERNEL_X+1, (height-1)/KERNEL_Y+1);
+
+		kernel->addArg(input);
+		kernel->addArg(output);
+		kernel->addArg(width);
+		kernel->addArg(height);
+		kernel->addArg(gaussian_);
+		kernel->addArg(filterSize_);
+
+		kernel->launch();
+
+		delete kernel;
+	}
 }
 
-} } // namespace xromm::cuda
+} } // namespace xromm::opencl

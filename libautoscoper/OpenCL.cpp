@@ -147,9 +147,19 @@ void copy_from_device(void* dst, const cl::Buffer* src, size_t size)
 	}
 }
 
+void copy_on_device(cl::Buffer* dst, const cl::Buffer* src, size_t size)
+{
+	init();
+	try {
+		queue_.enqueueCopyBuffer(*src, *dst, 0, 0, size);
+	} catch (cl::Error e) {
+		CL_ERROR(e);
+	}
+}
+
 Program::Program() { init(); compiled_ = false; }
 
-Kernel* Program::compile(const char* code, const char* kernel)
+Kernel* Program::compile(const char* code, const char* func)
 {
 	if (!compiled_) {
 		cl::Program::Sources src(1, std::make_pair(code, strlen(code)+1));
@@ -168,10 +178,10 @@ Kernel* Program::compile(const char* code, const char* kernel)
 		compiled_ = true;
 	}
 
-	return new Kernel(program_, kernel);
+	return new Kernel(program_, func);
 }
 
-Kernel* Program::compileFile(const char* filename, const char* kernel)
+Kernel* Program::compileFile(const char* filename, const char* func)
 {
 	if (!compiled_) {
 		std::ifstream srcFile(filename);
@@ -194,16 +204,16 @@ Kernel* Program::compileFile(const char* filename, const char* kernel)
 		compiled_ = true;
 	}
 
-	return new Kernel(program_, kernel);
+	return new Kernel(program_, func);
 }
 
-Kernel::Kernel(cl::Program& program, const char* name)
+Kernel::Kernel(cl::Program& program, const char* func)
 {
 	init();
 	arg_index_ = 0;
 	grid_dim_ = 0;
 	block_dim_ = 0;
-	kernel_ = cl::Kernel(program, name);
+	kernel_ = cl::Kernel(program, func);
 }
 
 void Kernel::grid2d(size_t X, size_t Y)
@@ -222,11 +232,6 @@ void Kernel::block2d(size_t X, size_t Y)
 	block_ = cl::NDRange(X, Y);
 }
 
-void Kernel::bind(void* value, size_t size)
-{
-	kernel_.setArg(arg_index_++, size, value);
-}
-
 void Kernel::launch()
 {
 	if (!block_dim_)
@@ -239,7 +244,7 @@ void Kernel::launch()
 	queue_.enqueueNDRangeKernel(kernel_, cl::NullRange, grid_, block_);
 	} catch(cl::Error e) {
 			CL_ERROR(e);
-		}
+	}
 }
 
 } } // namespace xromm::opencl

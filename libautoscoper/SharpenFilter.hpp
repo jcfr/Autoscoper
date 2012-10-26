@@ -39,55 +39,56 @@
 /// \file SharpenFilter.hpp
 /// \author Emily Fu
 
-#ifndef XROMM_CUDA_SHARPEN_FILTER_HPP
-#define XROMM_CUDA_SHARPEN_FILTER_HPP
+#ifndef XROMM_OPENCL_SHARPEN_FILTER_HPP
+#define XROMM_OPENCL_SHARPEN_FILTER_HPP
 
 #include <string>
 
-#include "Filter.hpp"
+#include "Filter2.hpp"
+#include "OpenCL.hpp"
 
-namespace xromm { namespace cuda {
+namespace xromm { namespace opencl {
 
 class SharpenFilter : public Filter
 {
 public:
 
-    SharpenFilter();
-    
-    virtual
-    ~SharpenFilter();
+	SharpenFilter();
+	
+	virtual
+	~SharpenFilter();
 
-    // Apply the filter to the input image
+	// Apply the filter to the input image
 
-    virtual
-    void apply(const float* input, float* output, int width, int height);
+	virtual
+	void apply(const cl::Buffer* input, cl::Buffer* output, int width, int height);
 
-    // Accessors and mutators
+	// Accessors and mutators
 
-    float radius() const { return radius_; }
+	float radius() const { return radius_; }
  
-    void set_radius(float radius);
+	void set_radius(float radius);
 
-    float contrast() const { return contrast_; }
+	float contrast() const { return contrast_; }
 
-    void set_contrast(float contrast);
-    
-    float threshold() const {return threshold_; }
-    
-    void set_threshold(float threshold);
-    
+	void set_contrast(float contrast);
+	
+	float threshold() const {return threshold_; }
+	
+	void set_threshold(float threshold);
+	
 private:
 
-    float radius_; 
-    float contrast_;   
-    float threshold_; 
+	float radius_; 
+	float contrast_;   
+	float threshold_; 
  
-    float* sharpen_;
-    int filterSize_;
-    
-    void makeFilter();
+	cl::Buffer* sharpen_;
+	int filterSize_;
+	
+	void makeFilter();
 };
 
-} } // namespace xromm::cuda
+} } // namespace xromm::opencl
 
-#endif // XROMM_CUDA_SHARPEN_FILTER_HPP
+#endif // XROMM_OPENCL_SHARPEN_FILTER_HPP
