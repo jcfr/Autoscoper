@@ -57,8 +57,10 @@ public:
 
     // Apply the filter to the input image
 
-    virtual
-    void apply(const cl::Buffer* input, cl::Buffer* output, int width, int height);
+    virtual void apply(const ReadBuffer* input,
+                       const WriteBuffer* output,
+                       int width,
+                       int height);
 
     // Accessors and mutators
 

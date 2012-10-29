@@ -67,8 +67,8 @@ SobelFilter::SobelFilter() : Filter(XROMM_OPENCL_SOBEL_FILTER,""),
 
 void
 SobelFilter::apply(
-		const cl::Buffer* input,
-		cl::Buffer* output,
+		const ReadBuffer* input,
+		const WriteBuffer* output,
 		int width,
 		int height)
 {
@@ -77,8 +77,8 @@ SobelFilter::apply(
     kernel->block2d(KERNEL_X, KERNEL_Y);
     kernel->grid2d((width-1)/KERNEL_X+1, (height-1)/KERNEL_Y+1);
 
-    kernel->addArg(input);
-    kernel->addArg(output);
+    kernel->addBufferArg(input);
+    kernel->addBufferArg(output);
     kernel->addArg(width);
     kernel->addArg(height);
     kernel->addArg(scale_);

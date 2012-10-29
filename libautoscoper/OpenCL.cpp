@@ -4,18 +4,25 @@
 
 #define TYPE CL_DEVICE_TYPE_GPU
 
-#define CL_ERROR(e) \
-	std::cerr << "OpenCL error at " << __FILE__ << ':' << __LINE__ \
-	          << "\n  " << e.err() << ' ' << opencl_error(e.err()) << std::endl; \
-	exit(1);
+#define ERROR(msg) \
+	std::cerr << "Error at " << __FILE__ << ':' << __LINE__ \
+	<< "\n  " << msg << std::endl; \
+	exit(1)
+
+#define CHECK_CL \
+	if (err_ != CL_SUCCESS) {\
+		std::cerr << "OpenCL error at " << __FILE__ << ':' << __LINE__ \
+	          << "\n  " << err_ << ' ' << opencl_error(err_) << std::endl; \
+		exit(1);\
+	}
 
 namespace xromm { namespace opencl {
 
 static bool inited_ = false;
-static cl::Context context_;
-static cl::vector<cl::Device> devices_;
-static cl::Device device_;
-static cl::CommandQueue queue_;
+static cl_int err_;
+static cl_context context_;
+static cl_device_id devices_[1];
+static cl_command_queue queue_;
 
 static const char* opencl_error(cl_uint err)
 {
@@ -70,91 +77,110 @@ static const char* opencl_error(cl_uint err)
     }
 }
 
-static void init_context()
-{
-	cl::vector<cl::Platform> platforms;
-	cl::Platform::get(&platforms);
-
-	if (platforms.size() == 0)
-		throw cl::Error(1, "No OpenCL platforms were found");
-
-	int platformID = -1;
-
-	for(unsigned int i = 0; i < platforms.size(); i++) {
-		try {
-			platforms[i].getDevices(TYPE, &devices_);
-			platformID = i;
-			break;
-		} catch(cl::Error e) {
-			CL_ERROR(e);
-		}
-	}
-
-	if (platformID == -1)
-		throw cl::Error(1, "No compatible OpenCL platform found");
-
-	cl_context_properties cps[3] = { 
-		CL_CONTEXT_PLATFORM, 
-		(cl_context_properties)(platforms[platformID])(), 
-		0 };
-
-	context_ = cl::Context(TYPE, cps);
-}
-
 static void init()
 {
-	if (!inited_) {
-		try {
-			init_context();
-			cl::vector<cl::Device> devices = context_.getInfo<CL_CONTEXT_DEVICES>();
-			device_ = devices[0];
-			queue_ = cl::CommandQueue(context_, device_);
-		} catch (cl::Error e) {
-			CL_ERROR(e);
-		}
+	if (!inited_)
+	{
+		/* find platform */
+
+		cl_uint num_platforms;
+		cl_platform_id platforms[1];
+		err_ = clGetPlatformIDs(1, platforms, &num_platforms);
+		CHECK_CL
+
+		if (num_platforms != 1) ERROR("no OpenCL platforms found");
+
+		/* find GPU device */
+
+		cl_uint num_devices;
+		err_ = clGetDeviceIDs(platforms[0], TYPE, 1, devices_, &num_devices);
+		CHECK_CL
+
+		if (num_devices != 1) ERROR("no OpenCL GPU device found");
+
+		/* create context */
+
+		cl_context_properties prop[3] = { 
+			CL_CONTEXT_PLATFORM, 
+			(cl_context_properties)(platforms[0]),
+			0 };
+
+		context_ = clCreateContext(prop, 1, devices_, NULL, NULL, &err_);
+		CHECK_CL
+
+		/* create command queue */
+
+		queue_ = clCreateCommandQueue(context_, devices_[0], 0, &err_);
+		CHECK_CL
+
 		std::cout << "OpenCL: init" << std::endl;
 		inited_ = true;
 	}
 }
 
-cl::Buffer* device_alloc(size_t size, cl_mem_flags flags)
+Kernel::Kernel(cl_program program, const char* func)
 {
 	init();
-	try {
-		return new cl::Buffer(context_, flags, size);
-	} catch (cl::Error e) {
-		CL_ERROR(e);
-	}
+	arg_index_ = 0;
+	grid_dim_ = 0;
+	block_dim_ = 0;
+	kernel_ = clCreateKernel(program, func, &err_);
+	CHECK_CL
 }
 
-void copy_to_device(cl::Buffer* dst, const void* src, size_t size)
+void Kernel::grid2d(size_t X, size_t Y)
 {
-	init();
-	try {
-		queue_.enqueueWriteBuffer(*dst, CL_TRUE, 0, size, src);
-	} catch (cl::Error e) {
-		CL_ERROR(e);
+	if (grid_dim_ && (grid_dim_ != 2)) {
+		ERROR("Grid dimension was already set and is not 2");
+	} else {
+		grid_dim_ = 2;
 	}
+	grid_[0] = X;
+	grid_[1] = Y;
 }
 
-void copy_from_device(void* dst, const cl::Buffer* src, size_t size)
+void Kernel::block2d(size_t X, size_t Y)
 {
-	init();
-	try {
-		queue_.enqueueReadBuffer(*src, CL_TRUE, 0, size, dst);
-	} catch (cl::Error e) {
-		CL_ERROR(e);
+	if (block_dim_ && (block_dim_ != 2)) {
+		ERROR("Block dimension was already set and is not 2");
+	} else {
+		block_dim_ = 2;
 	}
+	block_[0] = X;
+	block_[1] = Y;
 }
 
-void copy_on_device(cl::Buffer* dst, const cl::Buffer* src, size_t size)
+void Kernel::addBufferArg(const ReadBuffer* buf)
 {
-	init();
-	try {
-		queue_.enqueueCopyBuffer(*src, *dst, 0, 0, size);
-	} catch (cl::Error e) {
-		CL_ERROR(e);
+	err_ = clSetKernelArg(kernel_, arg_index_++, buf->size_, buf->buffer_);
+	CHECK_CL
+}
+
+void Kernel::addBufferArg(const WriteBuffer* buf)
+{
+	err_ = clSetKernelArg(kernel_, arg_index_++, buf->size_, buf->buffer_);
+	CHECK_CL
+}
+
+void Kernel::launch()
+{
+	if (!block_dim_) {
+		ERROR("Block dimension is unset");
+	} else if (!grid_dim_) {
+		ERROR("Grid dimension is unset");
+	} else if (block_dim_ != grid_dim_) {
+		ERROR("Block dimension doesn't match grid dimension");
 	}
+	err_ = clEnqueueNDRangeKernel(
+			queue_, kernel_, grid_dim_, NULL,
+			grid_, block_, 0, NULL, NULL);
+	CHECK_CL
+}
+
+void Kernel::setArg(cl_uint i, size_t size, const void* value)
+{
+	err_ = clSetKernelArg(kernel_, i, size, value);
+	CHECK_CL
 }
 
 Program::Program() { init(); compiled_ = false; }
@@ -162,18 +188,27 @@ Program::Program() { init(); compiled_ = false; }
 Kernel* Program::compile(const char* code, const char* func)
 {
 	if (!compiled_) {
-		cl::Program::Sources src(1, std::make_pair(code, strlen(code)+1));
-		program_ = cl::Program(context_, src);
-
 		// Build program for these specific devices
-		try {
-			program_.build(devices_);
-		} catch(cl::Error e) {
-			if (e.err() == CL_BUILD_PROGRAM_FAILURE) {
-				std::cerr << "Build log:\n" << program_.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device_) << std::endl;
-			}
-			CL_ERROR(e);
-		} 
+		std::cout << code << std::endl;
+		size_t len = strlen(code);
+		program_ = clCreateProgramWithSource(context_, 1, &code, &len, &err_);
+		CHECK_CL
+
+		err_ = clBuildProgram(program_, 1, devices_, NULL, NULL, NULL);
+		if (err_ == CL_BUILD_PROGRAM_FAILURE) {
+			size_t log_size;
+			cl_int err = clGetProgramBuildInfo(
+					program_, devices_[0], CL_PROGRAM_BUILD_LOG,
+					0, NULL, &log_size);
+			char* build_log = (char*)malloc(log_size+1);
+			err = clGetProgramBuildInfo(
+					program_, devices_[0], CL_PROGRAM_BUILD_LOG,
+					log_size, build_log, NULL);
+			build_log[log_size] = '\0';
+			std::cerr << "Build log:\n" << build_log << std::endl;
+			free(build_log);
+		}
+		CHECK_CL
 
 		compiled_ = true;
 	}
@@ -181,70 +216,56 @@ Kernel* Program::compile(const char* code, const char* func)
 	return new Kernel(program_, func);
 }
 
-Kernel* Program::compileFile(const char* filename, const char* func)
-{
-	if (!compiled_) {
-		std::ifstream srcFile(filename);
-		std::string code(
-			(std::istreambuf_iterator<char>(srcFile)),
-			std::istreambuf_iterator<char>());
-		cl::Program::Sources src(1, std::make_pair(code.c_str(), code.length()+1));
-		program_ = cl::Program(context_, src);
-
-		// Build program for these specific devices
-		try {
-			program_.build(devices_);
-		} catch(cl::Error e) {
-			if (e.err() == CL_BUILD_PROGRAM_FAILURE) {
-				std::cerr << "Build log:\n" << program_.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device_) << std::endl;
-			}
-			CL_ERROR(e);
-		} 
-
-		compiled_ = true;
-	}
-
-	return new Kernel(program_, func);
-}
-
-Kernel::Kernel(cl::Program& program, const char* func)
+ReadBuffer::ReadBuffer(size_t size)
 {
 	init();
-	arg_index_ = 0;
-	grid_dim_ = 0;
-	block_dim_ = 0;
-	kernel_ = cl::Kernel(program, func);
+	size_ = size;
+	buffer_ = clCreateBuffer(context_, CL_MEM_READ_ONLY, size, NULL, &err_);
+	CHECK_CL
 }
 
-void Kernel::grid2d(size_t X, size_t Y)
+ReadBuffer::~ReadBuffer()
 {
-	if (grid_dim_ && (grid_dim_ != 2))
-		throw cl::Error(1, "Grid dimension was already set and is not 2");
-	else grid_dim_ = 2;
-	grid_ = cl::NDRange(X, Y);
+	err_ = clReleaseMemObject(buffer_);
+	CHECK_CL
 }
 
-void Kernel::block2d(size_t X, size_t Y)
+void ReadBuffer::read(const void* buf) const
 {
-	if (block_dim_ && (block_dim_ != 2))
-		throw cl::Error(1, "Block dimension was already set and is not 2");
-	else block_dim_ = 2;
-	block_ = cl::NDRange(X, Y);
+	err_ = clEnqueueWriteBuffer(
+			queue_, buffer_, CL_TRUE, 0, size_, buf, 0, NULL, NULL);
+	CHECK_CL
 }
 
-void Kernel::launch()
+void ReadBuffer::write(const WriteBuffer* buf) const
 {
-	if (!block_dim_)
-		throw cl::Error(1, "Block dimension is unset");
-	else if (!grid_dim_)
-		throw cl::Error(1, "Grid dimension is unset");
-	else if (block_dim_ != grid_dim_)
-		throw cl::Error(1, "Block dimension doesn't match grid dimension");
-	try {
-	queue_.enqueueNDRangeKernel(kernel_, cl::NullRange, grid_, block_);
-	} catch(cl::Error e) {
-			CL_ERROR(e);
+	if (size_ != buf->size_) {
+		ERROR("Buffers have mismatching sizes");
 	}
+	err_ = clEnqueueCopyBuffer(
+			queue_, buf->buffer_, buffer_, 0, 0, size_, 0, NULL, NULL);
+	CHECK_CL
+}
+
+WriteBuffer::WriteBuffer(size_t size)
+{
+	init();
+	size_ = size;
+	buffer_ = clCreateBuffer(context_, CL_MEM_WRITE_ONLY, size, NULL, &err_);
+	CHECK_CL
+}
+
+WriteBuffer::~WriteBuffer()
+{
+	err_ = clReleaseMemObject(buffer_);
+	CHECK_CL
+}
+
+void WriteBuffer::write(void* buf) const
+{
+	err_ = clEnqueueReadBuffer(
+			queue_, buffer_, CL_TRUE, 0, size_, buf, 0, NULL, NULL);
+	CHECK_CL
 }
 
 } } // namespace xromm::opencl

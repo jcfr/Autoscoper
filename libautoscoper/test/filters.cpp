@@ -64,12 +64,12 @@ static unsigned char* output;
 static float* fInput;
 static float* fOutput;
 
-static cl::Buffer* clInput;
-static cl::Buffer* clOutput;
+static opencl::ReadBuffer* clInput;
+static opencl::WriteBuffer* clOutput;
 
 void writeOutput(const char* name)
 {
-	opencl::copy_from_device((void*)fOutput, clOutput, npixels*sizeof(float));
+	clOutput.write((void*)fOutput);
 	
 	/* convert to char */	
 	string filename(TESTFILE ".");
@@ -98,7 +98,7 @@ void writeOutput(const char* name)
 void testSobel()
 {
 	opencl::SobelFilter* filter = new opencl::SobelFilter();
-	opencl::copy_to_device(clInput, (const void*)fInput, npixels*sizeof(float));
+	clInput.read((const void*)fInput);
 	filter->apply(clInput, clOutput, img.width, img.height);
 	writeOutput("sobel");
 	delete filter;
@@ -172,8 +172,8 @@ int main(int argc, char** argv)
 	}
 	fclose(inputLog);
 
-	clInput = opencl::device_alloc(npixels*sizeof(float), CL_MEM_READ_ONLY);
-	clOutput = opencl::device_alloc(npixels*sizeof(float), CL_MEM_WRITE_ONLY);
+	clInput = new opencl::ReadBuffer(npixels*sizeof(float));
+	clOutput = new opencl::WriteBuffer(npixels*sizeof(float));
 
 	testSobel();
 	testContrast();

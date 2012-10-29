@@ -116,22 +116,22 @@ void GaussianFilter::set_radius(float radius)
 	
 	/* copies gaussian filter over to GPU */
 	if (gaussian_ != NULL) delete gaussian_;
-	gaussian_ = device_alloc(nBytes, CL_MEM_READ_ONLY);
-	copy_to_device(gaussian_, (void*)gaussian, nBytes);
+	gaussian_ = new ReadBuffer(nBytes);
+	gaussian_->read((void*)gaussian);
  
 	delete gaussian;
 }
 
 void
-GaussianFilter::apply(const cl::Buffer* input,
-					  cl::Buffer* output,
+GaussianFilter::apply(const ReadBuffer* input,
+					  const WriteBuffer* output,
 					  int width,
 					  int height)
 {
 	if (filterSize_ == 1 )
 	{
 		/* if filterSize_ = 1, filter does not change image */
-		copy_on_device(output, input, sizeof(float) * width * height);
+		input->write(output);
 	}
 	else
 	{
@@ -140,8 +140,8 @@ GaussianFilter::apply(const cl::Buffer* input,
 		kernel->block2d(KERNEL_X, KERNEL_Y);
 		kernel->grid2d((width-1)/KERNEL_X+1, (height-1)/KERNEL_Y+1);
 
-		kernel->addArg(input);
-		kernel->addArg(output);
+		kernel->addBufferArg(input);
+		kernel->addBufferArg(output);
 		kernel->addArg(width);
 		kernel->addArg(height);
 		kernel->addArg(gaussian_);

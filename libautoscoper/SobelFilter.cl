@@ -9,12 +9,12 @@ void sobel_filter_kernel(
 {
 	short x1 = get_global_id(0);
 	short y1 = get_global_id(1);
-   
+ 
 	if (x1 > width-1 || y1 > height-1) return;
 
 	short x0 = x1-1; if (x0 < 0) x0 = 0;
 	short y0 = y1-1; if (y0 < 0) y0 = 0;
-	
+
 	short x2 = x1+1; if (x2 > width-1) x2 = width-1;
 	short y2 = y1+1; if (y2 > height-1) y2 = height-1;
 

@@ -60,8 +60,11 @@ public:
 
     // Apply the filter to the input image
 
-    virtual
-    void apply(const cl::Buffer* input, cl::Buffer* output, int width, int height);
+    virtual void apply(const ReadBuffer* input,
+                       const WriteBuffer* output,
+                       int width,
+                       int height);
+
 
     // Accessors and mutators
 
@@ -72,7 +75,7 @@ public:
 private:
 
     float radius_;
-	cl::Buffer* gaussian_;
+	ReadBuffer* gaussian_;
     int filterSize_;
 };
 

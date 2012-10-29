@@ -136,23 +136,23 @@ void SharpenFilter::makeFilter()
 
 	/* copy the filter to GPU */
 	if (sharpen_ != NULL) delete sharpen_;
-	sharpen_ = device_alloc(nBytes, CL_MEM_READ_ONLY);
-	copy_to_device(sharpen_, (void*)sharpen, nBytes);
+	sharpen_ = new ReadBuffer(nBytes);
+	sharpen_->read((void*)sharpen);
  
 	delete sharpen;
 }
 
 void
 SharpenFilter::apply(
-		const cl::Buffer* input,
-		cl::Buffer* output,
+		const ReadBuffer* input,
+		const WriteBuffer* output,
 		int width,
 		int height)
 {
 	if (filterSize_ == 1 )
 	{
 		/* if filterSize_ = 1, filter does not change image */
-		copy_on_device(output, input, sizeof(float) * width * height);
+		input->write(output);
 	}
 	else
 	{
@@ -161,8 +161,8 @@ SharpenFilter::apply(
 		kernel->block2d(KERNEL_X, KERNEL_Y);
 		kernel->grid2d((width-1)/KERNEL_X+1, (height-1)/KERNEL_Y+1);
 
-		kernel->addArg(input);
-		kernel->addArg(output);
+		kernel->addBufferArg(input);
+		kernel->addBufferArg(output);
 		kernel->addArg(width);
 		kernel->addArg(height);
 		kernel->addArg(sharpen_);

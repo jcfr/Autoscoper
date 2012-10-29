@@ -55,8 +55,8 @@ public:
 
     SobelFilter();
 
-    virtual void apply(const cl::Buffer* input,
-                       cl::Buffer* output,
+    virtual void apply(const ReadBuffer* input,
+                       const WriteBuffer* output,
                        int width,
                        int height);
 

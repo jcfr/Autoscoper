@@ -64,8 +64,8 @@ public:
     Filter(int type, const std::string& name)
         : type_(type), name_(name), enabled_(true) {}
 
-    virtual void apply(const cl::Buffer* input,
-                       cl::Buffer* output,
+    virtual void apply(const ReadBuffer* input,
+                       const WriteBuffer* output,
                        int width,
                        int height) = 0;
 
