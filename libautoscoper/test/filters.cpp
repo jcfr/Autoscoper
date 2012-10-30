@@ -69,7 +69,7 @@ static opencl::WriteBuffer* clOutput;
 
 void writeOutput(const char* name)
 {
-	clOutput.write((void*)fOutput);
+	clOutput->write((void*)fOutput);
 	
 	/* convert to char */	
 	string filename(TESTFILE ".");
@@ -98,7 +98,7 @@ void writeOutput(const char* name)
 void testSobel()
 {
 	opencl::SobelFilter* filter = new opencl::SobelFilter();
-	clInput.read((const void*)fInput);
+	clInput->read((const void*)fInput);
 	filter->apply(clInput, clOutput, img.width, img.height);
 	writeOutput("sobel");
 	delete filter;
@@ -107,7 +107,7 @@ void testSobel()
 void testContrast()
 {
 	opencl::ContrastFilter* filter = new opencl::ContrastFilter();
-	opencl::copy_to_device(clInput, (const void*)fInput, npixels*sizeof(float));
+	clInput->read((const void*)fInput);
 	filter->apply(clInput, clOutput, img.width, img.height);
 	writeOutput("contrast");
 	delete filter;
@@ -116,7 +116,7 @@ void testContrast()
 void testSharpen()
 {
 	opencl::SharpenFilter* filter = new opencl::SharpenFilter();
-	opencl::copy_to_device(clInput, (const void*)fInput, npixels*sizeof(float));
+	clInput->read((const void*)fInput);
 	filter->apply(clInput, clOutput, img.width, img.height);
 	writeOutput("sharpen");
 	delete filter;
@@ -125,7 +125,7 @@ void testSharpen()
 void testGaussian()
 {
 	opencl::GaussianFilter* filter = new opencl::GaussianFilter();
-	opencl::copy_to_device(clInput, (const void*)fInput, npixels*sizeof(float));
+	clInput->read((const void*)fInput);
 	filter->apply(clInput, clOutput, img.width, img.height);
 	writeOutput("gaussian");
 	delete filter;

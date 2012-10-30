@@ -33,7 +33,7 @@ void sharpen_filter_kernel(
 	 * difference is adjusted by contrast and added to original,
 	 * else no change
 	 */
-	if(abs(input[y*width+x] - blur) > threshold)
+	if (fabs(input[y*width+x] - blur) > threshold)
 	{
 		  output[y*width + x] = input[y*width+x] + contrast*(input[y*width + x] - blur);
 		  

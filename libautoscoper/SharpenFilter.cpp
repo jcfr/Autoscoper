@@ -165,7 +165,7 @@ SharpenFilter::apply(
 		kernel->addBufferArg(output);
 		kernel->addArg(width);
 		kernel->addArg(height);
-		kernel->addArg(sharpen_);
+		kernel->addBufferArg(sharpen_);
 		kernel->addArg(filterSize_);
 		kernel->addArg(contrast_);
 		kernel->addArg(threshold_);

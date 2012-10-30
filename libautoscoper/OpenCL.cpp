@@ -1,20 +1,24 @@
+#include <stdlib.h>
 #include <iostream>
 #include <fstream>
 #include "OpenCL.hpp"
 
 #define TYPE CL_DEVICE_TYPE_GPU
 
-#define ERROR(msg) \
-	std::cerr << "Error at " << __FILE__ << ':' << __LINE__ \
-	<< "\n  " << msg << std::endl; \
-	exit(1)
+#define ERROR(msg) do{\
+	cerr << "Error at " << __FILE__ << ':' << __LINE__ \
+	     << "\n  " << msg << endl; \
+	exit(1); \
+	}while(0)
 
 #define CHECK_CL \
 	if (err_ != CL_SUCCESS) {\
-		std::cerr << "OpenCL error at " << __FILE__ << ':' << __LINE__ \
-	          << "\n  " << err_ << ' ' << opencl_error(err_) << std::endl; \
-		exit(1);\
+		cerr << "OpenCL error at " << __FILE__ << ':' << __LINE__ \
+	         << "\n  " << err_ << ' ' << opencl_error(err_) << endl; \
+		exit(1); \
 	}
+
+using namespace std;
 
 namespace xromm { namespace opencl {
 
@@ -24,7 +28,7 @@ static cl_context context_;
 static cl_device_id devices_[1];
 static cl_command_queue queue_;
 
-static const char* opencl_error(cl_uint err)
+static const char* opencl_error(cl_int err)
 {
     switch (err) {
         case CL_SUCCESS:                            return "Success!";
@@ -113,7 +117,7 @@ static void init()
 		queue_ = clCreateCommandQueue(context_, devices_[0], 0, &err_);
 		CHECK_CL
 
-		std::cout << "OpenCL: init" << std::endl;
+		//std::cout << "OpenCL: init" << std::endl;
 		inited_ = true;
 	}
 }
@@ -132,11 +136,13 @@ void Kernel::grid2d(size_t X, size_t Y)
 {
 	if (grid_dim_ && (grid_dim_ != 2)) {
 		ERROR("Grid dimension was already set and is not 2");
+	} else if (!block_dim_) {
+		ERROR("Must set block dimension before grid");
 	} else {
 		grid_dim_ = 2;
 	}
-	grid_[0] = X;
-	grid_[1] = Y;
+	grid_[0] = X * block_[0];
+	grid_[1] = Y * block_[1];
 }
 
 void Kernel::block2d(size_t X, size_t Y)
@@ -152,18 +158,20 @@ void Kernel::block2d(size_t X, size_t Y)
 
 void Kernel::addBufferArg(const ReadBuffer* buf)
 {
-	err_ = clSetKernelArg(kernel_, arg_index_++, buf->size_, buf->buffer_);
+	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), &buf->buffer_);
 	CHECK_CL
 }
 
 void Kernel::addBufferArg(const WriteBuffer* buf)
 {
-	err_ = clSetKernelArg(kernel_, arg_index_++, buf->size_, buf->buffer_);
+	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), &buf->buffer_);
 	CHECK_CL
 }
 
 void Kernel::launch()
 {
+	//cout << grid_[0] << "," << grid_[1] << endl;
+	//cout << block_[0] << "," << block_[1] << endl;
 	if (!block_dim_) {
 		ERROR("Block dimension is unset");
 	} else if (!grid_dim_) {
@@ -187,9 +195,8 @@ Program::Program() { init(); compiled_ = false; }
 
 Kernel* Program::compile(const char* code, const char* func)
 {
-	if (!compiled_) {
-		// Build program for these specific devices
-		std::cout << code << std::endl;
+	if (!compiled_)
+	{
 		size_t len = strlen(code);
 		program_ = clCreateProgramWithSource(context_, 1, &code, &len, &err_);
 		CHECK_CL
@@ -197,18 +204,24 @@ Kernel* Program::compile(const char* code, const char* func)
 		err_ = clBuildProgram(program_, 1, devices_, NULL, NULL, NULL);
 		if (err_ == CL_BUILD_PROGRAM_FAILURE) {
 			size_t log_size;
-			cl_int err = clGetProgramBuildInfo(
+			err_ = clGetProgramBuildInfo(
 					program_, devices_[0], CL_PROGRAM_BUILD_LOG,
 					0, NULL, &log_size);
+			CHECK_CL
 			char* build_log = (char*)malloc(log_size+1);
-			err = clGetProgramBuildInfo(
+			if (!build_log) ERROR("malloc for build log");
+			err_ = clGetProgramBuildInfo(
 					program_, devices_[0], CL_PROGRAM_BUILD_LOG,
 					log_size, build_log, NULL);
+			CHECK_CL
 			build_log[log_size] = '\0';
-			std::cerr << "Build log:\n" << build_log << std::endl;
+			cerr << "OpenCL build failure for kernel function '" << func
+			     << "':\n" << build_log << endl;
 			free(build_log);
+			exit(1);
+		} else {
+			CHECK_CL
 		}
-		CHECK_CL
 
 		compiled_ = true;
 	}

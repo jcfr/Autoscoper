@@ -144,7 +144,7 @@ GaussianFilter::apply(const ReadBuffer* input,
 		kernel->addBufferArg(output);
 		kernel->addArg(width);
 		kernel->addArg(height);
-		kernel->addArg(gaussian_);
+		kernel->addBufferArg(gaussian_);
 		kernel->addArg(filterSize_);
 
 		kernel->launch();
