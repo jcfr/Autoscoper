@@ -44,7 +44,7 @@
 
 #include <string>
 
-#include "Filter2.hpp"
+#include "Filter.hpp"
 #include "OpenCL.hpp"
 
 namespace xromm { namespace opencl {
@@ -52,35 +52,26 @@ namespace xromm { namespace opencl {
 class SharpenFilter : public Filter
 {
 public:
-
 	SharpenFilter();
-	
-	virtual
-	~SharpenFilter();
+	virtual ~SharpenFilter();
 
 	// Apply the filter to the input image
-
     virtual void apply(const ReadBuffer* input,
                        const WriteBuffer* output,
                        int width,
                        int height);
 
 	// Accessors and mutators
-
 	float radius() const { return radius_; }
- 
 	void set_radius(float radius);
 
 	float contrast() const { return contrast_; }
-
 	void set_contrast(float contrast);
 	
 	float threshold() const {return threshold_; }
-	
 	void set_threshold(float threshold);
 	
 private:
-
 	float radius_; 
 	float contrast_;   
 	float threshold_; 

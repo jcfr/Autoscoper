@@ -1,22 +1,22 @@
 // ----------------------------------
 // Copyright (c) 2011, Brown University
 // All rights reserved.
-//
+// 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
-//
+// 
 // (1) Redistributions of source code must retain the above copyright
 // notice, this list of conditions and the following disclaimer.
-//
+// 
 // (2) Redistributions in binary form must reproduce the above copyright
 // notice, this list of conditions and the following disclaimer in the
 // documentation and/or other materials provided with the distribution.
-//
+// 
 // (3) Neither the name of Brown University nor the names of its
 // contributors may be used to endorse or promote products derived from
 // this software without specific prior written permission.
-//
+// 
 // THIS SOFTWARE IS PROVIDED BY BROWN UNIVERSITY “AS IS” WITH NO
 // WARRANTIES OR REPRESENTATIONS OF ANY KIND WHATSOEVER EITHER EXPRESS OR
 // IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTY OF DESIGN OR
@@ -36,58 +36,26 @@
 // THEIR USE OF THE SOFTWARE.
 // ---------------------------------
 
-/// \file Filter.hpp
+/// \file Ncc_kernels.h
 /// \author Andy Loomis
 
-#ifndef XROMM_OPENCL_FILTER_HPP
-#define XROMM_OPENCL_FILTER_HPP
-
-#include <string>
+#ifndef XROMM_OPENCL_NCC_HPP
+#define XROMM_OPENCL_NCC_HPP
 
 #include "OpenCL.hpp"
 
-namespace xromm { namespace opencl {
+namespace xromm {
 
-class Filter
-{
-public:
+namespace opencl {
 
-    enum
-    {
-        XROMM_OPENCL_CONTRAST_FILTER,
-        XROMM_OPENCL_SOBEL_FILTER,
-        XROMM_OPENCL_MEDIAN_FILTER,
-        XROMM_OPENCL_GAUSSIAN_FILTER,
-        XROMM_OPENCL_SHARPEN_FILTER
-    };
+void ncc_init(size_t max_n);
 
-    Filter(int type, const std::string& name)
-        : type_(type), name_(name), enabled_(true) {}
+void ncc_deinit();
 
-    virtual void apply(const ReadBuffer* input,
-                       const WriteBuffer* output,
-                       int width,
-                       int height) = 0;
+float ncc(Buffer* f, Buffer* g, size_t n);
 
-    int type() const { return type_; }
+} // namespace opencl
 
-    const std::string& name() const { return name_; }
+} // namespace xromm
 
-    void set_name(const std::string& name) { name_ = name; }
-
-    bool enabled() const { return enabled_; }
-
-    void set_enabled(bool enabled) { enabled_ = enabled; }
-
-protected:
-
-    int type_;
-
-    std::string name_;
-
-    bool enabled_;
-};
-
-} } // namespace xromm::opencl
-
-#endif // XROMM_OPENCL_FILTER_HPP
+#endif // XROMM_OPENCL_NCC_HPP

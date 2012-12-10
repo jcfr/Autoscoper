@@ -48,6 +48,7 @@
 #include "RayCaster.hpp"
 #include "RadRenderer.hpp"
 #include "Trial.hpp"
+#include "OpenCL.hpp"
 
 namespace xromm
 {
@@ -55,14 +56,14 @@ namespace xromm
 class Camera;
 class CoordFrame;
 
-namespace cuda
+namespace opencl
 {
 
 class Filter;
 class View;
 class VolumeDescription;
 
-} // namespace cuda
+} // namespace opencl
 
 class Tracker
 {
@@ -84,13 +85,13 @@ public:
     double minimizationFunc(const double* values) const;
 
 
-    std::vector<cuda::View*>& views() { return views_; }
+    std::vector<opencl::View*>& views() { return views_; }
 
-    const std::vector<cuda::View*>& views() const { return views_; }
+    const std::vector<opencl::View*>& views() const { return views_; }
 
-    cuda::View* view(size_t i) { return views_.at(i); }
+    opencl::View* view(size_t i) { return views_.at(i); }
 
-    const cuda::View* view(size_t i) const { return views_.at(i); }
+    const opencl::View* view(size_t i) const { return views_.at(i); }
 
 private:
 
@@ -98,13 +99,12 @@ private:
 
     Trial trial_;
 
-    cuda::VolumeDescription* volumeDescription_;
+    opencl::VolumeDescription* volumeDescription_;
 
-    std::vector<cuda::View*> views_;
+    std::vector<opencl::View*> views_;
 
-    float* rendered_drr_;
-
-    float* rendered_rad_;
+	opencl::Buffer* rendered_drr_;
+	opencl::Buffer* rendered_rad_;
 };
 
 } // namespace XROMM

@@ -37,19 +37,20 @@
 // ---------------------------------
 
 /// \file View.hpp
-/// \author Andy Loomis
+/// \author Andy Loomis, Mark Howison
 
-#ifndef XROMM_CUDA_VIEW_HPP
-#define XROMM_CUDA_VIEW_HPP
+#ifndef XROMM_OPENCL_VIEW_HPP
+#define XROMM_OPENCL_VIEW_HPP
 
 #include <vector>
+#include "OpenCL.hpp"
 
 namespace xromm
 {
 
 class Camera;
 
-namespace cuda
+namespace opencl
 {
 
 class RayCaster;
@@ -64,59 +65,38 @@ class Filter;
 class View
 {
 public:
-
     // Constructs a View from a camera
-
     View(Camera& camera);
-
     ~View();
 
 private:
-
     View(const View& view);
-
     View& operator=(const View& view);
 
 public:
-
     // Accessors
-
     Camera* camera() { return camera_; }
-
     const Camera* camera() const { return camera_; }
-
     RayCaster* drrRenderer() { return drrRenderer_; }
-
     const RayCaster* drrRenderer() const { return drrRenderer_; }
-
     RadRenderer* radRenderer() { return radRenderer_; }
-
     const RadRenderer* radRenderer() const { return radRenderer_; }
-
     std::vector<Filter*>& drrFilters() { return drrFilters_; }
-
     const std::vector<Filter*>& drrFilters() const { return drrFilters_; }
-
     std::vector<Filter*>& radFilters() { return radFilters_; }
-
     const std::vector<Filter*>& radFilters() const { return radFilters_; }
 
     // Rendering functions
-
-    void renderRad(float* buffer, unsigned width, unsigned height);
-
+    void renderRad(Buffer* buffer, unsigned width, unsigned height);
     void renderRad(unsigned int pbo, unsigned width, unsigned height);
 
-    void renderDrr(float* buffer, unsigned width, unsigned height);
-
+    void renderDrr(Buffer* buffer, unsigned width, unsigned height);
     void renderDrr(unsigned int pbo, unsigned width, unsigned height);
 
-    void render(float* buffer, unsigned width, unsigned height);
-
+    void render(Buffer* buffer, unsigned width, unsigned height);
     void render(unsigned int pbo, unsigned width, unsigned height);
 
     bool drr_enabled;
-
     bool rad_enabled;
 
 private:
@@ -124,36 +104,29 @@ private:
     void init();
 
     void filter(const std::vector<Filter*>& filters,
-                const float* input,
-                float* output,
+                const Buffer* input,
+                Buffer* output,
                 unsigned width,
                 unsigned height);
 
-    Camera*              camera_;
-
-    RayCaster*           drrRenderer_;
-
-    RadRenderer*         radRenderer_;
+    Camera* camera_;
+    RayCaster* drrRenderer_;
+    RadRenderer* radRenderer_;
 
     std::vector<Filter*> drrFilters_;
 
     std::vector<Filter*> radFilters_;
 
-    unsigned               maxWidth_;
+    size_t maxWidth_;
+	size_t maxHeight_;
 
-    unsigned               maxHeight_;
-
-    float*               drrBuffer_;
-
-    float*               drrFilterBuffer_;
-
-    float*               radBuffer_;
-
-    float*               radFilterBuffer_;
-
-    float*               filterBuffer_;
+    Buffer* drrBuffer_;
+    Buffer* drrFilterBuffer_;
+    Buffer* radBuffer_;
+    Buffer* radFilterBuffer_;
+    Buffer* filterBuffer_;
 };
 
-} } //namespace xromm::cuda
+} } //namespace xromm::opencl
 
-#endif // XROMM_CUDA_VIEW_HPP
+#endif // XROMM_OPENCL_VIEW_HPP

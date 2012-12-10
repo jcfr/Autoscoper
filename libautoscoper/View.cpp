@@ -48,9 +48,6 @@
 
 #include <iostream>
 
-#include <cutil_inline.h>
-#include <cutil_gl_inline.h>
-
 #include "Camera.hpp"
 #include "Compositor_kernels.h"
 #include "Filter.hpp"
@@ -59,7 +56,7 @@
 
 using namespace std;
 
-namespace xromm { namespace cuda
+namespace xromm { namespace opencl
 {
 
 View::View(Camera& camera) : camera_(&camera),
@@ -91,11 +88,11 @@ View::~View()
         delete *iter;
     }
 
-    cutilSafeCall(cudaFree(filterBuffer_));
-    cutilSafeCall(cudaFree(drrBuffer_));
-    cutilSafeCall(cudaFree(drrFilterBuffer_));
-    cutilSafeCall(cudaFree(radBuffer_));
-    cutilSafeCall(cudaFree(radFilterBuffer_));
+    delete filterBuffer_;
+    delete drrBuffer_;
+    delete drrFilterBuffer_;
+    delete radBuffer_;
+    delete radFilterBuffer_;
 }
 
 void
@@ -132,18 +129,14 @@ View::renderRad(unsigned int pbo, unsigned width, unsigned height)
                                                        pboCudaResource));
 
     renderRad(radFilterBuffer_, width, height);
-    cuda::composite(radFilterBuffer_,
-                    radFilterBuffer_,
-                    buffer,
-                    width,
-                    height);
+    composite(radFilterBuffer_, radFilterBuffer_, buffer, width, height);
 
     cutilSafeCall(cudaGraphicsUnmapResources(1, &pboCudaResource, 0));
     cutilSafeCall(cudaGraphicsUnregisterResource(pboCudaResource));
 }
 
 void
-View::renderDrr(float* buffer, unsigned width, unsigned height)
+View::renderDrr(Buffer* buffer, unsigned width, unsigned height)
 {
     init();
 
@@ -187,7 +180,7 @@ View::renderDrr(unsigned int pbo, unsigned width, unsigned height)
 }
 
 void
-View::render(float* buffer, unsigned width, unsigned height)
+View::render(Buffer* buffer, unsigned width, unsigned height)
 {
     init();
 
@@ -205,11 +198,7 @@ View::render(float* buffer, unsigned width, unsigned height)
         cudaMemset(radFilterBuffer_,0,width*height*sizeof(float));
     }
 
-    cuda::composite(drrFilterBuffer_,
-                    radFilterBuffer_,
-                    buffer,
-                    width,
-                    height);
+    composite(drrFilterBuffer_, radFilterBuffer_, buffer, width, height);
 }
 
 void
@@ -236,16 +225,11 @@ void
 View::init()
 {
     if (!filterBuffer_) {
-        cutilSafeCall(cudaMalloc((void**)&filterBuffer_,
-                                 maxWidth_*maxHeight_*sizeof(float)));
-        cutilSafeCall(cudaMalloc((void**)&drrBuffer_,
-                                 maxWidth_*maxHeight_*sizeof(float)));
-        cutilSafeCall(cudaMalloc((void**)&drrFilterBuffer_,
-                                 maxWidth_*maxHeight_*sizeof(float)));
-        cutilSafeCall(cudaMalloc((void**)&radBuffer_,
-                                 maxWidth_*maxHeight_*sizeof(float)));
-        cutilSafeCall(cudaMalloc((void**)&radFilterBuffer_,
-                                 maxWidth_*maxHeight_*sizeof(float)));
+        filterBuffer_    = new Buffer(maxWidth_*maxHeight_*sizeof(float));
+        drrBuffer_       = new Buffer(maxWidth_*maxHeight_*sizeof(float));
+        drrFilterBuffer_ = new Buffer(maxWidth_*maxHeight_*sizeof(float));
+        radBuffer_       = new Buffer(maxWidth_*maxHeight_*sizeof(float));
+        radFilterBuffer_ = new Buffer(maxWidth_*maxHeight_*sizeof(float));
     }
 }
 
@@ -305,5 +289,5 @@ View::filter(const std::vector<Filter*>& filters,
     }
 }
 
+} } // namespace xromm::opencl
 
-} } // namespace xromm::cuda

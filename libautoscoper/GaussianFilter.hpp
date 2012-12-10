@@ -44,7 +44,7 @@
 
 #include <string>
 
-#include "Filter2.hpp"
+#include "Filter.hpp"
 #include "OpenCL.hpp"
 
 namespace xromm { namespace opencl {
@@ -52,28 +52,20 @@ namespace xromm { namespace opencl {
 class GaussianFilter : public Filter
 {
 public:
-
     GaussianFilter();
-    
-    virtual
-    ~GaussianFilter();
+    virtual ~GaussianFilter();
 
     // Apply the filter to the input image
-
     virtual void apply(const ReadBuffer* input,
                        const WriteBuffer* output,
                        int width,
                        int height);
 
-
     // Accessors and mutators
-
     float radius() const { return radius_; }
-
     void set_radius(float radius);
     
 private:
-
     float radius_;
 	ReadBuffer* gaussian_;
     int filterSize_;

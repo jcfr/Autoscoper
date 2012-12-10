@@ -44,7 +44,7 @@
 
 #include <string>
 
-#include "Filter2.hpp"
+#include "Filter.hpp"
 #include "OpenCL.hpp"
 
 namespace xromm { namespace opencl {
@@ -52,32 +52,24 @@ namespace xromm { namespace opencl {
 class ContrastFilter : public Filter
 {
 public:
-
     ContrastFilter();
 
     // Apply the filter to the input image
-
     virtual void apply(const ReadBuffer* input,
                        const WriteBuffer* output,
                        int width,
                        int height);
 
     // Accessors and mutators
-
     float alpha() const { return alpha_; }
-
     void set_alpha(float alpha) { alpha_ = alpha; }
 
     float beta() const { return beta_; }
-
     void set_beta(float beta) { beta_ = beta; }
 
 private:
-
     float alpha_;
-
     float beta_;
-
     int size_;
 };
 

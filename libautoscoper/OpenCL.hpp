@@ -20,12 +20,21 @@ class Kernel
 {
 public:
 	Kernel(cl_program program, const char* func);
+	void reset();
+
+	static size_t getLocalMemSize();
+	static size_t* getMaxItems();
+	static size_t getMaxGroups();
+
+	void grid1d(size_t X);
+	void block1d(size_t X);
 	void grid2d(size_t X, size_t Y);
 	void block2d(size_t X, size_t Y);
 	void launch();
 
 	void addBufferArg(const ReadBuffer* buf);
 	void addBufferArg(const WriteBuffer* buf);
+	void addLocalMem(size_t size);
 
 	template<typename T> void addArg(T& value)
 	{
@@ -52,32 +61,32 @@ protected:
 	bool compiled_;
 };
 
-class ReadBuffer
+class Buffer
+{
+public:
+	Buffer(size_t size);
+	~Buffer();
+	void read(const void* buf, size_t size=0) const;
+	void write(void* buf, size_t size=0) const;
+	friend class Kernel;
+protected:
+	size_t size_;
+	cl_mem buffer_;
+};
+
+class ReadBuffer : public Buffer
 {
 public:
 	ReadBuffer(size_t size);
-	~ReadBuffer();
-	void read(const void* buf) const;
 	void write(const WriteBuffer* buf) const;
-	friend class Kernel;
-protected:
-	size_t size_;
-	cl_mem buffer_;
 };
 
-class WriteBuffer
+class WriteBuffer : public Buffer
 {
 public:
 	WriteBuffer(size_t size);
-	~WriteBuffer();
-	void write(void* buf) const;
 	friend class ReadBuffer;
-	friend class Kernel;
-protected:
-	size_t size_;
-	cl_mem buffer_;
 };
-
 
 } } // namespace xromm::opencl
 

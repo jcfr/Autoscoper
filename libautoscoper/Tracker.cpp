@@ -122,8 +122,8 @@ namespace xromm {
 
 Tracker::Tracker()
     : volumeDescription_(0),
-      rendered_drr_(0),
-      rendered_rad_(0)
+      rendered_drr_(NULL),
+      rendered_rad_(NULL)
 {
     g_markerless = this;
 }
@@ -134,26 +134,26 @@ Tracker::~Tracker()
 
 void Tracker::init()
 {
-    cuda::cudaInitWrap();
+    //cuda::cudaInitWrap();
 }
 
 void Tracker::load(const Trial& trial)
 {
     trial_ = trial;
 
-    vector<cuda::View*>::iterator viewIter;
+    vector<opencl::View*>::iterator viewIter;
     for (viewIter = views_.begin(); viewIter != views_.end(); ++viewIter) {
         delete *viewIter;
     }
     views_.clear();
 
     delete volumeDescription_;
-    volumeDescription_ = new cuda::VolumeDescription(trial_.volumes.front());
+    volumeDescription_ = new opencl::VolumeDescription(trial_.volumes.front());
 
-    cuda::cudaMallocWrap(rendered_drr_,trial_.render_width*trial_.render_height*sizeof(float));
-    cuda::cudaMallocWrap(rendered_rad_,trial_.render_width*trial_.render_height*sizeof(float));
-
-    xromm::cuda::ncc_init(trial_.render_width*trial_.render_height);
+	size_t npixels = trial_.render_width*trial_.render_height;
+	rendered_drr_ = new opencl::Buffer(npixels*sizeof(float));
+	rendered_rad_ = new opencl::Buffer(npixels*sizeof(float));
+    opencl::ncc_init(npixels);
 
     for (unsigned int i = 0; i < trial_.cameras.size(); ++i) {
 
@@ -162,7 +162,7 @@ void Tracker::load(const Trial& trial)
 
         video.set_frame(trial_.frame);
 
-        cuda::View* view = new cuda::View(camera);
+        opencl::View* view = new opencl::View(camera);
 
         view->drrRenderer()->setVolume(*volumeDescription_);
 
@@ -345,8 +345,8 @@ double Tracker::minimizationFunc(const double* values) const
         views_[i]->renderRad(rendered_rad_,render_width,render_height);
 
         // Calculate the correlation
-        correlations[i] = 1.0-cuda::ncc(rendered_drr_,rendered_rad_,
-                                        render_width*render_height);
+        correlations[i] = 1.0-opencl::ncc(rendered_drr_,rendered_rad_,
+                                          render_width*render_height);
 
         //save_cuda_image(rendered_drr,render_width,render_height);
         //save_cuda_image(rendered_rad,render_width,render_height);

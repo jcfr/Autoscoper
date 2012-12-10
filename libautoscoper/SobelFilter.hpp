@@ -44,7 +44,7 @@
 
 #include <string>
 
-#include "Filter2.hpp"
+#include "Filter.hpp"
 #include "OpenCL.hpp"
 
 namespace xromm { namespace opencl {
@@ -52,34 +52,23 @@ namespace xromm { namespace opencl {
 class SobelFilter : public Filter
 {
 public:
-
     SobelFilter();
 
+    // Apply the filter to the input image
     virtual void apply(const ReadBuffer* input,
                        const WriteBuffer* output,
                        int width,
                        int height);
 
-    float getScale() const {
-        return scale_;
-    }
+    // Accessors and mutators
+    float scale() const { return scale_; }
+    void setScale(float scale) { scale_ = scale; }
 
-    void setScale(float scale) {
-        scale_ = scale;
-    }
-
-    float getBlend() const {
-        return blend_;
-    }
-
-    void setBlend(float blend) {
-        blend_ = blend;
-    }
+    float blend() const { return blend_; }
+    void setBlend(float blend) { blend_ = blend; }
 
 private:
-
     float scale_;
-
     float blend_;
 };
 

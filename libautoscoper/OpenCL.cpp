@@ -125,11 +125,58 @@ static void init()
 Kernel::Kernel(cl_program program, const char* func)
 {
 	init();
+	reset();
+	kernel_ = clCreateKernel(program, func, &err_);
+	CHECK_CL
+}
+
+void Kernel::reset()
+{
 	arg_index_ = 0;
 	grid_dim_ = 0;
 	block_dim_ = 0;
-	kernel_ = clCreateKernel(program, func, &err_);
+}
+
+size_t Kernel::getLocalMemSize()
+{
+	init();
+	size_t s;
+	err_ = clGetDeviceInfo(devices[0],
+					CL_DEVICE_LOCAL_MEM_SIZE, sizeof(size_t), &s, NULL);
 	CHECK_CL
+	return s;
+}
+
+size_t* Kernel::getMaxItems()
+{
+	init();
+	size_t* s = new size_t[3];
+	err_ = clGetDeviceInfo(devices[0],
+					CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(s), s, NULL);
+	CHECK_CL
+	return s;
+}
+
+size_t Kernel::getMaxGroups()
+{
+	init();
+	size_t s;
+	err_ = clGetDeviceInfo(devices[0],
+					CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t), &s, NULL);
+	CHECK_CL
+	return s;
+}
+
+void Kernel::grid1d(size_t X)
+{
+	if (grid_dim_ && (grid_dim_ != 1)) {
+		ERROR("Grid dimension was already set and is not 1");
+	} else if (!block_dim_) {
+		ERROR("Must set block dimension before grid");
+	} else {
+		grid_dim_ = 1;
+	}
+	grid_[0] = X * block_[0];
 }
 
 void Kernel::grid2d(size_t X, size_t Y)
@@ -143,6 +190,16 @@ void Kernel::grid2d(size_t X, size_t Y)
 	}
 	grid_[0] = X * block_[0];
 	grid_[1] = Y * block_[1];
+}
+
+void Kernel::block1d(size_t X)
+{
+	if (block_dim_ && (block_dim_ != 1)) {
+		ERROR("Block dimension was already set and is not 1");
+	} else {
+		block_dim_ = 1;
+	}
+	block_[0] = X;
 }
 
 void Kernel::block2d(size_t X, size_t Y)
@@ -166,6 +223,15 @@ void Kernel::addBufferArg(const WriteBuffer* buf)
 {
 	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), &buf->buffer_);
 	CHECK_CL
+}
+
+/* Dynamically allocated local memory can be added to the kernel by passing
+   a NULL argument with the size of the buffer, e.g.
+   http://stackoverflow.com/questions/8888718/how-to-declare-local-memory-in-opencl
+*/
+void Kernel::addLocalMem(size_t size)
+{
+	err_ = clSetKernelArg(kernel_, arg_index_++, size, NULL);
 }
 
 void Kernel::launch()
@@ -229,34 +295,19 @@ Kernel* Program::compile(const char* code, const char* func)
 	return new Kernel(program_, func);
 }
 
+Buffer::Buffer(size_t)
+{
+	init()
+	size_ = size;
+	buffer_ = clCreateBuffer(context_, CL_MEM_READ_WRITE, size, NULL, &err_);
+	CHECK_CL
+}
+
 ReadBuffer::ReadBuffer(size_t size)
 {
 	init();
 	size_ = size;
 	buffer_ = clCreateBuffer(context_, CL_MEM_READ_ONLY, size, NULL, &err_);
-	CHECK_CL
-}
-
-ReadBuffer::~ReadBuffer()
-{
-	err_ = clReleaseMemObject(buffer_);
-	CHECK_CL
-}
-
-void ReadBuffer::read(const void* buf) const
-{
-	err_ = clEnqueueWriteBuffer(
-			queue_, buffer_, CL_TRUE, 0, size_, buf, 0, NULL, NULL);
-	CHECK_CL
-}
-
-void ReadBuffer::write(const WriteBuffer* buf) const
-{
-	if (size_ != buf->size_) {
-		ERROR("Buffers have mismatching sizes");
-	}
-	err_ = clEnqueueCopyBuffer(
-			queue_, buf->buffer_, buffer_, 0, 0, size_, 0, NULL, NULL);
 	CHECK_CL
 }
 
@@ -268,16 +319,35 @@ WriteBuffer::WriteBuffer(size_t size)
 	CHECK_CL
 }
 
-WriteBuffer::~WriteBuffer()
+Buffer::~Buffer()
 {
 	err_ = clReleaseMemObject(buffer_);
 	CHECK_CL
 }
 
-void WriteBuffer::write(void* buf) const
+void Buffer::read(const void* buf, size_t size) const
 {
+	if (size == 0) size = size_;
+	err_ = clEnqueueWriteBuffer(
+			queue_, buffer_, CL_TRUE, 0, size, buf, 0, NULL, NULL);
+	CHECK_CL
+}
+
+void Buffer::write(void* buf, size_t size) const
+{
+	if (size == 0) size = size_;
 	err_ = clEnqueueReadBuffer(
-			queue_, buffer_, CL_TRUE, 0, size_, buf, 0, NULL, NULL);
+			queue_, buffer_, CL_TRUE, 0, size, buf, 0, NULL, NULL);
+	CHECK_CL
+}
+
+void ReadBuffer::write(const WriteBuffer* buf) const
+{
+	if (size_ != buf->size_) {
+		ERROR("Buffers have mismatching sizes");
+	}
+	err_ = clEnqueueCopyBuffer(
+			queue_, buf->buffer_, buffer_, 0, 0, size_, 0, NULL, NULL);
 	CHECK_CL
 }
 

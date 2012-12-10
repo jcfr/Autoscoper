@@ -37,7 +37,7 @@
 // ---------------------------------
 
 /// \file SobelFilter.cpp
-/// \author Andy Loomis
+/// \author Andy Loomis, Mark Howison
 //
 #include <sstream>
 #include "SobelFilter.hpp"
@@ -57,12 +57,12 @@ static int num_sobel_filters = 0;
 static Program sobel_program_;
 
 SobelFilter::SobelFilter() : Filter(XROMM_OPENCL_SOBEL_FILTER,""),
-                             scale_(1.0f),
-                             blend_(0.5f)
+							 scale_(1.0f),
+							 blend_(0.5f)
 {
-    stringstream name_stream;
-    name_stream << "SobelFilter" << (++num_sobel_filters);
-    name_ = name_stream.str();
+	stringstream name_stream;
+	name_stream << "SobelFilter" << (++num_sobel_filters);
+	name_ = name_stream.str();
 }
 
 void
@@ -74,15 +74,15 @@ SobelFilter::apply(
 {
 	Kernel* kernel = sobel_program_.compile(KERNEL_CODE, KERNEL_NAME);
 
-    kernel->block2d(KERNEL_X, KERNEL_Y);
-    kernel->grid2d((width-1)/KERNEL_X+1, (height-1)/KERNEL_Y+1);
+	kernel->block2d(KERNEL_X, KERNEL_Y);
+	kernel->grid2d((width-1)/KERNEL_X+1, (height-1)/KERNEL_Y+1);
 
-    kernel->addBufferArg(input);
-    kernel->addBufferArg(output);
-    kernel->addArg(width);
-    kernel->addArg(height);
-    kernel->addArg(scale_);
-    kernel->addArg(blend_);
+	kernel->addBufferArg(input);
+	kernel->addBufferArg(output);
+	kernel->addArg(width);
+	kernel->addArg(height);
+	kernel->addArg(scale_);
+	kernel->addArg(blend_);
 
 	kernel->launch();
 
