@@ -123,8 +123,8 @@ void GaussianFilter::set_radius(float radius)
 }
 
 void
-GaussianFilter::apply(const ReadBuffer* input,
-					  const WriteBuffer* output,
+GaussianFilter::apply(const Buffer* input,
+					  const Buffer* output,
 					  int width,
 					  int height)
 {

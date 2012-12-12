@@ -169,11 +169,7 @@ View::renderDrr(unsigned int pbo, unsigned width, unsigned height)
                                                        pboCudaResource));
 
     renderDrr(drrFilterBuffer_, width, height);
-    cuda::composite(drrFilterBuffer_,
-                    drrFilterBuffer_,
-                    buffer,
-                    width,
-                    height);
+    composite(drrFilterBuffer_, drrFilterBuffer_, buffer, width, height);
 
     cutilSafeCall(cudaGraphicsUnmapResources(1, &pboCudaResource, 0));
     cutilSafeCall(cudaGraphicsUnregisterResource(pboCudaResource));
@@ -235,24 +231,21 @@ View::init()
 
 void
 View::filter(const std::vector<Filter*>& filters,
-             const float* input,
-             float* output,
+             const Buffer* input,
+             const Buffer* output,
              unsigned width,
              unsigned height)
 {
     // If there are no filters simply copy the input to the output
     if (filters.size() == 0) {
-        cudaMemcpy(output,
-                   input,
-                   width*height*sizeof(float),
-                   cudaMemcpyDeviceToDevice);
+		input->copy(output, width*height*sizeof(float));
         return;
     }
 
     // Determine which buffer will be used first so that the final
     // filter will place the results into output.
-    float* buffer1;
-    float* buffer2;
+    Buffer* buffer1;
+    Buffer* buffer2;
     if (filters.size()%2) {
         buffer1 = output;
         buffer2 = filterBuffer_;
@@ -269,10 +262,7 @@ View::filter(const std::vector<Filter*>& filters,
         (*iter)->apply(input, buffer1, (int)width, (int)height);
     }
     else {
-        cudaMemcpy(buffer1,
-                   input,
-                   width*height*sizeof(float),
-                   cudaMemcpyDeviceToDevice);
+		input->copy(buffer1, width*height*sizeof(float));
     }
 
     for (iter += 1; iter != filters.end(); ++iter) {
@@ -280,10 +270,7 @@ View::filter(const std::vector<Filter*>& filters,
             (*iter)->apply(buffer1, buffer2, (int)width, (int)height);
         }
         else {
-            cudaMemcpy(buffer2,
-                       buffer1,
-                       width*height*sizeof(float),
-                       cudaMemcpyDeviceToDevice);
+			buffer1->copy(buffer2, width*height*sizeof(float));
         }
         swap(buffer1, buffer2);
     }

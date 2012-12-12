@@ -69,8 +69,8 @@ ContrastFilter::ContrastFilter()
 
 void
 ContrastFilter::apply(
-		const ReadBuffer* input,
-		const WriteBuffer* output,
+		const Buffer* input,
+		const Buffer* output,
 		int width,
 		int height)
 {

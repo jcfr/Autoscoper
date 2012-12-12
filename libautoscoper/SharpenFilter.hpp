@@ -56,8 +56,8 @@ public:
 	virtual ~SharpenFilter();
 
 	// Apply the filter to the input image
-    virtual void apply(const ReadBuffer* input,
-                       const WriteBuffer* output,
+    virtual void apply(const Buffer* input,
+                       const Buffer* output,
                        int width,
                        int height);
 

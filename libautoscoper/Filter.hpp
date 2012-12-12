@@ -37,7 +37,7 @@
 // ---------------------------------
 
 /// \file Filter.hpp
-/// \author Andy Loomis
+/// \author Andy Loomis, Mark Howison
 
 #ifndef XROMM_OPENCL_FILTER_HPP
 #define XROMM_OPENCL_FILTER_HPP
@@ -51,7 +51,6 @@ namespace xromm { namespace opencl {
 class Filter
 {
 public:
-
     enum
     {
         XROMM_OPENCL_CONTRAST_FILTER,
@@ -64,27 +63,24 @@ public:
     Filter(int type, const std::string& name)
         : type_(type), name_(name), enabled_(true) {}
 
-    virtual void apply(const ReadBuffer* input,
-                       const WriteBuffer* output,
+    // Apply the filter to the input image
+    virtual void apply(const Buffer* input,
+                       const Buffer* output,
                        int width,
                        int height) = 0;
 
+    // Accessors and mutators
     int type() const { return type_; }
 
     const std::string& name() const { return name_; }
-
     void set_name(const std::string& name) { name_ = name; }
 
     bool enabled() const { return enabled_; }
-
     void set_enabled(bool enabled) { enabled_ = enabled; }
 
 protected:
-
     int type_;
-
     std::string name_;
-
     bool enabled_;
 };
 

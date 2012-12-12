@@ -3,6 +3,14 @@
 #include <fstream>
 #include "OpenCL.hpp"
 
+/* OpenCL-OpenGL interoperability */
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#else
+#include <GL/glx.h>
+#endif
+
 #define TYPE CL_DEVICE_TYPE_GPU
 
 #define ERROR(msg) do{\
@@ -81,7 +89,7 @@ static const char* opencl_error(cl_int err)
     }
 }
 
-static void init()
+void init()
 {
 	if (!inited_)
 	{
@@ -105,6 +113,17 @@ static void init()
 		/* create context */
 
 		cl_context_properties prop[3] = { 
+#ifdef _WIN32
+			CL_GL_CONTEXT_KHR,
+			(cl_context_properties) wglGetCurrentContext(),
+			CL_WGL_HDC_KHR,
+			(cl_context_properties) wglGetCurrentDC(),
+#else
+			CL_GL_CONTEXT_KHR,
+			(cl_context_properties)glXGetCurrentContext(),
+			CL_GLX_DISPLAY_KHR,
+			(cl_context_properties)glXGetCurrentDisplay(),
+#endif
 			CL_CONTEXT_PLATFORM, 
 			(cl_context_properties)(platforms[0]),
 			0 };
@@ -341,13 +360,14 @@ void Buffer::write(void* buf, size_t size) const
 	CHECK_CL
 }
 
-void ReadBuffer::write(const WriteBuffer* buf) const
+void Buffer::write(const Buffer* buf, size_t size) const
 {
-	if (size_ != buf->size_) {
-		ERROR("Buffers have mismatching sizes");
+	if (size == 0) size = size_;
+	if (size > buf->size_) {
+		ERROR("Destination buffer does not have enough room!")
 	}
 	err_ = clEnqueueCopyBuffer(
-			queue_, buf->buffer_, buffer_, 0, 0, size_, 0, NULL, NULL);
+			queue_, buf->buffer_, buffer_, 0, 0, size, 0, NULL, NULL);
 	CHECK_CL
 }
 

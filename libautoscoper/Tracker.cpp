@@ -134,7 +134,7 @@ Tracker::~Tracker()
 
 void Tracker::init()
 {
-    //cuda::cudaInitWrap();
+	opencl::init();
 }
 
 void Tracker::load(const Trial& trial)

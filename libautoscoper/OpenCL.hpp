@@ -9,12 +9,14 @@
 #else
 #include <GL/gl.h>
 #include <CL/opencl.h>
-#endif // !__APPLE__
+#endif
+
+/* OpenCL-OpenGL interoperability */
+#pragma OPENCL EXTENSION cl_khr_gl_sharing enable
 
 namespace xromm { namespace opencl {
 
-class ReadBuffer;
-class WriteBuffer;
+void init();
 
 class Kernel
 {
@@ -68,6 +70,7 @@ public:
 	~Buffer();
 	void read(const void* buf, size_t size=0) const;
 	void write(void* buf, size_t size=0) const;
+	void copy(const Buffer* buf, size_t size=0) const;
 	friend class Kernel;
 protected:
 	size_t size_;
@@ -78,14 +81,12 @@ class ReadBuffer : public Buffer
 {
 public:
 	ReadBuffer(size_t size);
-	void write(const WriteBuffer* buf) const;
 };
 
 class WriteBuffer : public Buffer
 {
 public:
 	WriteBuffer(size_t size);
-	friend class ReadBuffer;
 };
 
 } } // namespace xromm::opencl
