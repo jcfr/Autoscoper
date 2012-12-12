@@ -36,20 +36,43 @@
 // THEIR USE OF THE SOFTWARE.
 // ----------------------------------
 
-/// \file Compositor_kernels.h
-/// \author Andy Loomis
+/// \file Compositor.cpp
+/// \author Andy Loomis, Mark Howison
 
-#ifndef XROMM_CUDA_COMPOSITOR_KERNELS_H
-#define XROMM_CUDA_COMPOSITOR_KERNELS_H
+#include "Compositor.h"
 
-namespace xromm { namespace cuda {
+static const char Compositor_cl[] =
+#include "Compositor.cl.h"
+
+static Program compositor_kernel_;
+
+#define BX 16
+#define BY 16
+
+namespace xromm { namespace opencl {
 
 void composite(float* src1,
                float* src2,
                float* dest,
                size_t width,
-               size_t height);
+               size_t height)
+{
+	Kernel* kernel = compositor_kernel_.compile(Compositor_cl, "composite_kernel");
 
-} } // namespace xromm::cuda
+    kernel->block2d(BX, BY);
+	kernel->grid2d((width+BX-1)/BX, (height+BY-1)/BY);
+    
+	kernel->addBufferArg(src1);
+	kernel->addBufferArg(src2);
+	kernel->addBufferArg(dest);
+	kernel->addArg(width);
+	kernel->addArg(height);
 
-#endif // XROMM_CUDA_COMPOSITOR_KERNELS_H
+	kernel->launch();
+
+	delete kernel;
+}
+
+} // namespace opencl
+
+} // namespace xromm
