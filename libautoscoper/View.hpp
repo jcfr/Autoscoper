@@ -88,13 +88,13 @@ public:
 
     // Rendering functions
     void renderRad(Buffer* buffer, unsigned width, unsigned height);
-    void renderRad(unsigned int pbo, unsigned width, unsigned height);
+    void renderRad(GLUint pbo, unsigned width, unsigned height);
 
     void renderDrr(Buffer* buffer, unsigned width, unsigned height);
-    void renderDrr(unsigned int pbo, unsigned width, unsigned height);
+    void renderDrr(GLUint pbo, unsigned width, unsigned height);
 
     void render(Buffer* buffer, unsigned width, unsigned height);
-    void render(unsigned int pbo, unsigned width, unsigned height);
+    void render(GLUint pbo, unsigned width, unsigned height);
 
     bool drr_enabled;
     bool rad_enabled;

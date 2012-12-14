@@ -115,24 +115,14 @@ View::renderRad(float* buffer, unsigned width, unsigned height)
 }
 
 void
-View::renderRad(unsigned int pbo, unsigned width, unsigned height)
+View::renderRad(GLuint pbo, unsigned width, unsigned height)
 {
-    struct cudaGraphicsResource* pboCudaResource;
-    cutilSafeCall(cudaGraphicsGLRegisterBuffer(&pboCudaResource, pbo,
-        cudaGraphicsMapFlagsWriteDiscard));
-
-    float* buffer = NULL;
-    size_t numOfBytes;
-    cutilSafeCall(cudaGraphicsMapResources(1, &pboCudaResource, 0));
-    cutilSafeCall(cudaGraphicsResourceGetMappedPointer((void**)&buffer,
-                                                       &numOfBytes,
-                                                       pboCudaResource));
+	GLBuffer* buffer = new GLBuffer(pbo, CL_MEM_WRITE_ONLY);
 
     renderRad(radFilterBuffer_, width, height);
     composite(radFilterBuffer_, radFilterBuffer_, buffer, width, height);
 
-    cutilSafeCall(cudaGraphicsUnmapResources(1, &pboCudaResource, 0));
-    cutilSafeCall(cudaGraphicsUnregisterResource(pboCudaResource));
+	delete buffer;
 }
 
 void
@@ -155,24 +145,14 @@ View::renderDrr(Buffer* buffer, unsigned width, unsigned height)
 }
 
 void
-View::renderDrr(unsigned int pbo, unsigned width, unsigned height)
+View::renderDrr(GLuint pbo, unsigned width, unsigned height)
 {
-    struct cudaGraphicsResource* pboCudaResource;
-    cutilSafeCall(cudaGraphicsGLRegisterBuffer(&pboCudaResource, pbo,
-        cudaGraphicsMapFlagsWriteDiscard));
-
-    float* buffer = NULL;
-    size_t numOfBytes;
-    cutilSafeCall(cudaGraphicsMapResources(1, &pboCudaResource, 0));
-    cutilSafeCall(cudaGraphicsResourceGetMappedPointer((void**)&buffer,
-                                                       &numOfBytes,
-                                                       pboCudaResource));
+	GLBuffer* buffer = new GLBuffer(pbo, CL_MEM_WRITE_ONLY);
 
     renderDrr(drrFilterBuffer_, width, height);
     composite(drrFilterBuffer_, drrFilterBuffer_, buffer, width, height);
 
-    cutilSafeCall(cudaGraphicsUnmapResources(1, &pboCudaResource, 0));
-    cutilSafeCall(cudaGraphicsUnregisterResource(pboCudaResource));
+	delete buffer;
 }
 
 void
@@ -198,23 +178,13 @@ View::render(Buffer* buffer, unsigned width, unsigned height)
 }
 
 void
-View::render(unsigned int pbo, unsigned width, unsigned height)
+View::render(GLuint pbo, unsigned width, unsigned height)
 {
-    struct cudaGraphicsResource* pboCudaResource;
-	cutilSafeCall(cudaGraphicsGLRegisterBuffer(&pboCudaResource, pbo,
-        cudaGraphicsMapFlagsWriteDiscard));
-
-    float* buffer = NULL;
-    size_t numOfBytes;
-    cutilSafeCall(cudaGraphicsMapResources(1, &pboCudaResource, 0));
-    cutilSafeCall(cudaGraphicsResourceGetMappedPointer((void**)&buffer,
-                                                       &numOfBytes,
-						                               pboCudaResource));
+	GLBuffer* buffer = new GLBuffer(pbo, CL_MEM_WRITE_ONLY);
 
     render(buffer, width, height);
 
-    cutilSafeCall(cudaGraphicsUnmapResources(1, &pboCudaResource, 0));
-	cutilSafeCall(cudaGraphicsUnregisterResource(pboCudaResource));
+	delete buffer;
 }
 
 void

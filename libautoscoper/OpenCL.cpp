@@ -232,14 +232,15 @@ void Kernel::block2d(size_t X, size_t Y)
 	block_[1] = Y;
 }
 
-void Kernel::addBufferArg(const ReadBuffer* buf)
+void Kernel::addBufferArg(const Buffer* buf)
 {
 	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), &buf->buffer_);
 	CHECK_CL
 }
 
-void Kernel::addBufferArg(const WriteBuffer* buf)
+void Kernel::addGLBufferArg(const GLBuffer* buf)
 {
+	gl_buffers.push_back(buf);
 	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), &buf->buffer_);
 	CHECK_CL
 }
@@ -264,10 +265,35 @@ void Kernel::launch()
 	} else if (block_dim_ != grid_dim_) {
 		ERROR("Block dimension doesn't match grid dimension");
 	}
+
+	unsigned n_gl_buffers = gl_buffers.size();
+	cl_mem* gl_mem = NULL;
+	if (n_gl_buffers)
+	{
+		gl_mem = new cl_mem[n_gl_buffers];
+
+		for (unsigned i=0; i<n_gl_buffers; i++) {
+			gl_mem[i] = gl_buffers[i]->buffer_;
+		}
+
+		err_ = clEnqueueAcquireGLObjects(
+				queue_, n_gl_buffers, gl_mem, 0, NULL, NULL);
+		CHECK_CL
+	}
+
 	err_ = clEnqueueNDRangeKernel(
 			queue_, kernel_, grid_dim_, NULL,
 			grid_, block_, 0, NULL, NULL);
 	CHECK_CL
+
+	if (n_gl_buffers)
+	{
+		err_ = clEnqueueReleaseGLObjects(
+				queue_, n_gl_buffers, gl_mem, 0, NULL, NULL);
+		CHECK_CL
+
+		delete gl_mem;
+	}
 }
 
 void Kernel::setArg(cl_uint i, size_t size, const void* value)
@@ -314,27 +340,12 @@ Kernel* Program::compile(const char* code, const char* func)
 	return new Kernel(program_, func);
 }
 
-Buffer::Buffer(size_t)
+Buffer::Buffer(size_t size, cl_mem_flags access)
 {
 	init()
 	size_ = size;
-	buffer_ = clCreateBuffer(context_, CL_MEM_READ_WRITE, size, NULL, &err_);
-	CHECK_CL
-}
-
-ReadBuffer::ReadBuffer(size_t size)
-{
-	init();
-	size_ = size;
-	buffer_ = clCreateBuffer(context_, CL_MEM_READ_ONLY, size, NULL, &err_);
-	CHECK_CL
-}
-
-WriteBuffer::WriteBuffer(size_t size)
-{
-	init();
-	size_ = size;
-	buffer_ = clCreateBuffer(context_, CL_MEM_WRITE_ONLY, size, NULL, &err_);
+	access_ = access;
+	buffer_ = clCreateBuffer(context_, access, size, NULL, &err_);
 	CHECK_CL
 }
 
@@ -368,6 +379,20 @@ void Buffer::write(const Buffer* buf, size_t size) const
 	}
 	err_ = clEnqueueCopyBuffer(
 			queue_, buf->buffer_, buffer_, 0, 0, size, 0, NULL, NULL);
+	CHECK_CL
+}
+
+GLBuffer::GLBuffer(GLUint pbo, cl_mem_flags access)
+{
+	init();
+	access_ = access;
+	buffer_ = clCreateFromGLBuffer(context_, access, pbo, err_);
+	CHECK_CL
+}
+
+GLBuffer::~GLBuffer()
+{
+	err_ = clReleaseMemObject(buffer_);
 	CHECK_CL
 }
 

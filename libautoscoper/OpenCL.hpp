@@ -18,6 +18,9 @@ namespace xromm { namespace opencl {
 
 void init();
 
+class Buffer;
+class GLBuffer;
+
 class Kernel
 {
 public:
@@ -34,8 +37,8 @@ public:
 	void block2d(size_t X, size_t Y);
 	void launch();
 
-	void addBufferArg(const ReadBuffer* buf);
-	void addBufferArg(const WriteBuffer* buf);
+	void addBufferArg(const Buffer* buf);
+	void addGLBufferArg(const GLBuffer* buf);
 	void addLocalMem(size_t size);
 
 	template<typename T> void addArg(T& value)
@@ -51,6 +54,7 @@ protected:
 	cl_uint grid_dim_;
 	size_t block_[3];
 	cl_uint block_dim_;
+	vector<GLBuffer*> gl_buffers;
 };
 
 class Program
@@ -66,7 +70,7 @@ protected:
 class Buffer
 {
 public:
-	Buffer(size_t size);
+	Buffer(size_t size, cl_mem_flags access=CL_MEM_READ_WRITE);
 	~Buffer();
 	void read(const void* buf, size_t size=0) const;
 	void write(void* buf, size_t size=0) const;
@@ -75,19 +79,19 @@ public:
 protected:
 	size_t size_;
 	cl_mem buffer_;
+	cl_mem_flags access_;
 };
 
-class ReadBuffer : public Buffer
+class GLBuffer
 {
 public:
-	ReadBuffer(size_t size);
-};
-
-class WriteBuffer : public Buffer
-{
-public:
-	WriteBuffer(size_t size);
-};
+	GLBuffer(GLuint pbo, cl_mem_flags access=CL_MEM_READ_WRITE);
+	~GLBuffer();
+	friend class Kernel;
+protected:
+	cl_mem buffer_;
+	cl_mem_flags access_;
+}
 
 } } // namespace xromm::opencl
 
