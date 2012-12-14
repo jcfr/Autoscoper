@@ -12,7 +12,6 @@
 #endif
 
 #define TYPE CL_DEVICE_TYPE_GPU
-#define MEMSET_BLOCKSIZE 128
 
 #define ERROR(msg) do{\
 	cerr << "Error at " << __FILE__ << ':' << __LINE__ \
@@ -389,29 +388,11 @@ void Buffer::copy(const Buffer* buf, size_t size) const
 	CHECK_CL
 }
 
-static char memset_cl[] =
-	"__kernel void memset_kernel(char val, __global char* buf, size_t size) { "
-	"size_t i = get_global_id(0); "
-	"if (i < size) buf[i] = val; }";
-
-static Program memset_program_;
-
-void Buffer::memset(char val, size_t size) const
+void Buffer::fill(const void* pattern, size_t pattern_size)
 {
-	if (size == 0) size = size_;
-
-	Kernel* kernel = memset_program_.compile(memset_cl, "memset_kernel");
-
-	kernel->block1d(MEMSET_BLOCKSIZE);
-	kernel->grid1d((size-1)/MEMSET_BLOCKSIZE + 1);
-
-	kernel->setArg(val);
-	kernel->setBufferArg(buf);
-	kernel->setArg(size);
-
-	kernel->launch();
-
-	delete kernel;
+	err_ = clEnqueueFillBuffer(
+			queue_, buf->buffer_, pattern, pattern_size, 0, size_, 0, NULL, NULL);
+	CHECK_CL
 }
 
 GLBuffer::GLBuffer(GLUint pbo, cl_mem_flags access)

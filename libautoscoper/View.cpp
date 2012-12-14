@@ -164,14 +164,14 @@ View::render(Buffer* buffer, unsigned width, unsigned height)
         renderDrr(drrFilterBuffer_, width, height);
     }
     else {
-		drrFilterBuffer_->memset(0x00);
+		drrFilterBuffer_->memset(0.f);
     }
 
     if (rad_enabled) {
         renderRad(radFilterBuffer_, width, height);
     }
     else {
-		radFilterBuffer_->memset(0x00);
+		radFilterBuffer_->memset(0.f);
     }
 
     composite(drrFilterBuffer_, radFilterBuffer_, buffer, width, height);

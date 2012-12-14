@@ -73,12 +73,21 @@ class Buffer
 public:
 	Buffer(size_t size, cl_mem_flags access=CL_MEM_READ_WRITE);
 	~Buffer();
+
 	void read(const void* buf, size_t size=0) const;
 	void write(void* buf, size_t size=0) const;
 	void copy(const Buffer* buf, size_t size=0) const;
-	void memset(char val, size_t size=0) const;
+
+	template<typename T> void memset(T& value)
+	{
+		fill((const void*)(&value), sizeof(T));
+	}
+
 	friend class Kernel;
+
 protected:
+	void fill(const void* pattern, size_t pattern_size);
+
 	size_t size_;
 	cl_mem buffer_;
 	cl_mem_flags access_;
@@ -101,9 +110,12 @@ public:
 	Image2D(size_t width, size_t height, cl_image_format *format,
 	        cl_mem_flags access=CL_MEM_READ_WRITE);
 	~Image2D();
+
 	void read(const void* buf) const;
 	void write(void* buf) const;
+
 	friend class Kernel;
+
 protected:
 	size_t size_[3];
 	cl_mem image_;
