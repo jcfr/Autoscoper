@@ -37,18 +37,18 @@
 // ---------------------------------
 
 /// \file VolumeDescription.hpp
-/// \author Andy Loomis
+/// \author Andy Loomis, Mark Howison
 
-#ifndef XROMM_CUDA_VOLUME_DESCRIPTION_HPP
-#define XROMM_CUDA_VOLUME_DESCRIPTION_HPP
+#ifndef XROMM_OPENCL_VOLUME_DESCRIPTION_HPP
+#define XROMM_OPENCL_VOLUME_DESCRIPTION_HPP
 
-struct cudaArray;
+include "OpenCL.hpp"
 
 namespace xromm {
 
 class Volume;
 
-namespace cuda {
+namespace opencl {
 
 // The VolumeDescription class provides an abstraction between the volume as it
 // is stored in CPU memory and the volume as it is stored in GPU memory. When it
@@ -58,46 +58,28 @@ namespace cuda {
 class VolumeDescription
 {
 public:
-
     VolumeDescription(const Volume& volume);
-
     ~VolumeDescription();
 
-private:
-
-    VolumeDescription(const VolumeDescription&);
-
-    VolumeDescription& operator=(const VolumeDescription&);
-
-public:
-
     const float* invScale() const { return invScale_; }
-
     const float* invTrans() const { return invTrans_; }
-
     const int* flips() const { return flips_; }
-
     float minValue() const { return minValue_; }
-
     float maxValue() const { return maxValue_; }
-
     const cudaArray* array() const { return array_; }
 
 private:
+    VolumeDescription(const VolumeDescription&);
+    VolumeDescription& operator=(const VolumeDescription&);
 
     float minValue_;
-
     float maxValue_;
-
     float invScale_[3];
-
     float invTrans_[3];
-
     int flips_[3];
-
-    cudaArray* array_;
+    Buffer* array_;
 };
 
-} } // namespace xromm::cuda
+} } // namespace xromm::opencl
 
-#endif // XROMM_CUDA_VOLUME_DESCRIPTION_HPP
+#endif // XROMM_OPENCL_VOLUME_DESCRIPTION_HPP

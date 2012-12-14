@@ -70,39 +70,23 @@ class Tracker
 public:
 
     Tracker();
-
     ~Tracker();
-
     void init();
-
     void load(const Trial& trial);
-
     Trial* trial() { return &trial_; }
-
-
     void optimize(int frame, int dframe, int repeats = 1);
-
     double minimizationFunc(const double* values) const;
-
-
     std::vector<opencl::View*>& views() { return views_; }
-
     const std::vector<opencl::View*>& views() const { return views_; }
-
     opencl::View* view(size_t i) { return views_.at(i); }
-
     const opencl::View* view(size_t i) const { return views_.at(i); }
 
 private:
-
     void calculate_viewport(const CoordFrame& modelview, double* viewport) const;
 
     Trial trial_;
-
     opencl::VolumeDescription* volumeDescription_;
-
     std::vector<opencl::View*> views_;
-
 	opencl::Buffer* rendered_drr_;
 	opencl::Buffer* rendered_rad_;
 };

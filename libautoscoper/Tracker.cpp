@@ -66,48 +66,6 @@
 
 using namespace std;
 
-/* XXX This is used only for debugging--probably should be deleted...
-#include <cutil_inline.h>
-void save_cuda_image(float* dev_image, int width, int height)
-{
-    static int count = 0;
-    float* host_image = new float[width*height];
-    unsigned char* uchar_image = new unsigned char[width*height];
-
-    // Copy the image to the host
-    cudaMemcpy(host_image,dev_image,width*height*sizeof(float),cudaMemcpyDeviceToHost);
-
-    // Copy to a char array
-    for (int i = 0; i < width*height; i++) {
-        uchar_image[i] = (int)(255*host_image[i]);
-    }
-
-    char filename[256];
-    sprintf(filename,"image_%02d.ppm",count++);
-    ofstream file(filename,ios::out);
-    file << "P2" << endl;
-    file << width << " " << height << endl;
-    file << 255 << endl;
-    for (int i = 0; i < width*height; i++) {
-        file << (int)uchar_image[i] << " ";
-    }
-
-    delete[] uchar_image;
-    delete[] host_image;
-}
-*/
-
-// XXX
-// These variables should probably live somewhere else.
-
-/*
-int maxWidth = 2048;
-int maxHeight = 2048;
-
-float* rendered_drr = 0;
-float* rendered_rad = 0;
-*/
-//struct cudaGraphicsResource *pboCudaResource;
 static bool firstRun = true;
 
 // XXX

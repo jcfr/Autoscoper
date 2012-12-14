@@ -12,6 +12,7 @@
 #endif
 
 #define TYPE CL_DEVICE_TYPE_GPU
+#define MEMSET_BLOCKSIZE 128
 
 #define ERROR(msg) do{\
 	cerr << "Error at " << __FILE__ << ':' << __LINE__ \
@@ -245,6 +246,12 @@ void Kernel::addGLBufferArg(const GLBuffer* buf)
 	CHECK_CL
 }
 
+void Kernel::addBufferArg(const Image2D* img)
+{
+	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), &img->image_);
+	CHECK_CL
+}
+
 /* Dynamically allocated local memory can be added to the kernel by passing
    a NULL argument with the size of the buffer, e.g.
    http://stackoverflow.com/questions/8888718/how-to-declare-local-memory-in-opencl
@@ -371,7 +378,7 @@ void Buffer::write(void* buf, size_t size) const
 	CHECK_CL
 }
 
-void Buffer::write(const Buffer* buf, size_t size) const
+void Buffer::copy(const Buffer* buf, size_t size) const
 {
 	if (size == 0) size = size_;
 	if (size > buf->size_) {
@@ -382,17 +389,77 @@ void Buffer::write(const Buffer* buf, size_t size) const
 	CHECK_CL
 }
 
+static char memset_cl[] =
+	"__kernel void memset_kernel(char val, __global char* buf, size_t size) { "
+	"size_t i = get_global_id(0); "
+	"if (i < size) buf[i] = val; }";
+
+static Program memset_program_;
+
+void Buffer::memset(char val, size_t size) const
+{
+	if (size == 0) size = size_;
+
+	Kernel* kernel = memset_program_.compile(memset_cl, "memset_kernel");
+
+	kernel->block1d(MEMSET_BLOCKSIZE);
+	kernel->grid1d((size-1)/MEMSET_BLOCKSIZE + 1);
+
+	kernel->setArg(val);
+	kernel->setBufferArg(buf);
+	kernel->setArg(size);
+
+	kernel->launch();
+
+	delete kernel;
+}
+
 GLBuffer::GLBuffer(GLUint pbo, cl_mem_flags access)
 {
 	init();
 	access_ = access;
-	buffer_ = clCreateFromGLBuffer(context_, access, pbo, err_);
+	buffer_ = clCreateFromGLBuffer(context_, access, pbo, &err_);
 	CHECK_CL
 }
 
 GLBuffer::~GLBuffer()
 {
 	err_ = clReleaseMemObject(buffer_);
+	CHECK_CL
+}
+
+Image2D::Image2D(size_t width, size_t height, cl_image_format *format,
+                 cl_mem_flags access)
+{
+	init()
+	size_[0] = width;
+	size_[1] = height;
+	size_[2] = 0;
+	access_ = access;
+	image_ = clCreateImage2D(
+					context_, access, format, width, height, 0, NULL, &err_);
+	CHECK_CL
+}
+
+Image2D::~Image2D()
+{
+	err_ = clReleaseMemObject(image_);
+	CHECK_CL
+}
+
+void Image2D::read(const void* buf) const
+{
+	size_t origin[3] = {0,0,0};
+	err_ = clEnqueueWriteImage(
+			queue_, image_, CL_TRUE, origin, size_, 0, 0, buf, 0, NULL, NULL);
+	CHECK_CL
+}
+
+void Image2D::write(void* buf) const
+{
+	size_t origin[3] = {0,0,0};
+	err_ = clEnqueueReadImage(
+			queue_, image_, CL_TRUE, origin, size_, 0, 0, buf, 0, NULL, NULL);
 	CHECK_CL
 }
 

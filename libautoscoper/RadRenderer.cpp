@@ -37,21 +37,16 @@
 // ---------------------------------
 
 /// \file RadRenderer.cpp
-/// \author Andy Loomis
+/// \author Andy Loomis, Mark Howison
 
 #include <iostream>
 #include <sstream>
 
-#include <cuda.h>
-#include <cutil_inline.h>
-#include <cutil_math.h>
-
 #include "RadRenderer.hpp"
-#include "RadRenderer_kernels.h"
 
 using namespace std;
 
-namespace xromm { namespace cuda
+namespace xromm { namespace opencl
 {
 
 static int num_rad_renderers = 0;
@@ -75,34 +70,27 @@ RadRenderer::RadRenderer() : array_(0)
 
 RadRenderer::~RadRenderer()
 {
-    cutilSafeCall(cudaFreeArray(array_));
+	if (image_) delete image_;
 }
 
 void
 RadRenderer::set_rad(const void* data, size_t width, size_t height, size_t bps)
 {
-    cutilSafeCall(cudaFreeArray(array_));
-
-    // Create a 2D array.
-    cudaChannelFormatDesc desc;
+	cl_image_format format;
+	format.image_channel_order = CL_R;
     switch (bps) {
-        case 8:  desc = cudaCreateChannelDesc<unsigned char>(); break;
-        case 16: desc = cudaCreateChannelDesc<unsigned short>(); break;
-        case 32: desc = cudaCreateChannelDesc<unsigned int>(); break;
+        case 8:  format.image_channel_data_type = CL_UNSIGNED_INT8; break;
+        case 16: format.image_channel_data_type = CL_UNSIGNED_INT16; break;
+        case 32: format.image_channel_data_type = CL_UNSIGNED_INT32; break;
         default:
             cerr << "RadRenderer::rad(): Unsupported bit depth "
                  << bps << endl;
             return;
     }
-    cutilSafeCall(cudaMallocArray(&array_, &desc, width, height));
 
-    // Copy data to 2D array.
-    cutilSafeCall(cudaMemcpyToArray(array_,
-                                    0,
-                                    0,
-                                    data,
-                                    width*height*(bps/8),
-                                    cudaMemcpyHostToDevice));
+	if (image_) delete image_;
+	image_ = new Image2D(width, height, &format, CL_MEM_READ_ONLY);
+	image_->read(data);
 }
 
 void
@@ -124,20 +112,30 @@ RadRenderer::set_viewport(float x, float y, float width, float height)
 }
 
 void
-RadRenderer::render(float* buffer, size_t width, size_t height) const
+RadRenderer::render(Buffer* buffer, size_t width, size_t height) const
 {
-    video_bind_array(array_);
-    video_render(buffer,
-                 (int)width,
-                 (int)height,
-                 image_plane_[0],
-                 image_plane_[1],
-                 image_plane_[2],
-                 image_plane_[3],
-                 viewport_[0],
-                 viewport_[1],
-                 viewport_[2],
-                 viewport_[3]);
+	Kernel* kernel = rad_renderer_program_.compile();
+
+	kernel->setBufferArg(buffer);
+	kernel->setArg(width);
+	kernel->setArg(height);
+	kernel->setArg(image_plane_[0]);
+	kernel->setArg(image_plane_[1]);
+	kernel->setArg(image_plane_[2]);
+	kernel->setArg(image_plane_[3]);
+	kernel->setArg(viewport_[0]);
+	kernel->setArg(viewport_[1]);
+	kernel->setArg(viewport_[2]);
+	kernel->setArg(viewport_[3]);
+	kernel->setImage2DArg(image_);
+
+    // Calculate the block and grid sizes.
+	kernel->block2d(BX, BY);
+    kernel->grid2d((width+BX-1)/BX, (height+BY-1)/BY);
+    
+	kernel->launch();
+
+	delete kernel;
 }
 
-} } // namespace xromm::cuda
+} } // namespace xromm::opencl

@@ -164,14 +164,14 @@ View::render(Buffer* buffer, unsigned width, unsigned height)
         renderDrr(drrFilterBuffer_, width, height);
     }
     else {
-        cudaMemset(drrFilterBuffer_,0,width*height*sizeof(float));
+		drrFilterBuffer_->memset(0x00);
     }
 
     if (rad_enabled) {
         renderRad(radFilterBuffer_, width, height);
     }
     else {
-        cudaMemset(radFilterBuffer_,0,width*height*sizeof(float));
+		radFilterBuffer_->memset(0x00);
     }
 
     composite(drrFilterBuffer_, radFilterBuffer_, buffer, width, height);

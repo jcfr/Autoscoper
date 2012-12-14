@@ -37,16 +37,12 @@
 // ---------------------------------
 
 /// \file VolumeDescription.cpp
-/// \author Andy Loomis
+/// \author Andy Loomis, Mark Howison
 
 #include <iostream>
 #include <limits>
 #include <fstream>
 #include <vector>
-
-#include <cuda.h>
-#include <cutil_inline.h>
-#include <cutil_math.h>
 
 #include "Volume.hpp"
 #include "VolumeDescription.hpp"
@@ -132,7 +128,7 @@ void copyVolume(T* dest,
     }
 }
 
-namespace xromm { namespace cuda
+namespace xromm { namespace opencl
 {
 
 VolumeDescription::VolumeDescription(const Volume& volume)
@@ -226,7 +222,8 @@ VolumeDescription::VolumeDescription(const Volume& volume)
     flips_[2] = volume.flipZ();
 
     // Free any previously allocated memory.
-    cutilSafeCall(cudaFreeArray(array_));
+	if (array_) delete array_;
+    //cutilSafeCall(cudaFreeArray(array_));
 
     // Create a 3D array.
     cudaChannelFormatDesc desc;
@@ -254,7 +251,8 @@ VolumeDescription::VolumeDescription(const Volume& volume)
 
 VolumeDescription::~VolumeDescription()
 {
+	if (array_) delete array_;
     cutilSafeCall(cudaFreeArray(array_));
 }
 
-} } // namespace xromm::cuda
+} } // namespace xromm::opencl

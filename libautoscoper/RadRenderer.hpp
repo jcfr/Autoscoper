@@ -37,58 +37,42 @@
 // ---------------------------------
 
 /// \file RadRenderer.hpp
-/// \author Andy Loomis
+/// \author Andy Loomis, Mark Howison
 
-#ifndef XROMM_CUDA_RAD_RENDERER_HPP
-#define XROMM_CUDA_RAD_RENDERER_HPP
+#ifndef XROMM_OPENCL_RAD_RENDERER_HPP
+#define XROMM_OPENCL_RAD_RENDERER_HPP
 
 #include <string>
 
-struct cudaArray;
+#include "OpenCL.hpp"
 
-namespace xromm { namespace cuda
+namespace xromm { namespace opencl
 {
 
 class RadRenderer
 {
 public:
-
     RadRenderer();
-
     ~RadRenderer();
 
-private:
-
-    RadRenderer(const RadRenderer& renderer);
-
-    RadRenderer& operator=(const RadRenderer& renderer);
-
-public:
-
     void set_rad(const void* data, size_t width, size_t height, size_t bps);
-
     void set_image_plane(float x, float y, float width, float height);
-
     void set_viewport(float x, float y, float width, float height); 
-
-    void render(float* buffer, size_t width, size_t height) const;
-
+    void render(Buffer* buffer, size_t width, size_t height) const;
     const std::string& getName() const { return name_; }
-
     void setName(const std::string& name) { name_ = name; }
 
 private:
+    RadRenderer(const RadRenderer& renderer);
+    RadRenderer& operator=(const RadRenderer& renderer);
 
-    cudaArray* array_;
-
+	Image2d* image_;
     float image_plane_[4];
-    
     float viewport_[4];
-
     std::string name_;
 };
 
-} } // namespace xromm::cuda
+} } // namespace xromm::opencl
 
-#endif // XROMM_CUDA_RAD_RENDERER_HPP
+#endif // XROMM_OPENCL_RAD_RENDERER_HPP
 
