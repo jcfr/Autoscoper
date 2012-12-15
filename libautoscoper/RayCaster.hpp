@@ -37,31 +37,28 @@
 // ---------------------------------
 
 /// \file RayCaster.hpp
-/// \author Andy Loomis
+/// \author Andy Loomis, Mark Howison
 
-#ifndef XROMM_CUDA_RAY_CASTER_HPP
-#define XROMM_CUDA_RAY_CASTER_HPP
+#ifndef XROMM_OPENCL_RAY_CASTER_HPP
+#define XROMM_OPENCL_RAY_CASTER_HPP
 
-#include "VolumeDescription.hpp"
 #include <string>
 
-namespace xromm { namespace cuda {
+#include "VolumeDescription.hpp"
+#include "OpenCL.hpp"
+
+namespace xromm { namespace opencl {
 
 class RayCaster
 {
 public:
-
     RayCaster();
-
     ~RayCaster();
 
     void setVolume(VolumeDescription& volume);
-
     void setInvModelView(const double* invModelView);
-
     void setViewport(float x, float y, float width, float height);
-
-    void render(float* buffer, size_t width, size_t height);
+    void render(const Buffer* buffer, size_t width, size_t height);
 
     float getSampleDistance() const {
         return sampleDistance_;
@@ -104,22 +101,16 @@ public:
     }
 
 private:
-
     VolumeDescription* volumeDescription_;
-
     float invModelView_[16];
-
     float viewport_[4];
-
+	Buffer* b_viewport_;
     float sampleDistance_;
-
     float rayIntensity_;
-
     float cutoff_;
-
     std::string name_;
 };
 
-} } // namespace xromm::cuda
+} } // namespace xromm::opencl
 
-#endif // XROMM_CUDA_RAY_CASTER_HPP
+#endif // XROMM_OPENCL_RAY_CASTER_HPP

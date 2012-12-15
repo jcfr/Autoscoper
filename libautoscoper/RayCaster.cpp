@@ -44,57 +44,22 @@
 #include <sstream>
 
 #include "RayCaster.hpp"
-#include "RayCaster_kernels.h"
 #include "VolumeDescription.hpp"
+#include "OpenCL.hpp"
 
 using namespace std;
+
+#define BX 16
+#define BY 16
+
+static char RayCaster_cl[] =
+#include "RayCaster.cl.h"
+
+static Program raycaster_program_;
 
 namespace xromm { namespace opencl {
 
 static int num_ray_casters = 0;
-
-static void volume_bind_array(const cudaArray* array)
-{
-    // Setup 3D texture.
-    tex.normalized = true;
-    tex.filterMode = cudaFilterModeLinear;
-    tex.addressMode[0] = cudaAddressModeClamp;
-    tex.addressMode[1] = cudaAddressModeClamp;
-    
-    // Bind array to 3D texture.
-    cutilSafeCall(cudaBindTextureToArray(tex, array));
-}
-
-void volume_viewport(float x, float y, float width, float height)
-{
-    float4 viewport = make_float4(x, y, width, height);
-    cutilSafeCall(cudaMemcpyToSymbol(d_viewport, &viewport, sizeof(float4)));
-}
-
-static void volume_render(float* buffer, size_t width, size_t height,
-                   const float* invModelView, float step, float intensity,
-                   float cutoff, const int* flip)
-{
-    // Copy the matrix to the device.
-    cutilSafeCall(cudaMemcpyToSymbol(d_invModelView,
-                                     invModelView,
-                                     sizeof(float3x4)));
-    
-    cutilSafeCall(cudaMemcpyToSymbol(d_flip,
-                                     flip,
-                                     sizeof(int3)));
-    
-    // Calculate the block and grid sizes.
-    dim3 blockDim(16, 16);
-    dim3 gridDim((width+blockDim.x-1)/blockDim.x,
-                 (height+blockDim.y-1)/blockDim.y);
-   
-    // Call the kernel
-    cuda_volume_render_kernel<<<gridDim, blockDim>>>(buffer, width, height,
-                                                step, intensity, cutoff);
-    cutilSafeCall(cudaThreadSynchronize());
-    cutilSafeCall(cudaGetLastError());
-}
 
 RayCaster::RayCaster() : volumeDescription_(0),
                          sampleDistance_(0.5f),
@@ -110,10 +75,14 @@ RayCaster::RayCaster() : volumeDescription_(0),
     viewport_[1] = -1.0f;
     viewport_[2] =  2.0f;
     viewport_[3] =  2.0f;
+
+	b_viewport_ = new Buffer(4*sizeof(float), CL_MEM_READ_ONLY);
+	b_viewport_->read(viewport_);
 }
 
 RayCaster::~RayCaster()
 {
+	if (b_viewport_) delete b_viewport_;
 }
 
 void
@@ -170,27 +139,48 @@ RayCaster::setViewport(float x, float y, float width, float height)
     viewport_[1] = y;
     viewport_[2] = width;
     viewport_[3] = height;
+
+	b_viewport_->read(viewport_);
 }
 
 void
-RayCaster::render(float* buffer, size_t width, size_t height)
+RayCaster::render(const Buffer* buffer, size_t width, size_t height)
 {
     if (!volumeDescription_) {
         cerr << "RayCaster: WARNING: No volume loaded. " << endl;
         return;
     }
   
-    //float aspectRatio = (float)width/(float)height;
-    volume_bind_array(volumeDescription_->array());
-    volume_viewport(viewport_[0], viewport_[1], viewport_[2], viewport_[3]);
-    volume_render(buffer,
-                  width,
-                  height,
-                  invModelView_, 
-                  sampleDistance_,
-                  rayIntensity_,
-                  cutoff_,
-                  volumeDescription_->flips());
+	Kernel* kernel = raycaster_program_.compile(
+									raycaster_cl, "volume_render_kernel");
+    
+	Buffer* b_flip = new Buffer(3*sizeof(int), CL_MEM_READ_ONLY);
+	b_flip.read(volumeDescription_->flips());
+
+	Buffer* b_imv = new Buffer(12*sizeof(float), CL_MEM_READ_ONLY);
+	b_imv.read(invModelView_);
+
+    // Calculate the block and grid sizes.
+	kernel->block2d(BX, BY);
+    kernel->grid2d((width+BX-1)/BX, (height+BY-1)/BY);
+   
+	kernel->addBufferArg(buffer);
+	kernel->addArg(width);
+	kernel->addArg(height);
+	kernel->addArg(sampleDistance_);
+	kernel->addArg(rayIntensity_);
+	kernel->addArg(cutuff_);
+	kernel->addBufferArg(b_viewport_);
+	kernel->addBufferArg(b_flip);
+	kernel->addBufferArg(b_imv);
+	kernel->addImage3DArg(image);
+
+	kernel->launch();
+
+	delete kernel;
+	delete b_imv;
+	delete b_flip;
+}
 }
 
 } } // namespace xromm::opencl

@@ -8,8 +8,9 @@ struct Ray
 __kernel
 void volume_render_kernel(__global float* buffer, size_t width, size_t height,
                           float step, float intensity, float cutoff,
-                          float4 viewport, int3 flip,
-                          __global __read_only float* imv,
+                          __constant float* viewport,
+                          __constant int* flip,
+                          __constant float* imv,
                           __read_only image3d_t image)
 {
 	const uint x = get_global_id(0);
@@ -24,8 +25,8 @@ void volume_render_kernel(__global float* buffer, size_t width, size_t height,
     }
 
     // Calculate the normalized device coordinates using the viewport
-    const float u = viewport.x+viewport.z*(x/(float)width);
-    const float v = viewport.y+viewport.w*(y/(float)height);
+    const float u = viewport[0]+viewport[2]*(x/(float)width);
+    const float v = viewport[1]+viewport[3]*(y/(float)height);
 
     // Determine the look ray in camera space.
     const float3 look = step*normalize((float4)(u, v, -2.0f));
@@ -73,9 +74,9 @@ void volume_render_kernel(__global float* buffer, size_t width, size_t height,
     while (t > near) {
         const float3 point = ray.origin+t*ray.direction;
         const float s = read_imagef(image, sample, (float3)(
-                (flip.x == 1 ? 1.0f-point.x : point.x),
-                (flip.y == 1 ? point.y      : 1.0f-point.y),
-                (flip.z == 1 ? point.z+1.0f : -point.z))).x;
+                (flip[0] == 1 ? 1.0f-point.x : point.x),
+                (flip[1] == 1 ? point.y      : 1.0f-point.y),
+                (flip[2] == 1 ? point.z+1.0f : -point.z))).x;
         density += s > cutoff ? step*sample : 0.0f;
         t -= 1.0f;
     }
