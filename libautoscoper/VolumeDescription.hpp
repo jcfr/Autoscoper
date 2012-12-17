@@ -66,7 +66,7 @@ public:
     const int* flips() const { return flips_; }
     float minValue() const { return minValue_; }
     float maxValue() const { return maxValue_; }
-    const cudaArray* array() const { return array_; }
+    const Image3D* image() const { return image_; }
 
 private:
     VolumeDescription(const VolumeDescription&);
@@ -77,7 +77,7 @@ private:
     float invScale_[3];
     float invTrans_[3];
     int flips_[3];
-    Buffer* array_;
+	Image3D* image_;
 };
 
 } } // namespace xromm::opencl

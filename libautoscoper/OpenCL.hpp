@@ -122,6 +122,23 @@ protected:
 	cl_mem_flags access_;
 };
 
+class Image3D
+{
+public:
+	Image3D(size_t width, size_t height, size_t depth, cl_image_format *format,
+	        cl_mem_flags access=CL_MEM_READ_WRITE);
+	~Image3D();
+
+	void read(const void* buf) const;
+	void write(void* buf) const;
+
+	friend class Kernel;
+
+protected:
+	size_t size_[3];
+	cl_mem image_;
+	cl_mem_flags access_;
+};
 
 } } // namespace xromm::opencl
 

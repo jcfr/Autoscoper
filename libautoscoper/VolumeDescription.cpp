@@ -132,7 +132,7 @@ namespace xromm { namespace opencl
 {
 
 VolumeDescription::VolumeDescription(const Volume& volume)
-    : minValue_(0.0f), maxValue_(1.0f), array_(0)
+    : minValue_(0.0f), maxValue_(1.0f), image_(0)
 {
     // Crop the volume
     int min[3], max[3];
@@ -222,37 +222,27 @@ VolumeDescription::VolumeDescription(const Volume& volume)
     flips_[2] = volume.flipZ();
 
     // Free any previously allocated memory.
-	if (array_) delete array_;
-    //cutilSafeCall(cudaFreeArray(array_));
+	if (image_) delete image_;
 
     // Create a 3D array.
-    cudaChannelFormatDesc desc;
-    switch(volume.bps()) {
-        case 8: desc = cudaCreateChannelDesc<unsigned char>(); break;
-        case 16: desc = cudaCreateChannelDesc<unsigned short>(); break;
+	cl_image_format format;
+	format.image_channel_order = CL_R;
+    switch (bps) {
+        case 8:  format.image_channel_data_type = CL_UNSIGNED_INT8; break;
+        case 16: format.image_channel_data_type = CL_UNSIGNED_INT16; break;
         default:
-                 cerr << "VolumeDescription(): Unsupported bit-depth "
-                                               << volume.bps() << endl;
-                 exit(0);
+            cerr << "VolumeDescription(): unsupported bit depth "
+                 << volume.bps() << endl;
+            return;
     }
-    cudaExtent extent = make_cudaExtent(dim[0], dim[1], dim[2]);
-    cutilSafeCall(cudaMalloc3DArray(&array_, &desc, extent));
 
-    // Copy volume to 3D array.
-    cudaMemcpy3DParms copyParams = {0};
-    copyParams.srcPtr = make_cudaPitchedPtr(&data[0],
-            extent.width*(volume.bps()/8),
-            extent.width, extent.height);
-    copyParams.dstArray = array_;
-    copyParams.extent = extent;
-    copyParams.kind = cudaMemcpyHostToDevice;
-    cutilSafeCall(cudaMemcpy3D(&copyParams));
+	image_ = new Image3D(dim[0], dim[1], dim[2], &format, CL_MEM_READ_ONLY);
+	image_->read(data);
 }
 
 VolumeDescription::~VolumeDescription()
 {
-	if (array_) delete array_;
-    cutilSafeCall(cudaFreeArray(array_));
+	if (image_) delete image_;
 }
 
 } } // namespace xromm::opencl

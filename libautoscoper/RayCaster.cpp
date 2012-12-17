@@ -181,7 +181,6 @@ RayCaster::render(const Buffer* buffer, size_t width, size_t height)
 	delete b_imv;
 	delete b_flip;
 }
-}
 
 } } // namespace xromm::opencl
 

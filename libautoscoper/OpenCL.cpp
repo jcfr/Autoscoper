@@ -444,4 +444,39 @@ void Image2D::write(void* buf) const
 	CHECK_CL
 }
 
+Image3D::Image3D(size_t width, size_t height, size_t depth,
+                 cl_image_format *format, cl_mem_flags access)
+{
+	init();
+	size_[0] = width;
+	size_[1] = height;
+	size_[2] = depth;
+	access_ = access;
+	image_ = clCreateImage3D(
+				context_, access, format, width, height, depth, 0, NULL, &err_);
+	CHECK_CL
+}
+
+Image3D::~Image3D()
+{
+	err_ = clReleaseMemObject(image_);
+	CHECK_CL
+}
+
+void Image3D::read(const void* buf) const
+{
+	size_t origin[3] = {0,0,0};
+	err_ = clEnqueueWriteImage(
+			queue_, image_, CL_TRUE, origin, size_, 0, 0, buf, 0, NULL, NULL);
+	CHECK_CL
+}
+
+void Image3D::write(void* buf) const
+{
+	size_t origin[3] = {0,0,0};
+	err_ = clEnqueueReadImage(
+			queue_, image_, CL_TRUE, origin, size_, 0, 0, buf, 0, NULL, NULL);
+	CHECK_CL
+}
+
 } } // namespace xromm::opencl
