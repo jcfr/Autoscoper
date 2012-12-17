@@ -89,7 +89,8 @@ RadRenderer::set_rad(const void* data, size_t width, size_t height, size_t bps)
     }
 
 	if (image_) delete image_;
-	image_ = new Image2D(width, height, &format, CL_MEM_READ_ONLY);
+	size_t dims[3] = { width, height, 0 };
+	image_ = new Image(dims, &format, CL_MEM_READ_ONLY);
 	image_->read(data);
 }
 
@@ -127,7 +128,7 @@ RadRenderer::render(Buffer* buffer, size_t width, size_t height) const
 	kernel->setArg(viewport_[1]);
 	kernel->setArg(viewport_[2]);
 	kernel->setArg(viewport_[3]);
-	kernel->setImage2DArg(image_);
+	kernel->setImageArg(image_);
 
     // Calculate the block and grid sizes.
 	kernel->block2d(BX, BY);

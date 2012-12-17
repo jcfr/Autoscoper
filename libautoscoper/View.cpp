@@ -49,7 +49,7 @@
 #include <iostream>
 
 #include "Camera.hpp"
-#include "Compositor_kernels.h"
+#include "Compositor.hpp"
 #include "Filter.hpp"
 #include "RayCaster.hpp"
 #include "RadRenderer.hpp"

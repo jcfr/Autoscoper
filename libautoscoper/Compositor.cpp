@@ -39,7 +39,7 @@
 /// \file Compositor.cpp
 /// \author Andy Loomis, Mark Howison
 
-#include "Compositor.h"
+#include "Compositor.hpp"
 
 static const char Compositor_cl[] =
 #include "Compositor.cl.h"

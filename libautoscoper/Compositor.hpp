@@ -42,7 +42,7 @@
 #ifndef XROMM_OPENCL_COMPOSITOR_H
 #define XROMM_OPENCL_COMPOSITOR_H
 
-#include "OpenCL.h"
+#include "OpenCL.hpp"
 
 namespace xromm { namespace opencl {
 
@@ -54,4 +54,4 @@ void composite(const Buffer* src1,
 
 } } // namespace xromm::opencl
 
-#endif // XROMM_OPENCL_COMPOSITOR_KERNELS_H
+#endif // XROMM_OPENCL_COMPOSITOR_H

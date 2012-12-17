@@ -20,6 +20,7 @@ void init();
 
 class Buffer;
 class GLBuffer;
+class Image;
 
 class Kernel
 {
@@ -39,7 +40,7 @@ public:
 
 	void addBufferArg(const Buffer* buf);
 	void addGLBufferArg(const GLBuffer* buf);
-	void addBufferArg(const Image2D* img);
+	void addImageArg(const Image* img);
 	void addLocalMem(size_t size);
 
 	template<typename T> void addArg(T& value)
@@ -104,12 +105,12 @@ protected:
 	cl_mem_flags access_;
 }
 
-class Image2D
+class Image
 {
 public:
-	Image2D(size_t width, size_t height, cl_image_format *format,
-	        cl_mem_flags access=CL_MEM_READ_WRITE);
-	~Image2D();
+	Image(size_t* dims, cl_image_format *format,
+	      cl_mem_flags access=CL_MEM_READ_WRITE);
+	~Image();
 
 	void read(const void* buf) const;
 	void write(void* buf) const;
@@ -117,25 +118,7 @@ public:
 	friend class Kernel;
 
 protected:
-	size_t size_[3];
-	cl_mem image_;
-	cl_mem_flags access_;
-};
-
-class Image3D
-{
-public:
-	Image3D(size_t width, size_t height, size_t depth, cl_image_format *format,
-	        cl_mem_flags access=CL_MEM_READ_WRITE);
-	~Image3D();
-
-	void read(const void* buf) const;
-	void write(void* buf) const;
-
-	friend class Kernel;
-
-protected:
-	size_t size_[3];
+	size_t dims_[3];
 	cl_mem image_;
 	cl_mem_flags access_;
 };

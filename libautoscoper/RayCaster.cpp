@@ -173,7 +173,7 @@ RayCaster::render(const Buffer* buffer, size_t width, size_t height)
 	kernel->addBufferArg(b_viewport_);
 	kernel->addBufferArg(b_flip);
 	kernel->addBufferArg(b_imv);
-	kernel->addImage3DArg(image);
+	kernel->addImageArg(volumeDescription_->image());
 
 	kernel->launch();
 

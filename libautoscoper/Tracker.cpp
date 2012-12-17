@@ -53,9 +53,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#include "CudaWrap.hpp"
-#include "Compositor_kernels.h"
-#include "Ncc_kernels.h"
+#include "Ncc.hpp"
 #include "VolumeDescription.hpp"
 #include "Video.hpp"
 #include "View.hpp"

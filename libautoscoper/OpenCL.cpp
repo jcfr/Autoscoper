@@ -245,7 +245,7 @@ void Kernel::addGLBufferArg(const GLBuffer* buf)
 	CHECK_CL
 }
 
-void Kernel::addBufferArg(const Image2D* img)
+void Kernel::addImageArg(const Image* img)
 {
 	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), &img->image_);
 	CHECK_CL
@@ -409,61 +409,30 @@ GLBuffer::~GLBuffer()
 	CHECK_CL
 }
 
-Image2D::Image2D(size_t width, size_t height, cl_image_format *format,
-                 cl_mem_flags access)
-{
-	init()
-	size_[0] = width;
-	size_[1] = height;
-	size_[2] = 0;
-	access_ = access;
-	image_ = clCreateImage2D(
-					context_, access, format, width, height, 0, NULL, &err_);
-	CHECK_CL
-}
-
-Image2D::~Image2D()
-{
-	err_ = clReleaseMemObject(image_);
-	CHECK_CL
-}
-
-void Image2D::read(const void* buf) const
-{
-	size_t origin[3] = {0,0,0};
-	err_ = clEnqueueWriteImage(
-			queue_, image_, CL_TRUE, origin, size_, 0, 0, buf, 0, NULL, NULL);
-	CHECK_CL
-}
-
-void Image2D::write(void* buf) const
-{
-	size_t origin[3] = {0,0,0};
-	err_ = clEnqueueReadImage(
-			queue_, image_, CL_TRUE, origin, size_, 0, 0, buf, 0, NULL, NULL);
-	CHECK_CL
-}
-
-Image3D::Image3D(size_t width, size_t height, size_t depth,
-                 cl_image_format *format, cl_mem_flags access)
+Image::Image(size_t* dims, cl_image_format *format, cl_mem_flags access)
 {
 	init();
-	size_[0] = width;
-	size_[1] = height;
-	size_[2] = depth;
+	dims_[0] = dims[0];
+	dims_[1] = dims[1];
+	dims_[2] = dims[2];
 	access_ = access;
-	image_ = clCreateImage3D(
-				context_, access, format, width, height, depth, 0, NULL, &err_);
+	if (dims[2] == 0) {
+		image_ = clCreateImage2D(context_,
+					access, format, dims[0], dims[1], 0, NULL, &err_);
+	} else {
+		image_ = clCreateImage3D(context_,
+					access, format, dims[0], dims[1], dims[2], 0, NULL, &err_);
+	}
 	CHECK_CL
 }
 
-Image3D::~Image3D()
+Image::~Image()
 {
 	err_ = clReleaseMemObject(image_);
 	CHECK_CL
 }
 
-void Image3D::read(const void* buf) const
+void Image::read(const void* buf) const
 {
 	size_t origin[3] = {0,0,0};
 	err_ = clEnqueueWriteImage(
@@ -471,7 +440,7 @@ void Image3D::read(const void* buf) const
 	CHECK_CL
 }
 
-void Image3D::write(void* buf) const
+void Image::write(void* buf) const
 {
 	size_t origin[3] = {0,0,0};
 	err_ = clEnqueueReadImage(
