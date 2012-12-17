@@ -64,8 +64,8 @@ static unsigned char* output;
 static float* fInput;
 static float* fOutput;
 
-static opencl::ReadBuffer* clInput;
-static opencl::WriteBuffer* clOutput;
+static opencl::Buffer* clInput;
+static opencl::Buffer* clOutput;
 
 void writeOutput(const char* name)
 {
@@ -172,8 +172,8 @@ int main(int argc, char** argv)
 	}
 	fclose(inputLog);
 
-	clInput = new opencl::ReadBuffer(npixels*sizeof(float));
-	clOutput = new opencl::WriteBuffer(npixels*sizeof(float));
+	clInput = new opencl::Buffer(npixels*sizeof(float), CL_MEM_READ_ONLY);
+	clOutput = new opencl::Buffer(npixels*sizeof(float), CL_MEM_WRITE_ONLY);
 
 	testSobel();
 	testContrast();
