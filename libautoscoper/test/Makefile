@@ -1,4 +1,4 @@
-TARGETS = filters render
+TARGETS = filters
 
 CXX = g++
 CXXFLAGS = -Wall -g -O2 -fPIC
@@ -19,9 +19,6 @@ all:	$(TARGETS)
 
 filters: filters.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) filters.cpp -o $@ $(LIBS)
-
-render: render.cpp
-	$(CXX) $(CXXFLAGS) $(INCLUDES) render.cpp -o $@ $(LIBS)
 
 clean:
 	rm -f $(TARGETS) $(OBJDIR)/*.o
