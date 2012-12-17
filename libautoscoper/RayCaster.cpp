@@ -45,19 +45,18 @@
 
 #include "RayCaster.hpp"
 #include "VolumeDescription.hpp"
-#include "OpenCL.hpp"
-
-using namespace std;
 
 #define BX 16
 #define BY 16
 
-static char RayCaster_cl[] =
+using namespace std;
+
+namespace xromm { namespace opencl {
+
+static const char RayCaster_cl[] =
 #include "RayCaster.cl.h"
 
 static Program raycaster_program_;
-
-namespace xromm { namespace opencl {
 
 static int num_ray_casters = 0;
 
@@ -152,13 +151,13 @@ RayCaster::render(const Buffer* buffer, size_t width, size_t height)
     }
   
 	Kernel* kernel = raycaster_program_.compile(
-									raycaster_cl, "volume_render_kernel");
+									RayCaster_cl, "volume_render_kernel");
     
 	Buffer* b_flip = new Buffer(3*sizeof(int), CL_MEM_READ_ONLY);
-	b_flip.read(volumeDescription_->flips());
+	b_flip->read(volumeDescription_->flips());
 
 	Buffer* b_imv = new Buffer(12*sizeof(float), CL_MEM_READ_ONLY);
-	b_imv.read(invModelView_);
+	b_imv->read(invModelView_);
 
     // Calculate the block and grid sizes.
 	kernel->block2d(BX, BY);
@@ -169,7 +168,7 @@ RayCaster::render(const Buffer* buffer, size_t width, size_t height)
 	kernel->addArg(height);
 	kernel->addArg(sampleDistance_);
 	kernel->addArg(rayIntensity_);
-	kernel->addArg(cutuff_);
+	kernel->addArg(cutoff_);
 	kernel->addBufferArg(b_viewport_);
 	kernel->addBufferArg(b_flip);
 	kernel->addBufferArg(b_imv);

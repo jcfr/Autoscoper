@@ -87,14 +87,14 @@ public:
     const std::vector<Filter*>& radFilters() const { return radFilters_; }
 
     // Rendering functions
-    void renderRad(Buffer* buffer, unsigned width, unsigned height);
-    void renderRad(GLUint pbo, unsigned width, unsigned height);
+    void renderRad(const Buffer* buffer, unsigned width, unsigned height);
+    void renderRad(GLuint pbo, unsigned width, unsigned height);
 
-    void renderDrr(Buffer* buffer, unsigned width, unsigned height);
-    void renderDrr(GLUint pbo, unsigned width, unsigned height);
+    void renderDrr(const Buffer* buffer, unsigned width, unsigned height);
+    void renderDrr(GLuint pbo, unsigned width, unsigned height);
 
-    void render(Buffer* buffer, unsigned width, unsigned height);
-    void render(GLUint pbo, unsigned width, unsigned height);
+    void render(const GLBuffer* buffer, unsigned width, unsigned height);
+    void render(GLuint pbo, unsigned width, unsigned height);
 
     bool drr_enabled;
     bool rad_enabled;
@@ -105,7 +105,7 @@ private:
 
     void filter(const std::vector<Filter*>& filters,
                 const Buffer* input,
-                Buffer* output,
+                const Buffer* output,
                 unsigned width,
                 unsigned height);
 
@@ -114,7 +114,6 @@ private:
     RadRenderer* radRenderer_;
 
     std::vector<Filter*> drrFilters_;
-
     std::vector<Filter*> radFilters_;
 
     size_t maxWidth_;

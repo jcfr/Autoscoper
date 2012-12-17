@@ -2,17 +2,15 @@
 #define XROMM_OPENCL_HPP
 
 #include <iostream>
+#include <vector>
 
 #if defined(__APPLE__) || defined(__MACOSX)
-#include <OpenGL/OpenGL.h>
 #include <OpenCL/opencl.h>
+#include <OpenGL/OpenGL.h>
 #else
-#include <GL/gl.h>
 #include <CL/opencl.h>
+#include <GL/gl.h>
 #endif
-
-/* OpenCL-OpenGL interoperability */
-#pragma OPENCL EXTENSION cl_khr_gl_sharing enable
 
 namespace xromm { namespace opencl {
 
@@ -56,7 +54,7 @@ protected:
 	cl_uint grid_dim_;
 	size_t block_[3];
 	cl_uint block_dim_;
-	vector<GLBuffer*> gl_buffers;
+	std::vector<const GLBuffer*> gl_buffers;
 };
 
 class Program
@@ -77,7 +75,13 @@ public:
 
 	void read(const void* buf, size_t size=0) const;
 	void write(void* buf, size_t size=0) const;
-	void copy(const Buffer* buf, size_t size=0) const;
+	void copy(const Buffer* dst, size_t size=0) const;
+
+	template<typename T> void memset(T value)
+	{
+		T tmp = value;
+		fill((const void*)(&tmp), sizeof(T));
+	}
 
 	template<typename T> void memset(T& value)
 	{
@@ -103,7 +107,7 @@ public:
 protected:
 	cl_mem buffer_;
 	cl_mem_flags access_;
-}
+};
 
 class Image
 {

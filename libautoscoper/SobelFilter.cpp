@@ -44,17 +44,17 @@
 
 using namespace std;
 
+#define BX 16
+#define BY 16
+
 namespace xromm { namespace opencl {
 
-#define KERNEL_X 16
-#define KERNEL_Y 16
-#define KERNEL_CODE SobelFilter_cl
-#define KERNEL_NAME "sobel_filter_kernel"
-static const char KERNEL_CODE[] =
+static const char SobelFilter_cl[] = 
 #include "SobelFilter.cl.h"
 
-static int num_sobel_filters = 0;
 static Program sobel_program_;
+
+static int num_sobel_filters = 0;
 
 SobelFilter::SobelFilter() : Filter(XROMM_OPENCL_SOBEL_FILTER,""),
 							 scale_(1.0f),
@@ -67,15 +67,16 @@ SobelFilter::SobelFilter() : Filter(XROMM_OPENCL_SOBEL_FILTER,""),
 
 void
 SobelFilter::apply(
-		const ReadBuffer* input,
-		const WriteBuffer* output,
+		const Buffer* input,
+		const Buffer* output,
 		int width,
 		int height)
 {
-	Kernel* kernel = sobel_program_.compile(KERNEL_CODE, KERNEL_NAME);
+	Kernel* kernel = sobel_program_.compile(
+									SobelFilter_cl, "sobel_filter_kernel");
 
-	kernel->block2d(KERNEL_X, KERNEL_Y);
-	kernel->grid2d((width-1)/KERNEL_X+1, (height-1)/KERNEL_Y+1);
+	kernel->block2d(BX, BY);
+	kernel->grid2d((width-1)/BX+1, (height-1)/BY+1);
 
 	kernel->addBufferArg(input);
 	kernel->addBufferArg(output);

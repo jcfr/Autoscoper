@@ -4,7 +4,8 @@
 #include "OpenCL.hpp"
 
 /* OpenCL-OpenGL interoperability */
-#ifdef _WIN32
+#if defined(__APPLE__) || defined(__MACOSX)
+#elif defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #else
@@ -112,20 +113,37 @@ void init()
 
 		/* create context */
 
+#if defined(__APPLE__) || defined(__MACOSX)
+		CGLContextObj glContext = CGLGetCurrentContext();
+		CGLShareGroupObj shareGroup = CGLGetShareGroup(glContext);
+#endif
+
+#if defined(__APPLE__) || defined(__MACOSX)
+#pragma OPENCL EXTENSION cl_APPLE_gl_sharing : enable
 		cl_context_properties prop[3] = { 
-#ifdef _WIN32
+			CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
+			(cl_context_properties) shareGroup,
+/* omit the CL_CONTEXT_PLATFORM on OS X according to:
+   http://stackoverflow.com/questions/10756993/getting-current-opengl-context-on-os-x */
+#elif defined(_WIN32)
+#pragma OPENCL EXTENSION cl_khr_gl_sharing : enable
+		cl_context_properties prop[7] = { 
 			CL_GL_CONTEXT_KHR,
 			(cl_context_properties) wglGetCurrentContext(),
 			CL_WGL_HDC_KHR,
 			(cl_context_properties) wglGetCurrentDC(),
+			CL_CONTEXT_PLATFORM, 
+			(cl_context_properties)(platforms[0]),
 #else
+#pragma OPENCL EXTENSION cl_khr_gl_sharing : enable
+		cl_context_properties prop[7] = { 
 			CL_GL_CONTEXT_KHR,
 			(cl_context_properties)glXGetCurrentContext(),
 			CL_GLX_DISPLAY_KHR,
 			(cl_context_properties)glXGetCurrentDisplay(),
-#endif
 			CL_CONTEXT_PLATFORM, 
 			(cl_context_properties)(platforms[0]),
+#endif
 			0 };
 
 		context_ = clCreateContext(prop, 1, devices_, NULL, NULL, &err_);
@@ -160,7 +178,7 @@ size_t Kernel::getLocalMemSize()
 {
 	init();
 	size_t s;
-	err_ = clGetDeviceInfo(devices[0],
+	err_ = clGetDeviceInfo(devices_[0],
 					CL_DEVICE_LOCAL_MEM_SIZE, sizeof(size_t), &s, NULL);
 	CHECK_CL
 	return s;
@@ -170,7 +188,7 @@ size_t* Kernel::getMaxItems()
 {
 	init();
 	size_t* s = new size_t[3];
-	err_ = clGetDeviceInfo(devices[0],
+	err_ = clGetDeviceInfo(devices_[0],
 					CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(s), s, NULL);
 	CHECK_CL
 	return s;
@@ -180,7 +198,7 @@ size_t Kernel::getMaxGroups()
 {
 	init();
 	size_t s;
-	err_ = clGetDeviceInfo(devices[0],
+	err_ = clGetDeviceInfo(devices_[0],
 					CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t), &s, NULL);
 	CHECK_CL
 	return s;
@@ -234,20 +252,20 @@ void Kernel::block2d(size_t X, size_t Y)
 
 void Kernel::addBufferArg(const Buffer* buf)
 {
-	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), &buf->buffer_);
+	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), buf->buffer_);
 	CHECK_CL
 }
 
 void Kernel::addGLBufferArg(const GLBuffer* buf)
 {
 	gl_buffers.push_back(buf);
-	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), &buf->buffer_);
+	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), buf->buffer_);
 	CHECK_CL
 }
 
 void Kernel::addImageArg(const Image* img)
 {
-	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), &img->image_);
+	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), img->image_);
 	CHECK_CL
 }
 
@@ -348,7 +366,7 @@ Kernel* Program::compile(const char* code, const char* func)
 
 Buffer::Buffer(size_t size, cl_mem_flags access)
 {
-	init()
+	init();
 	size_ = size;
 	access_ = access;
 	buffer_ = clCreateBuffer(context_, access, size, NULL, &err_);
@@ -377,25 +395,24 @@ void Buffer::write(void* buf, size_t size) const
 	CHECK_CL
 }
 
-void Buffer::copy(const Buffer* buf, size_t size) const
+void Buffer::copy(const Buffer* dst, size_t size) const
 {
 	if (size == 0) size = size_;
-	if (size > buf->size_) {
-		ERROR("Destination buffer does not have enough room!")
-	}
+	if (size > dst->size_)
+		ERROR("Destination buffer does not have enough room!");
 	err_ = clEnqueueCopyBuffer(
-			queue_, buf->buffer_, buffer_, 0, 0, size, 0, NULL, NULL);
+			queue_, dst->buffer_, buffer_, 0, 0, size, 0, NULL, NULL);
 	CHECK_CL
 }
 
 void Buffer::fill(const void* pattern, size_t pattern_size)
 {
 	err_ = clEnqueueFillBuffer(
-			queue_, buf->buffer_, pattern, pattern_size, 0, size_, 0, NULL, NULL);
+			queue_, buffer_, pattern, pattern_size, 0, size_, 0, NULL, NULL);
 	CHECK_CL
 }
 
-GLBuffer::GLBuffer(GLUint pbo, cl_mem_flags access)
+GLBuffer::GLBuffer(GLuint pbo, cl_mem_flags access)
 {
 	init();
 	access_ = access;
@@ -416,13 +433,28 @@ Image::Image(size_t* dims, cl_image_format *format, cl_mem_flags access)
 	dims_[1] = dims[1];
 	dims_[2] = dims[2];
 	access_ = access;
+
+	if (dims[0] == 0 || dims[1] == 0)
+		ERROR("Image object must have at least two non-zero dimensions");
+
+	cl_image_desc desc;
+
 	if (dims[2] == 0) {
-		image_ = clCreateImage2D(context_,
-					access, format, dims[0], dims[1], 0, NULL, &err_);
+		desc.image_type  = CL_MEM_OBJECT_IMAGE2D;
 	} else {
-		image_ = clCreateImage3D(context_,
-					access, format, dims[0], dims[1], dims[2], 0, NULL, &err_);
+		desc.image_type  = CL_MEM_OBJECT_IMAGE3D;
 	}
+
+	desc.image_width       = dims[0];
+	desc.image_height      = dims[1];
+	desc.image_depth       = dims[2];
+	desc.image_row_pitch   = 0;
+	desc.image_slice_pitch = 0;
+//	desc.num_mip_level     = 0;
+	desc.num_samples       = 0;
+	desc.buffer            = NULL;
+
+	image_ = clCreateImage(context_, access, format, &desc, NULL, &err_);
 	CHECK_CL
 }
 
@@ -436,7 +468,7 @@ void Image::read(const void* buf) const
 {
 	size_t origin[3] = {0,0,0};
 	err_ = clEnqueueWriteImage(
-			queue_, image_, CL_TRUE, origin, size_, 0, 0, buf, 0, NULL, NULL);
+			queue_, image_, CL_TRUE, origin, dims_, 0, 0, buf, 0, NULL, NULL);
 	CHECK_CL
 }
 
@@ -444,7 +476,7 @@ void Image::write(void* buf) const
 {
 	size_t origin[3] = {0,0,0};
 	err_ = clEnqueueReadImage(
-			queue_, image_, CL_TRUE, origin, size_, 0, 0, buf, 0, NULL, NULL);
+			queue_, image_, CL_TRUE, origin, dims_, 0, 0, buf, 0, NULL, NULL);
 	CHECK_CL
 }
 

@@ -42,8 +42,11 @@
 #include "Ncc.hpp"
 
 #include <iostream>
+#include <cmath>
 
 using namespace std;
+
+namespace xromm { namespace opencl {
 
 //////// Global variables ////////
 
@@ -67,11 +70,13 @@ static Program ncc_sum_kernel_;
 
 //////// Helper functions ////////
 
-void get_max_threads()
+static void get_max_threads()
 {
 	if (!g_maxNumThreads)
 	{
-		g_maxNumThreads = Kernel::getMaxItems();
+		size_t* max_items = Kernel::getMaxItems();
+		g_maxNumThreads = max_items[0];
+		delete max_items;
 
 		/* reduce threads to fit in local mem */
 		size_t maxLocalMem = Kernel::getLocalMemSize();
@@ -81,7 +86,7 @@ void get_max_threads()
 	}
 }
 
-void get_device_params(size_t n,
+static void get_device_params(size_t n,
 					   size_t& numThreads,
 					   size_t& numBlocks,
 					   size_t& sizeMem)
@@ -126,18 +131,12 @@ static float ncc_sum(Buffer* f, size_t n)
 
 //////// Interface Definitions ////////
 
-namespace xromm
-{
-
-namespace opencl
-{
-
-void ncc_init(size_t max_n);
+void ncc_init(size_t max_n)
 {
 	if (g_max_n != max_n)
 	{
 		ncc_deinit();
-		get_max_threads(max_n);
+		get_max_threads();
 
 		size_t numThreads, numBlocks, sizeMem;
 		get_device_params(max_n, numThreads, numBlocks, sizeMem);
@@ -163,8 +162,8 @@ void ncc_deinit()
 
 float ncc(Buffer* f, Buffer* g, size_t n)
 {
-	float meanF = sum(f,n)/n;
-	float meanG = sum(g,n)/n;
+	float meanF = ncc_sum(f,n)/n;
+	float meanG = ncc_sum(g,n)/n;
 
 	size_t numThreads, numBlocks, sizeMem;
 	get_device_params(n, numThreads, numBlocks, sizeMem);
@@ -187,13 +186,13 @@ float ncc(Buffer* f, Buffer* g, size_t n)
 
 	delete kernel;
 	
-	float den = sqrt(sum(d_den1s,n)*sum(d_den2s,n));
+	float den = sqrt(ncc_sum(d_den1s,n)*ncc_sum(d_den2s,n));
 
 	if (den < 1e-5) {
 		return 1e5;
 	}
 
-	return sum(d_nums,n)/den;
+	return ncc_sum(d_nums,n)/den;
 }
 
 } // namespace opencl

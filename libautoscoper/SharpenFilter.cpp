@@ -41,21 +41,22 @@
 
 #include <sstream>
 #include <cmath>
+
 #include "SharpenFilter.hpp"
+
+#define BX 16
+#define BY 16
 
 using namespace std;
 
 namespace xromm { namespace opencl {
 
-#define KERNEL_X 16
-#define KERNEL_Y 16
-#define KERNEL_CODE SharpenFilter_cl
-#define KERNEL_NAME "sharpen_filter_kernel"
-extern const char KERNEL_CODE[] =
+extern const char SharpenFilter_cl[] = 
 #include "SharpenFilter.cl.h"
 
-static int num_sharpen_filters = 0;
 static Program sharpen_program_;
+
+static int num_sharpen_filters = 0;
 
 SharpenFilter::SharpenFilter()
 	: Filter(XROMM_OPENCL_SHARPEN_FILTER,""),
@@ -136,7 +137,7 @@ void SharpenFilter::makeFilter()
 
 	/* copy the filter to GPU */
 	if (sharpen_ != NULL) delete sharpen_;
-	sharpen_ = new ReadBuffer(nBytes);
+	sharpen_ = new Buffer(nBytes, CL_MEM_READ_ONLY);
 	sharpen_->read((void*)sharpen);
  
 	delete sharpen;
@@ -144,22 +145,23 @@ void SharpenFilter::makeFilter()
 
 void
 SharpenFilter::apply(
-		const ReadBuffer* input,
-		const WriteBuffer* output,
+		const Buffer* input,
+		const Buffer* output,
 		int width,
 		int height)
 {
 	if (filterSize_ == 1 )
 	{
 		/* if filterSize_ = 1, filter does not change image */
-		input->write(output);
+		input->copy(output);
 	}
 	else
 	{
-		Kernel* kernel = sharpen_program_.compile(KERNEL_CODE, KERNEL_NAME);
+		Kernel* kernel = sharpen_program_.compile(
+									SharpenFilter_cl, "sharpen_filter_kernel");
 
-		kernel->block2d(KERNEL_X, KERNEL_Y);
-		kernel->grid2d((width-1)/KERNEL_X+1, (height-1)/KERNEL_Y+1);
+		kernel->block2d(BX, BY);
+		kernel->grid2d((width-1)/BX+1, (height-1)/BY+1);
 
 		kernel->addBufferArg(input);
 		kernel->addBufferArg(output);

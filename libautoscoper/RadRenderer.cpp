@@ -44,14 +44,22 @@
 
 #include "RadRenderer.hpp"
 
+#define BX 16
+#define BY 16
+
 using namespace std;
 
 namespace xromm { namespace opencl
 {
 
+static const char RadRenderer_cl[] =
+#include "RadRenderer.cl.h"
+
+static Program rad_renderer_program_;
+
 static int num_rad_renderers = 0;
 
-RadRenderer::RadRenderer() : array_(0)
+RadRenderer::RadRenderer() : image_(0)
 {
     image_plane_[0] = -1.0f;
     image_plane_[1] = -1.0f;
@@ -113,22 +121,23 @@ RadRenderer::set_viewport(float x, float y, float width, float height)
 }
 
 void
-RadRenderer::render(Buffer* buffer, size_t width, size_t height) const
+RadRenderer::render(const Buffer* buffer, size_t width, size_t height) const
 {
-	Kernel* kernel = rad_renderer_program_.compile();
+	Kernel* kernel = rad_renderer_program_.compile(
+										RadRenderer_cl, "rad_render_kernel");
 
-	kernel->setBufferArg(buffer);
-	kernel->setArg(width);
-	kernel->setArg(height);
-	kernel->setArg(image_plane_[0]);
-	kernel->setArg(image_plane_[1]);
-	kernel->setArg(image_plane_[2]);
-	kernel->setArg(image_plane_[3]);
-	kernel->setArg(viewport_[0]);
-	kernel->setArg(viewport_[1]);
-	kernel->setArg(viewport_[2]);
-	kernel->setArg(viewport_[3]);
-	kernel->setImageArg(image_);
+	kernel->addBufferArg(buffer);
+	kernel->addArg(width);
+	kernel->addArg(height);
+	kernel->addArg(image_plane_[0]);
+	kernel->addArg(image_plane_[1]);
+	kernel->addArg(image_plane_[2]);
+	kernel->addArg(image_plane_[3]);
+	kernel->addArg(viewport_[0]);
+	kernel->addArg(viewport_[1]);
+	kernel->addArg(viewport_[2]);
+	kernel->addArg(viewport_[3]);
+	kernel->addImageArg(image_);
 
     // Calculate the block and grid sizes.
 	kernel->block2d(BX, BY);

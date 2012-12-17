@@ -42,7 +42,7 @@
 #ifndef XROMM_OPENCL_VOLUME_DESCRIPTION_HPP
 #define XROMM_OPENCL_VOLUME_DESCRIPTION_HPP
 
-include "OpenCL.hpp"
+#include "OpenCL.hpp"
 
 namespace xromm {
 
@@ -66,7 +66,7 @@ public:
     const int* flips() const { return flips_; }
     float minValue() const { return minValue_; }
     float maxValue() const { return maxValue_; }
-    const Image3D* image() const { return image_; }
+    const Image* image() const { return image_; }
 
 private:
     VolumeDescription(const VolumeDescription&);
@@ -77,7 +77,7 @@ private:
     float invScale_[3];
     float invTrans_[3];
     int flips_[3];
-	Image3D* image_;
+	Image* image_;
 };
 
 } } // namespace xromm::opencl

@@ -227,7 +227,7 @@ VolumeDescription::VolumeDescription(const Volume& volume)
     // Create a 3D array.
 	cl_image_format format;
 	format.image_channel_order = CL_R;
-    switch (bps) {
+    switch (volume.bps()) {
         case 8:  format.image_channel_data_type = CL_UNSIGNED_INT8; break;
         case 16: format.image_channel_data_type = CL_UNSIGNED_INT16; break;
         default:
@@ -236,8 +236,9 @@ VolumeDescription::VolumeDescription(const Volume& volume)
             return;
     }
 
-	image_ = new Image3D(dim[0], dim[1], dim[2], &format, CL_MEM_READ_ONLY);
-	image_->read(data);
+	size_t sdim[3] = { dim[0], dim[1], dim[2] };
+	image_ = new Image(sdim, &format, CL_MEM_READ_ONLY);
+	image_->read(&data[0]);
 }
 
 VolumeDescription::~VolumeDescription()
@@ -246,3 +247,4 @@ VolumeDescription::~VolumeDescription()
 }
 
 } } // namespace xromm::opencl
+

@@ -37,7 +37,7 @@
 // ---------------------------------
 
 /// \file SharpenFilter.hpp
-/// \author Emily Fu
+/// \author Emily Fu, Mark Howison
 
 #ifndef XROMM_OPENCL_SHARPEN_FILTER_HPP
 #define XROMM_OPENCL_SHARPEN_FILTER_HPP
@@ -76,7 +76,7 @@ private:
 	float contrast_;   
 	float threshold_; 
  
-	ReadBuffer* sharpen_;
+	Buffer* sharpen_;
 	int filterSize_;
 	
 	void makeFilter();

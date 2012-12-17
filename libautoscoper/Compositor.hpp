@@ -48,7 +48,7 @@ namespace xromm { namespace opencl {
 
 void composite(const Buffer* src1,
                const Buffer* src2,
-               const Buffer* dest,
+               const GLBuffer* dest,
                size_t width,
                size_t height);
 

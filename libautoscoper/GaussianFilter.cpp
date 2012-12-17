@@ -116,7 +116,7 @@ void GaussianFilter::set_radius(float radius)
 	
 	/* copies gaussian filter over to GPU */
 	if (gaussian_ != NULL) delete gaussian_;
-	gaussian_ = new ReadBuffer(nBytes);
+	gaussian_ = new Buffer(nBytes, CL_MEM_READ_ONLY);
 	gaussian_->read((void*)gaussian);
  
 	delete gaussian;
@@ -131,7 +131,7 @@ GaussianFilter::apply(const Buffer* input,
 	if (filterSize_ == 1 )
 	{
 		/* if filterSize_ = 1, filter does not change image */
-		input->write(output);
+		input->copy(output);
 	}
 	else
 	{

@@ -41,30 +41,31 @@
 
 #include "Compositor.hpp"
 
-static const char Compositor_cl[] =
-#include "Compositor.cl.h"
-
-static Program compositor_kernel_;
-
 #define BX 16
 #define BY 16
 
 namespace xromm { namespace opencl {
 
-void composite(float* src1,
-               float* src2,
-               float* dest,
+static const char Compositor_cl[] =
+#include "Compositor.cl.h"
+
+static Program compositor_kernel_;
+
+void composite(Buffer* src1,
+               Buffer* src2,
+               GLBuffer* dest,
                size_t width,
                size_t height)
 {
-	Kernel* kernel = compositor_kernel_.compile(Compositor_cl, "composite_kernel");
+	Kernel* kernel = compositor_kernel_.compile(
+										Compositor_cl, "composite_kernel");
 
     kernel->block2d(BX, BY);
 	kernel->grid2d((width+BX-1)/BX, (height+BY-1)/BY);
     
 	kernel->addBufferArg(src1);
 	kernel->addBufferArg(src2);
-	kernel->addBufferArg(dest);
+	kernel->addGLBufferArg(dest);
 	kernel->addArg(width);
 	kernel->addArg(height);
 

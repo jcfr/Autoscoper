@@ -59,19 +59,20 @@ using namespace std;
 namespace xromm { namespace opencl
 {
 
-View::View(Camera& camera) : camera_(&camera),
-                             drrRenderer_(new RayCaster()),
-                             radRenderer_(new RadRenderer()),
-                             drrBuffer_(0),
-                             drrFilterBuffer_(0),
-                             radBuffer_(0),
-                             radFilterBuffer_(0),
-                             filterBuffer_(0),
-                             maxWidth_(2048),
-                             maxHeight_(2048),
-                             drr_enabled(true),
-                             rad_enabled(true)
+View::View(Camera& camera)
 {
+	camera_ = &camera;
+	drr_enabled = true;
+	rad_enabled = true;
+	drrRenderer_ = new RayCaster();
+	radRenderer_ = new RadRenderer();
+	maxWidth_ = 2048;
+	maxHeight_ = 2048;
+	drrBuffer_ = 0;
+	drrFilterBuffer_ = 0;
+	radBuffer_ = 0;
+	radFilterBuffer_ = 0;
+	filterBuffer_ = 0;
 }
 
 View::~View()
@@ -96,7 +97,7 @@ View::~View()
 }
 
 void
-View::renderRad(float* buffer, unsigned width, unsigned height)
+View::renderRad(const Buffer* buffer, unsigned width, unsigned height)
 {
     init();
 
@@ -126,7 +127,7 @@ View::renderRad(GLuint pbo, unsigned width, unsigned height)
 }
 
 void
-View::renderDrr(Buffer* buffer, unsigned width, unsigned height)
+View::renderDrr(const Buffer* buffer, unsigned width, unsigned height)
 {
     init();
 
@@ -156,7 +157,7 @@ View::renderDrr(GLuint pbo, unsigned width, unsigned height)
 }
 
 void
-View::render(Buffer* buffer, unsigned width, unsigned height)
+View::render(const GLBuffer* buffer, unsigned width, unsigned height)
 {
     init();
 
@@ -214,8 +215,8 @@ View::filter(const std::vector<Filter*>& filters,
 
     // Determine which buffer will be used first so that the final
     // filter will place the results into output.
-    Buffer* buffer1;
-    Buffer* buffer2;
+    const Buffer* buffer1;
+    const Buffer* buffer2;
     if (filters.size()%2) {
         buffer1 = output;
         buffer2 = filterBuffer_;
