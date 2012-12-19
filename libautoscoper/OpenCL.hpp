@@ -76,17 +76,7 @@ public:
 	void read(const void* buf, size_t size=0) const;
 	void write(void* buf, size_t size=0) const;
 	void copy(const Buffer* dst, size_t size=0) const;
-
-	template<typename T> void memset(T value)
-	{
-		T tmp = value;
-		fill((const void*)(&tmp), sizeof(T));
-	}
-
-	template<typename T> void memset(T& value)
-	{
-		fill((const void*)(&value), sizeof(T));
-	}
+	void zero() const;
 
 	friend class Kernel;
 
