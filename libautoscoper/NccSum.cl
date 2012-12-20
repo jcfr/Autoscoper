@@ -19,7 +19,7 @@ void ncc_sum_kernel(
 	}
 
 	if (t == 0) {
-		sums[t] = buffer[0];
+		sums[get_group_id(0)] = buffer[0];
 	}
 }
 

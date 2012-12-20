@@ -106,7 +106,7 @@ void Tracker::load(const Trial& trial)
     delete volumeDescription_;
     volumeDescription_ = new opencl::VolumeDescription(trial_.volumes.front());
 
-	size_t npixels = trial_.render_width*trial_.render_height;
+	unsigned npixels = trial_.render_width*trial_.render_height;
 	rendered_drr_ = new opencl::Buffer(npixels*sizeof(float));
 	rendered_rad_ = new opencl::Buffer(npixels*sizeof(float));
     opencl::ncc_init(npixels);
@@ -287,8 +287,8 @@ double Tracker::minimizationFunc(const double* values) const
         this->calculate_viewport(modelview,viewport);
 
         // Calculate the size of the image to render
-        int render_width = viewport[2] * trial_.render_width / views_[i]->camera()->viewport()[2];
-        int render_height = viewport[3] * trial_.render_height / views_[i]->camera()->viewport()[3];
+        unsigned render_width = viewport[2] * trial_.render_width / views_[i]->camera()->viewport()[2];
+        unsigned render_height = viewport[3] * trial_.render_height / views_[i]->camera()->viewport()[3];
 
         // Set the viewports
         views_[i]->drrRenderer()->setViewport(viewport[0],viewport[1],

@@ -349,7 +349,7 @@ size_t* Kernel::getMaxItems()
 	opencl_global_context();
 	size_t* s = new size_t[3];
 	err_ = clGetDeviceInfo(devices_[0],
-					CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(s), s, NULL);
+					CL_DEVICE_MAX_WORK_ITEM_SIZES, 3*sizeof(s), s, NULL);
 	CHECK_CL
 	return s;
 }

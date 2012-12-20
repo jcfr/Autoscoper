@@ -1,4 +1,4 @@
-TARGETS = filters
+TARGETS = filters ncc
 
 CXX = g++
 CXXFLAGS = -Wall -g -O2 -fPIC
@@ -19,6 +19,9 @@ all:	$(TARGETS)
 
 filters: filters.cpp ../libautoscoper.a
 	$(CXX) $(CXXFLAGS) $(INCLUDES) filters.cpp -o $@ $(LIBS)
+
+ncc: ncc.cpp ../libautoscoper.a
+	$(CXX) $(CXXFLAGS) $(INCLUDES) ncc.cpp -o $@ $(LIBS)
 
 clean:
 	rm -f $(TARGETS) $(OBJDIR)/*.o

@@ -50,7 +50,7 @@ namespace xromm { namespace opencl {
 
 //////// Global variables ////////
 
-static size_t g_max_n = 0;
+static unsigned g_max_n = 0;
 static size_t g_maxNumThreads = 0;
 
 static Buffer* d_sums = NULL;
@@ -76,6 +76,9 @@ static void get_max_threads()
 	{
 		size_t* max_items = Kernel::getMaxItems();
 		g_maxNumThreads = max_items[0];
+#if DEBUG
+		cerr << "ncc: maxWorkItems = " << max_items[0] << endl;
+#endif
 		delete max_items;
 
 		/* reduce threads to fit in local mem */
@@ -83,10 +86,15 @@ static void get_max_threads()
 		if (g_maxNumThreads*sizeof(float) > maxLocalMem) {
 			g_maxNumThreads = maxLocalMem / sizeof(float);
 		}
+
+#if DEBUG
+		cerr << "ncc: maxLocalMem = " << maxLocalMem << endl;
+		cerr << "ncc: maxNumThreads = " << g_maxNumThreads << endl;
+#endif
 	}
 }
 
-static void get_device_params(size_t n,
+static void get_device_params(unsigned n,
 					   size_t& numThreads,
 					   size_t& numBlocks,
 					   size_t& sizeMem)
@@ -96,7 +104,7 @@ static void get_device_params(size_t n,
 	sizeMem = numThreads*sizeof(float);
 }
 
-static float ncc_sum(Buffer* f, size_t n)
+static float ncc_sum(Buffer* f, unsigned n)
 {
 	size_t numThreads, numBlocks, sizeMem;
 	get_device_params(n, numThreads, numBlocks, sizeMem);
@@ -105,6 +113,12 @@ static float ncc_sum(Buffer* f, size_t n)
 
 	while (n > 1)
 	{
+#if DEBUG
+		cerr << "ncc_sum[" << n << "] numThreads = " << numThreads << endl;
+		cerr << "ncc_sum[" << n << "] numBlocks = " << numBlocks << endl;
+		cerr << "ncc_sum[" << n << "] sizeMem = " << sizeMem << endl;
+#endif
+
 		kernel->block1d(numBlocks);
 		kernel->grid1d(numThreads);
 
@@ -114,6 +128,16 @@ static float ncc_sum(Buffer* f, size_t n)
 		kernel->addArg(n);
 
 		kernel->launch();
+
+#if DEBUG
+		float *tmp = new float[numBlocks];
+		d_sums->write(tmp, numBlocks*sizeof(float));
+		for (unsigned j=0; j<numBlocks; j++) {
+			cerr << " " << tmp[j];
+		}
+		cerr << endl;
+		delete tmp;
+#endif
 
 		n = numBlocks;
 		get_device_params(n, numThreads, numBlocks, sizeMem);
@@ -131,7 +155,7 @@ static float ncc_sum(Buffer* f, size_t n)
 
 //////// Interface Definitions ////////
 
-void ncc_init(size_t max_n)
+void ncc_init(unsigned max_n)
 {
 	if (g_max_n != max_n)
 	{
@@ -160,10 +184,15 @@ void ncc_deinit()
 	g_max_n = 0;
 }
 
-float ncc(Buffer* f, Buffer* g, size_t n)
+float ncc(Buffer* f, Buffer* g, unsigned n)
 {
 	float meanF = ncc_sum(f,n)/n;
 	float meanG = ncc_sum(g,n)/n;
+
+#if DEBUG
+	cerr << "meanF: " << meanF << endl;
+	cerr << "meanG: " << meanG << endl;
+#endif
 
 	size_t numThreads, numBlocks, sizeMem;
 	get_device_params(n, numThreads, numBlocks, sizeMem);

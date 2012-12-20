@@ -48,11 +48,11 @@ namespace xromm {
 
 namespace opencl {
 
-void ncc_init(size_t max_n);
+void ncc_init(unsigned max_n);
 
 void ncc_deinit();
 
-float ncc(Buffer* f, Buffer* g, size_t n);
+float ncc(Buffer* f, Buffer* g, unsigned n);
 
 } // namespace opencl
 
