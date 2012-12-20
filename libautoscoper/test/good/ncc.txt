@@ -1,0 +1,60 @@
+width: 300
+height: 300
+bitsPerSample: 8
+photometric: 1
+orientation: 1
+samplesPerPixel: 1
+planarConfig: 1
+compression: 1
+sampleFormat: 1
+Image dimensions: 300 x 300
+Image size: 90000
+width: 300
+height: 300
+bitsPerSample: 8
+photometric: 1
+orientation: 1
+samplesPerPixel: 1
+planarConfig: 1
+compression: 1
+sampleFormat: 1
+Image dimensions: 300 x 300
+Image size: 90000
+ncc: numBlocks = 352
+ncc: numBlocks = 352
+ncc: 90000
+ncc: numBlocks = 2
+ncc: 352
+ncc: numBlocks = 1
+ncc: 2
+ncc: numBlocks = 1
+ncc: numBlocks = 352
+ncc: 90000
+ncc: numBlocks = 2
+ncc: 352
+ncc: numBlocks = 1
+ncc: 2
+ncc: numBlocks = 1
+ncc: numBlocks = 352
+ncc: numBlocks = 352
+ncc: 90000
+ncc: numBlocks = 2
+ncc: 352
+ncc: numBlocks = 1
+ncc: 2
+ncc: numBlocks = 1
+ncc: numBlocks = 352
+ncc: 90000
+ncc: numBlocks = 2
+ncc: 352
+ncc: numBlocks = 1
+ncc: 2
+ncc: numBlocks = 1
+ncc: numBlocks = 352
+ncc: 90000
+ncc: numBlocks = 2
+ncc: 352
+ncc: numBlocks = 1
+ncc: 2
+ncc: numBlocks = 1
+ncc: 0.967925
