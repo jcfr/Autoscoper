@@ -7,6 +7,8 @@
 
 /* OpenCL-OpenGL interoperability */
 #if defined(__APPLE__) || defined(__MACOSX)
+#include <OpenGL/CGLDevice.h>
+#include <OpenCL/cl_gl_ext.h>
 #elif defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -92,6 +94,137 @@ static const char* opencl_error(cl_int err)
     }
 }
 
+static void print_platform(cl_platform_id platform)
+{
+	cerr << "# OpenCL Platform" << endl;
+
+	char buffer[1024];
+
+	err_ = clGetPlatformInfo(
+				platform, CL_PLATFORM_VERSION, sizeof(buffer), buffer, NULL);
+	CHECK_CL
+	cerr << "# Version    : " << buffer << endl;
+
+	err_ = clGetPlatformInfo(
+				platform, CL_PLATFORM_NAME, sizeof(buffer), buffer, NULL);
+	CHECK_CL
+	cerr << "# Name       : " << buffer << endl;
+
+	err_ = clGetPlatformInfo(
+				platform, CL_PLATFORM_VENDOR, sizeof(buffer), buffer, NULL);
+	CHECK_CL
+	cerr << "# Vendor     : " << buffer << endl;
+}
+
+static void print_device(cl_device_id device)
+{
+	char buffer[1024];
+	cl_bool b;
+	cl_device_type t;
+	cl_ulong ul;
+	cl_uint ui;
+	size_t s[3];
+
+	cerr << "# OpenCL Device" << "\n";
+
+	err_ = clGetDeviceInfo(
+				device, CL_DEVICE_NAME, sizeof(buffer), buffer, NULL);
+	CHECK_CL
+	cerr << "# Name          : " << buffer << "\n";
+
+	err_ = clGetDeviceInfo(
+				device, CL_DEVICE_TYPE, sizeof(t), &t, NULL);
+	cerr << "# Type          : ";
+	switch (t) {
+		case CL_DEVICE_TYPE_CPU: cerr << "CPU\n"; break;
+		case CL_DEVICE_TYPE_GPU: cerr << "GPU\n"; break;
+		case CL_DEVICE_TYPE_ACCELERATOR: cerr << "Accelerator\n"; break;
+		case CL_DEVICE_TYPE_DEFAULT: cerr << "Default\n"; break;
+		default: cerr << "Unknown\n";
+	}
+
+	err_ = clGetDeviceInfo(
+		device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(ui), &ui, NULL);
+	CHECK_CL
+	cerr << "# Compute Cores : " << ui << "\n";
+
+	err_ = clGetDeviceInfo(
+		device, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(ui), &ui, NULL);
+	CHECK_CL
+	cerr << "# Core Freq.    : " << ui << " Mhz\n";
+
+	err_ = clGetDeviceInfo(
+		device, CL_DEVICE_VENDOR, sizeof(buffer), buffer, NULL);
+	CHECK_CL
+	cerr << "# Vendor        : " << buffer << "\n";
+
+	err_ = clGetDeviceInfo(
+		device, CL_DEVICE_VENDOR_ID, sizeof(ui), &ui, NULL);
+	CHECK_CL
+	cerr << "# Vendor ID     : " << ui << "\n";
+
+	err_ = clGetDeviceInfo(
+		device, CL_DEVICE_VERSION, sizeof(buffer), buffer, NULL);
+	CHECK_CL
+	cerr << "# Version       : " << buffer << "\n";
+
+	err_ = clGetDeviceInfo(
+		device, CL_DRIVER_VERSION, sizeof(buffer), buffer, NULL);
+	CHECK_CL
+	cerr << "# Driver Ver.   : " << buffer << "\n";
+
+	err_ = clGetDeviceInfo(
+		device, CL_DEVICE_AVAILABLE, sizeof(b), &b, NULL);
+	CHECK_CL
+	cerr << "# Available     : ";
+	switch (b) {
+		case CL_TRUE: cerr << "Yes\n"; break;
+		case CL_FALSE: cerr << "No\n"; break;
+		default: cerr << "Unknown\n";
+	}
+
+	err_ = clGetDeviceInfo(
+		device, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(s), s, NULL);
+	CHECK_CL
+	cerr << "# Max Items     : ("
+		 << s[0] << ',' << s[1] << ',' << s[2] << ")\n";
+
+	err_ = clGetDeviceInfo(
+		device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t), s, NULL);
+	CHECK_CL
+	cerr << "# Max Groups    : " << s[0] << "\n";
+
+	err_ = clGetDeviceInfo(
+		device, CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE, sizeof(ul), &ul, NULL);
+	CHECK_CL
+	cerr << "# Max Constant  : " << ul << " kB\n";
+
+	err_ = clGetDeviceInfo(
+		device, CL_DEVICE_MAX_CONSTANT_ARGS, sizeof(ui), &ui, NULL);
+	CHECK_CL
+	cerr << "# Max Constants : " << ui << "\n";
+
+	err_ = clGetDeviceInfo(
+		device, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(ul), &ul, NULL);
+	CHECK_CL
+	cerr << "# Local Mem.    : " << (ul/1024) << " kB\n";
+
+	err_ = clGetDeviceInfo(
+		device, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(ul), &ul, NULL);
+	CHECK_CL
+	cerr << "# Global Mem.   : " << (ul/1024) << " kB\n";
+
+	err_ = clGetDeviceInfo(
+		device, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(ul), &ul, NULL);
+	CHECK_CL
+	cerr << "# Global Cache  : " << ul << " B\n";
+
+	err_ = clGetDeviceInfo(
+		device, CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, NULL);
+	CHECK_CL
+	cerr << "# Extensions    : " << buffer << "\n";
+}
+
 void init()
 {
 	if (!inited_)
@@ -103,7 +236,9 @@ void init()
 		err_ = clGetPlatformIDs(1, platforms, &num_platforms);
 		CHECK_CL
 
-		if (num_platforms != 1) ERROR("no OpenCL platforms found");
+		if (num_platforms < 1) ERROR("no OpenCL platforms found");
+
+		print_platform(platforms[0]);
 
 		/* find GPU device */
 
@@ -111,22 +246,34 @@ void init()
 		err_ = clGetDeviceIDs(platforms[0], TYPE, 1, devices_, &num_devices);
 		CHECK_CL
 
-		if (num_devices != 1) ERROR("no OpenCL GPU device found");
+		if (num_devices < 1) ERROR("no OpenCL GPU device found");
+
+		print_device(devices_[0]);
 
 		/* create context */
 
 #if defined(__APPLE__) || defined(__MACOSX)
+#pragma OPENCL EXTENSION cl_APPLE_gl_sharing : enable
 		CGLContextObj glContext = CGLGetCurrentContext();
 		CGLShareGroupObj shareGroup = CGLGetShareGroup(glContext);
-#endif
 
-#if defined(__APPLE__) || defined(__MACOSX)
-#pragma OPENCL EXTENSION cl_APPLE_gl_sharing : enable
-		cl_context_properties prop[3] = { 
+		cl_context_properties prop[] = { 
 			CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
-			(cl_context_properties) shareGroup,
-/* omit the CL_CONTEXT_PLATFORM on OS X according to:
-   http://stackoverflow.com/questions/10756993/getting-current-opengl-context-on-os-x */
+			(intptr_t) shareGroup,
+			0 };
+
+		/* omit the device, according to this:
+		   http://www.khronos.org/message_boards/viewtopic.php?f=28&t=2548 */
+		context_ = clCreateContext(prop, 0, NULL, 0, 0, &err_);
+		CHECK_CL
+
+		size_t num_gl_devices;
+		err_ = clGetGLContextInfoAPPLE(
+					context_, glContext,
+					CL_CGL_DEVICE_FOR_CURRENT_VIRTUAL_SCREEN_APPLE,
+					1, devices_, &num_gl_devices);
+
+		if (num_gl_devices < 1) ERROR("no OpenCL GPU device found");
 #elif defined(_WIN32)
 #pragma OPENCL EXTENSION cl_khr_gl_sharing : enable
 		cl_context_properties prop[7] = { 
@@ -136,6 +283,10 @@ void init()
 			(cl_context_properties) wglGetCurrentDC(),
 			CL_CONTEXT_PLATFORM, 
 			(cl_context_properties)(platforms[0]),
+			0 };
+
+		context_ = clCreateContext(prop, 1, devices_, NULL, NULL, &err_);
+		CHECK_CL
 #else
 #pragma OPENCL EXTENSION cl_khr_gl_sharing : enable
 		cl_context_properties prop[7] = { 
@@ -145,11 +296,11 @@ void init()
 			(cl_context_properties)glXGetCurrentDisplay(),
 			CL_CONTEXT_PLATFORM, 
 			(cl_context_properties)(platforms[0]),
-#endif
 			0 };
 
 		context_ = clCreateContext(prop, 1, devices_, NULL, NULL, &err_);
 		CHECK_CL
+#endif
 
 		/* create command queue */
 
