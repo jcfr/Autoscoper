@@ -63,6 +63,8 @@ public:
     Filter(int type, const std::string& name)
         : type_(type), name_(name), enabled_(true) {}
 
+	virtual ~Filter() {}
+
     // Apply the filter to the input image
     virtual void apply(const Buffer* input,
                        const Buffer* output,

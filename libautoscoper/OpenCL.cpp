@@ -33,8 +33,6 @@
 
 using namespace std;
 
-namespace xromm { namespace opencl {
-
 static bool inited_ = false;
 static cl_int err_;
 static cl_context context_;
@@ -225,7 +223,9 @@ static void print_device(cl_device_id device)
 	cerr << "# Extensions    : " << buffer << "\n";
 }
 
-void init()
+namespace xromm { namespace opencl {
+
+void opencl_global_context()
 {
 	if (!inited_)
 	{
@@ -307,14 +307,13 @@ void init()
 		queue_ = clCreateCommandQueue(context_, devices_[0], 0, &err_);
 		CHECK_CL
 
-		//std::cout << "OpenCL: init" << std::endl;
 		inited_ = true;
 	}
 }
 
 Kernel::Kernel(cl_program program, const char* func)
 {
-	init();
+	opencl_global_context();
 	reset();
 	kernel_ = clCreateKernel(program, func, &err_);
 	CHECK_CL
@@ -329,7 +328,7 @@ void Kernel::reset()
 
 size_t Kernel::getLocalMemSize()
 {
-	init();
+	opencl_global_context();
 	size_t s;
 	err_ = clGetDeviceInfo(devices_[0],
 					CL_DEVICE_LOCAL_MEM_SIZE, sizeof(size_t), &s, NULL);
@@ -339,7 +338,7 @@ size_t Kernel::getLocalMemSize()
 
 size_t* Kernel::getMaxItems()
 {
-	init();
+	opencl_global_context();
 	size_t* s = new size_t[3];
 	err_ = clGetDeviceInfo(devices_[0],
 					CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(s), s, NULL);
@@ -349,7 +348,7 @@ size_t* Kernel::getMaxItems()
 
 size_t Kernel::getMaxGroups()
 {
-	init();
+	opencl_global_context();
 	size_t s;
 	err_ = clGetDeviceInfo(devices_[0],
 					CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t), &s, NULL);
@@ -479,7 +478,7 @@ void Kernel::setArg(cl_uint i, size_t size, const void* value)
 	CHECK_CL
 }
 
-Program::Program() { init(); compiled_ = false; }
+Program::Program() { opencl_global_context(); compiled_ = false; }
 
 Kernel* Program::compile(const char* code, const char* func)
 {
@@ -519,7 +518,7 @@ Kernel* Program::compile(const char* code, const char* func)
 
 Buffer::Buffer(size_t size, cl_mem_flags access)
 {
-	init();
+	opencl_global_context();
 	size_ = size;
 	access_ = access;
 	buffer_ = clCreateBuffer(context_, access, size, NULL, &err_);
@@ -565,10 +564,10 @@ void Buffer::zero() const
 	err_ = clEnqueueFillBuffer(queue_, buffer_, &c, 1, 0, size_, 0, NULL, NULL);
 	CHECK_CL
 #else
-	void* tmp = (void*)new char[size_];
+	char* tmp = (char*)new char[size_];
 	memset(tmp, 0x00, size_);
 	err_ = clEnqueueWriteBuffer(
-			queue_, buffer_, CL_TRUE, 0, size_, tmp, 0, NULL, NULL);
+			queue_, buffer_, CL_TRUE, 0, size_, (void*)tmp, 0, NULL, NULL);
 	CHECK_CL
 	delete tmp;
 #endif
@@ -576,7 +575,7 @@ void Buffer::zero() const
 
 GLBuffer::GLBuffer(GLuint pbo, cl_mem_flags access)
 {
-	init();
+	opencl_global_context();
 	access_ = access;
 	buffer_ = clCreateFromGLBuffer(context_, access, pbo, &err_);
 	CHECK_CL
@@ -590,7 +589,7 @@ GLBuffer::~GLBuffer()
 
 Image::Image(size_t* dims, cl_image_format *format, cl_mem_flags access)
 {
-	init();
+	opencl_global_context();
 	dims_[0] = dims[0];
 	dims_[1] = dims[1];
 	dims_[2] = dims[2];

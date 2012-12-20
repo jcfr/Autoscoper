@@ -51,11 +51,11 @@ static const char Compositor_cl[] =
 
 static Program compositor_kernel_;
 
-void composite(Buffer* src1,
-               Buffer* src2,
-               GLBuffer* dest,
-               size_t width,
-               size_t height)
+void composite(const Buffer* src1,
+               const Buffer* src2,
+               const GLBuffer* dest,
+               unsigned width,
+               unsigned height)
 {
 	Kernel* kernel = compositor_kernel_.compile(
 										Compositor_cl, "composite_kernel");

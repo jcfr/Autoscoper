@@ -43,6 +43,7 @@
 #define XROMM_OPENCL_VIEW_HPP
 
 #include <vector>
+
 #include "OpenCL.hpp"
 
 namespace xromm

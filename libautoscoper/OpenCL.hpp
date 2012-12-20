@@ -14,7 +14,7 @@
 
 namespace xromm { namespace opencl {
 
-void init();
+void opencl_global_context();
 
 class Buffer;
 class GLBuffer;

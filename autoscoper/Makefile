@@ -24,18 +24,17 @@ LIBS = \
 # Test OS
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
-CXXFLAGS += -D_MACOSX
-LDFLAGS += -L/System/Library/Frameworks/OpenGL.framework/Libraries -framework GLUT
+LDFLAGS += -frameworks OpenCL -L/System/Library/Frameworks/OpenGL.framework/Libraries -framework GLUT
 LIBS += -L$(CUDA_DIR)/lib -lcudart -L/opt/X11/lib
 else
-LIBS += -lglut -L$(CUDA_DIR)/lib64 -lcudart
+LIBS += -lOpenCL -lglut
 endif
 
 OBJDIR = obj
 CXXFILES = $(shell ls *.cpp)
 OBJS = $(CXXFILES:%.cpp=$(OBJDIR)/%.cpp.o)
 
-.PHONE:	check-gtk check-cuda clean
+.PHONE:	check-gtk clean
 
 all:	$(TARGET)
 
@@ -47,13 +46,7 @@ ifeq ($(GTHREAD_PACKAGE), 1)
 	$(error pkg-config could not find the gthread library from glib)
 endif
 
-check-cuda:
-ifndef CUDA_DIR
-	$(error CUDA_DIR is undefined)
-endif
-	@ echo "CUDA_DIR = $(CUDA_DIR)"
-
-$(TARGET) : check-gtk check-cuda $(OBJS)
+$(TARGET) : check-gtk $(OBJS)
 	@ echo $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 

@@ -59,14 +59,14 @@
 
 using namespace std;
 using namespace xromm;
-using namespace cuda;
+using namespace opencl;
 
 enum
 {
-    XROMM_CUDA_VIEW,
-    XROMM_CUDA_DRR_RENDERER,
-    XROMM_CUDA_RAD_RENDERER,
-    XROMM_CUDA_FILTER,
+    XROMM_OPENCL_VIEW,
+    XROMM_OPENCL_DRR_RENDERER,
+    XROMM_OPENCL_RAD_RENDERER,
+    XROMM_OPENCL_FILTER,
 };
 
 enum
@@ -107,7 +107,7 @@ GtkTreeStore* xromm_gtk_tree_store_new_from_views(const vector<View*>& views)
                            ENABLED_COLUMN, TRUE,
                            NAME_COLUMN, view_name_stream.str().c_str(),
                            POINTER_COLUMN, *view_iter,
-                           TYPE_COLUMN, XROMM_CUDA_VIEW,
+                           TYPE_COLUMN, XROMM_OPENCL_VIEW,
                            VISIBLE_COLUMN, FALSE,
                            -1);
 
@@ -118,7 +118,7 @@ GtkTreeStore* xromm_gtk_tree_store_new_from_views(const vector<View*>& views)
                            ENABLED_COLUMN, TRUE,
                            NAME_COLUMN, (*view_iter)->drrRenderer()->getName().c_str(),
                            POINTER_COLUMN, (*view_iter)->drrRenderer(),
-                           TYPE_COLUMN, XROMM_CUDA_DRR_RENDERER,
+                           TYPE_COLUMN, XROMM_OPENCL_DRR_RENDERER,
                            VECTOR_COLUMN, &(*view_iter)->drrFilters(),
                            VISIBLE_COLUMN, TRUE,
                            -1);
@@ -137,7 +137,7 @@ GtkTreeStore* xromm_gtk_tree_store_new_from_views(const vector<View*>& views)
                                ENABLED_COLUMN, TRUE,
                                NAME_COLUMN, (*filter_iter)->name().c_str(),
                                POINTER_COLUMN, *filter_iter,
-                               TYPE_COLUMN, XROMM_CUDA_FILTER,
+                               TYPE_COLUMN, XROMM_OPENCL_FILTER,
                                VISIBLE_COLUMN, TRUE,
                                VECTOR_COLUMN, &(*view_iter)->drrFilters(),
                                -1);
@@ -150,7 +150,7 @@ GtkTreeStore* xromm_gtk_tree_store_new_from_views(const vector<View*>& views)
                            ENABLED_COLUMN, TRUE,
                            NAME_COLUMN, (*view_iter)->radRenderer()->getName().c_str(),
                            POINTER_COLUMN, (*view_iter)->radRenderer(),
-                           TYPE_COLUMN, XROMM_CUDA_RAD_RENDERER,
+                           TYPE_COLUMN, XROMM_OPENCL_RAD_RENDERER,
                            VISIBLE_COLUMN, TRUE,
                            VECTOR_COLUMN, &(*view_iter)->radFilters(),
                            -1);
@@ -168,7 +168,7 @@ GtkTreeStore* xromm_gtk_tree_store_new_from_views(const vector<View*>& views)
                                ENABLED_COLUMN, TRUE,
                                NAME_COLUMN, (*filter_iter)->name().c_str(),
                                POINTER_COLUMN, *filter_iter,
-                               TYPE_COLUMN, XROMM_CUDA_FILTER,
+                               TYPE_COLUMN, XROMM_OPENCL_FILTER,
                                VISIBLE_COLUMN, TRUE,
                                VECTOR_COLUMN, &(*view_iter)->radFilters(),
                                -1);
@@ -245,7 +245,7 @@ properties_activate_filter(GtkWidget* menu_item, gpointer data)
     title_stream << filter->name() << " Properties";
 
     switch (filter->type()) {
-        case Filter::XROMM_CUDA_SOBEL_FILTER: {
+        case Filter::XROMM_OPENCL_SOBEL_FILTER: {
             SobelFilter* sobel_filter = (SobelFilter*)filter;
 
             GtkWidget* properties_dialog =
@@ -262,10 +262,8 @@ properties_activate_filter(GtkWidget* menu_item, gpointer data)
                                                    "dialog_blend_scale");
 
             // Set the intensity and cutoff values.
-            gtk_range_set_value(GTK_RANGE(scale_scale),
-                                sobel_filter->getScale());
-            gtk_range_set_value(GTK_RANGE(blend_scale),
-                                sobel_filter->getBlend());
+            gtk_range_set_value(GTK_RANGE(scale_scale), sobel_filter->scale());
+            gtk_range_set_value(GTK_RANGE(blend_scale), sobel_filter->blend());
 
             // Connect the signals.
             g_signal_connect(scale_scale,
@@ -283,7 +281,7 @@ properties_activate_filter(GtkWidget* menu_item, gpointer data)
 
             break;
         }
-        case Filter::XROMM_CUDA_CONTRAST_FILTER: {
+        case Filter::XROMM_OPENCL_CONTRAST_FILTER: {
             ContrastFilter* contrast_filter = (ContrastFilter*)filter;
 
             GtkWidget* properties_dialog =
@@ -321,7 +319,7 @@ properties_activate_filter(GtkWidget* menu_item, gpointer data)
 
             break;
         }
-        case Filter::XROMM_CUDA_GAUSSIAN_FILTER: {
+        case Filter::XROMM_OPENCL_GAUSSIAN_FILTER: {
             GaussianFilter* gaussian_filter = (GaussianFilter*)filter;
 
             GtkWidget* properties_dialog =
@@ -348,7 +346,7 @@ properties_activate_filter(GtkWidget* menu_item, gpointer data)
             
             break;
         }
-	case Filter::XROMM_CUDA_SHARPEN_FILTER: {
+	case Filter::XROMM_OPENCL_SHARPEN_FILTER: {
             SharpenFilter* sharpen_filter = (SharpenFilter*)filter;
 
             GtkWidget* properties_dialog =
@@ -436,7 +434,7 @@ xromm_gtk_tree_view_on_button_press(GtkWidget* tree_view,
         GtkWidget* menu = gtk_menu_new();
 
         switch (iter_type) {
-            case XROMM_CUDA_VIEW: {
+            case XROMM_OPENCL_VIEW: {
                 GtkWidget* import_menu_item =
                     gtk_menu_item_new_with_label("Import");
                 GtkWidget* export_menu_item =
@@ -457,7 +455,7 @@ xromm_gtk_tree_view_on_button_press(GtkWidget* tree_view,
                                  iter_pointer);
                 break;
             }
-            case XROMM_CUDA_DRR_RENDERER: {
+            case XROMM_OPENCL_DRR_RENDERER: {
 
 
                 GtkWidget* new_filter_menu_item =
@@ -517,7 +515,7 @@ xromm_gtk_tree_view_on_button_press(GtkWidget* tree_view,
                                  iter_pointer);
                 break;
             }
-            case XROMM_CUDA_RAD_RENDERER: {
+            case XROMM_OPENCL_RAD_RENDERER: {
                 GtkWidget* new_filter_menu_item =
                     gtk_menu_item_new_with_label("New Filter");
 
@@ -565,7 +563,7 @@ xromm_gtk_tree_view_on_button_press(GtkWidget* tree_view,
 
                 break;
             }
-            case XROMM_CUDA_FILTER: {
+            case XROMM_OPENCL_FILTER: {
 
                 //GtkWidget* new_filter_before_menu_item =
                 //    gtk_menu_item_new_with_label("Insert Before");
@@ -654,11 +652,11 @@ xromm_gtk_tree_view_on_toggle(GtkCellRendererToggle* cell,
     // Update the toggle button to reflect its new value
     gtk_tree_store_set(GTK_TREE_STORE(tree_model), &tree_iter, 0, toggled, -1);
 
-    if (type == XROMM_CUDA_FILTER) {
+    if (type == XROMM_OPENCL_FILTER) {
         on_toggle_filter(filter,toggled);
     }
-    else if (type == XROMM_CUDA_RAD_RENDERER ||
-             type == XROMM_CUDA_DRR_RENDERER) {
+    else if (type == XROMM_OPENCL_RAD_RENDERER ||
+             type == XROMM_OPENCL_DRR_RENDERER) {
 
         gtk_tree_path_up(tree_path);
 
@@ -668,7 +666,7 @@ xromm_gtk_tree_view_on_toggle(GtkCellRendererToggle* cell,
         gpointer view;
         gtk_tree_model_get(tree_model,&view_iter,POINTER_COLUMN,&view,-1);
 
-        on_toggle_renderer(view,type == XROMM_CUDA_DRR_RENDERER? 0:1,toggled);
+        on_toggle_renderer(view,type == XROMM_OPENCL_DRR_RENDERER? 0:1,toggled);
     }
 
     gtk_tree_path_free(tree_path);

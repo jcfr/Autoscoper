@@ -47,22 +47,22 @@
 
 #include <Filter.hpp>
 
-namespace xromm { namespace cuda
+namespace xromm { namespace opencl
 {
 
 class View;
 
-} } // namespace xromm::cuda
+} } // namespace xromm::opencl
 
 struct Args
 {
-    std::vector<xromm::cuda::Filter*>* filters;
-    xromm::cuda::Filter* filter;
+    std::vector<xromm::opencl::Filter*>* filters;
+    xromm::opencl::Filter* filter;
 };
 
 GtkWidget*
 xromm_gtk_tree_view_new_from_views(
-    const std::vector<xromm::cuda::View*>& views);
+    const std::vector<xromm::opencl::View*>& views);
 
 void toggle_drrs();
 void toggle_rads();

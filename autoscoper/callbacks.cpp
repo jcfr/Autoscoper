@@ -99,7 +99,7 @@
 
 using namespace std;
 using namespace xromm;
-using namespace cuda;
+using namespace opencl;
 
 static Tracker tracker;
 static Manip3D manip;
@@ -2274,13 +2274,13 @@ on_export_view_activate                 (GtkWidget*     menu_item,
          iter != view->drrFilters().end();
          ++iter) {
         switch ((*iter)->type()) {
-            case Filter::XROMM_CUDA_SOBEL_FILTER:
+            case Filter::XROMM_OPENCL_SOBEL_FILTER:
                 file << "SobelFilter_begin" << endl;
-                file << "Scale " << ((SobelFilter*)(*iter))->getScale() << endl;
-                file << "Blend " << ((SobelFilter*)(*iter))->getBlend() << endl;
+                file << "Scale " << ((SobelFilter*)(*iter))->scale() << endl;
+                file << "Blend " << ((SobelFilter*)(*iter))->blend() << endl;
                 file << "SobelFilter_end" << endl;
                 break;
-            case Filter::XROMM_CUDA_CONTRAST_FILTER:
+            case Filter::XROMM_OPENCL_CONTRAST_FILTER:
                 file << "ContrastFilter_begin" << endl;
                 file << "Alpha " << ((ContrastFilter*)(*iter))->alpha() << endl;
                 file << "Beta " << ((ContrastFilter*)(*iter))->beta() << endl;
@@ -2295,13 +2295,13 @@ on_export_view_activate                 (GtkWidget*     menu_item,
          iter != view->radFilters().end();
          ++iter) {
         switch ((*iter)->type()) {
-            case Filter::XROMM_CUDA_SOBEL_FILTER:
+            case Filter::XROMM_OPENCL_SOBEL_FILTER:
                 file << "SobelFilter_begin" << endl;
-                file << "Scale " << ((SobelFilter*)(*iter))->getScale() << endl;
-                file << "Blend " << ((SobelFilter*)(*iter))->getBlend() << endl;
+                file << "Scale " << ((SobelFilter*)(*iter))->scale() << endl;
+                file << "Blend " << ((SobelFilter*)(*iter))->blend() << endl;
                 file << "SobelFilter_end" << endl;
                 break;
-            case Filter::XROMM_CUDA_CONTRAST_FILTER:
+            case Filter::XROMM_OPENCL_CONTRAST_FILTER:
                 file << "ContrastFilter_begin" << endl;
                 file << "Alpha " << ((ContrastFilter*)(*iter))->alpha() << endl;
                 file << "Beta " << ((ContrastFilter*)(*iter))->beta() << endl;
@@ -2484,10 +2484,8 @@ on_xromm_markerless_tracking_drawingarea1_realize
     drawingarea1_view.pbo = 0;
 
     // Initialize the opengl context and state
-    if (glcontext == NULL) {
-
-        tracker.init();
-
+    if (glcontext == NULL)
+	{
         glcontext = gtk_widget_get_gl_context(widget);
         GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable(widget);
 
@@ -2500,6 +2498,8 @@ on_xromm_markerless_tracking_drawingarea1_realize
 
         // End opengl calls.
         gdk_gl_drawable_gl_end(gldrawable);
+
+        tracker.init();
 
 		redraw_drawingarea(drawingarea1);
 		redraw_drawingarea(drawingarea2);

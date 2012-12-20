@@ -2,8 +2,8 @@ __kernel
 void composite_kernel(__global const float* src1,
                       __global const float* src2,
                       __global float* dest,
-                      size_t width,
-                      size_t height)
+                      unsigned width,
+                      unsigned height)
 {
     int x = get_global_id(0);
     int y = get_global_id(1);

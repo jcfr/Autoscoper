@@ -37,7 +37,7 @@
 // ---------------------------------
 
 /// \file View.cpp
-/// \author Andy Loomis
+/// \author Andy Loomis, Mark Howison
 
 #include "View.hpp"
 
