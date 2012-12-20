@@ -10,7 +10,7 @@ UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
 LIBS += -framework OpenCL -framework OpenGL -framework GLUT
 else
-LIBS += -L$(OPENCL_DIR)/lib64 -lOpenCL -lGL
+LIBS += -lOpenCL -lglut -lGL
 endif
 
 .PHONY:	clean

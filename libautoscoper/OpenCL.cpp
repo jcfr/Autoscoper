@@ -1,6 +1,8 @@
-#include <stdlib.h>
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <fstream>
+
 #include "OpenCL.hpp"
 
 /* OpenCL-OpenGL interoperability */
@@ -556,11 +558,20 @@ void Buffer::copy(const Buffer* dst, size_t size) const
 	CHECK_CL
 }
 
-void Buffer::fill(const void* pattern, size_t pattern_size)
+void Buffer::zero() const
 {
-	err_ = clEnqueueFillBuffer(
-			queue_, buffer_, pattern, pattern_size, 0, size_, 0, NULL, NULL);
+#ifdef CL_VERSION_1_2
+	char c = 0x00;
+	err_ = clEnqueueFillBuffer(queue_, buffer_, &c, 1, 0, size_, 0, NULL, NULL);
 	CHECK_CL
+#else
+	void* tmp = (void*)new char[size_];
+	memset(tmp, 0x00, size_);
+	err_ = clEnqueueWriteBuffer(
+			queue_, buffer_, CL_TRUE, 0, size_, tmp, 0, NULL, NULL);
+	CHECK_CL
+	delete tmp;
+#endif
 }
 
 GLBuffer::GLBuffer(GLuint pbo, cl_mem_flags access)
@@ -588,6 +599,7 @@ Image::Image(size_t* dims, cl_image_format *format, cl_mem_flags access)
 	if (dims[0] == 0 || dims[1] == 0)
 		ERROR("Image object must have at least two non-zero dimensions");
 
+#ifdef CL_VERSION_1_2
 	cl_image_desc desc;
 
 	if (dims[2] == 0) {
@@ -606,6 +618,18 @@ Image::Image(size_t* dims, cl_image_format *format, cl_mem_flags access)
 	desc.buffer            = NULL;
 
 	image_ = clCreateImage(context_, access, format, &desc, NULL, &err_);
+#else
+	if (dims[2] == 0) {
+		image_ = clCreateImage2D(context_,
+					access, format, dims[0], dims[1], 0, NULL, &err_);	
+	} else {
+		image_ = clCreateImage3D(
+					context_, access, format,
+					dims[0], dims[1], dims[2],
+					0, 0, NULL, &err_);	
+	}
+#endif
+
 	CHECK_CL
 }
 

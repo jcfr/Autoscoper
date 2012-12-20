@@ -40,10 +40,16 @@
 /// \author Mark Howison
 
 #include <cstdio>
+#include <cstring>
 #include <string>
 #include <iostream>
 #include <stdexcept>
+
+#if defined(__APPLE__) || defined(__MACOSX)
 #include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
 
 #include "TiffImage.h"
 #include "SobelFilter.hpp"
