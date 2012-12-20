@@ -23,7 +23,7 @@ all:	$(TARGET)
 $(TARGET) : $(KERNELS) $(OBJS)
 	$(AR) $(ARFLAGS) $(TARGET) $(OBJS)
 
-$(OBJDIR)/%.cpp.o: %.cpp
+$(OBJDIR)/%.cpp.o: %.cpp $(KERNELS)
 	mkdir -p $(OBJDIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 

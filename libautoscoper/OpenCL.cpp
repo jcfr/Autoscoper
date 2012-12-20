@@ -14,6 +14,7 @@
 #include <windows.h>
 #else
 #include <GL/glx.h>
+#include <CL/cl_gl.h>
 #endif
 
 #define TYPE CL_DEVICE_TYPE_GPU
@@ -289,11 +290,18 @@ void opencl_global_context()
 		CHECK_CL
 #else
 #pragma OPENCL EXTENSION cl_khr_gl_sharing : enable
+			/*
 		cl_context_properties prop[7] = { 
 			CL_GL_CONTEXT_KHR,
 			(cl_context_properties)glXGetCurrentContext(),
 			CL_GLX_DISPLAY_KHR,
 			(cl_context_properties)glXGetCurrentDisplay(),
+			CL_CONTEXT_PLATFORM, 
+			(cl_context_properties)(platforms[0]),
+			0 };
+			*/
+
+		cl_context_properties prop[] = { 
 			CL_CONTEXT_PLATFORM, 
 			(cl_context_properties)(platforms[0]),
 			0 };
@@ -404,20 +412,20 @@ void Kernel::block2d(size_t X, size_t Y)
 
 void Kernel::addBufferArg(const Buffer* buf)
 {
-	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), buf->buffer_);
+	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), &buf->buffer_);
 	CHECK_CL
 }
 
 void Kernel::addGLBufferArg(const GLBuffer* buf)
 {
 	gl_buffers.push_back(buf);
-	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), buf->buffer_);
+	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), &buf->buffer_);
 	CHECK_CL
 }
 
 void Kernel::addImageArg(const Image* img)
 {
-	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), img->image_);
+	err_ = clSetKernelArg(kernel_, arg_index_++, sizeof(cl_mem), &img->image_);
 	CHECK_CL
 }
 
