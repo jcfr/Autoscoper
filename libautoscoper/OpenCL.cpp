@@ -5,6 +5,8 @@
 
 /* OpenCL-OpenGL interoperability */
 #if defined(__APPLE__) || defined(__MACOSX)
+#include <OpenGL/CGLDevice.h>
+#include <OpenCL/cl_gl_ext.h>
 #elif defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -94,7 +96,7 @@ static void print_platform(cl_platform_id platform)
 {
 	cerr << "# OpenCL Platform" << endl;
 
-	char buffer[64];
+	char buffer[1024];
 
 	err_ = clGetPlatformInfo(
 				platform, CL_PLATFORM_VERSION, sizeof(buffer), buffer, NULL);
@@ -114,7 +116,7 @@ static void print_platform(cl_platform_id platform)
 
 static void print_device(cl_device_id device)
 {
-	char buffer[64];
+	char buffer[1024];
 	cl_bool b;
 	cl_device_type t;
 	cl_ulong ul;
@@ -214,6 +216,11 @@ static void print_device(cl_device_id device)
 		device, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(ul), &ul, NULL);
 	CHECK_CL
 	cerr << "# Global Cache  : " << ul << " B\n";
+
+	err_ = clGetDeviceInfo(
+		device, CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, NULL);
+	CHECK_CL
+	cerr << "# Extensions    : " << buffer << "\n";
 }
 
 void init()
@@ -244,19 +251,27 @@ void init()
 		/* create context */
 
 #if defined(__APPLE__) || defined(__MACOSX)
+#pragma OPENCL EXTENSION cl_APPLE_gl_sharing : enable
 		CGLContextObj glContext = CGLGetCurrentContext();
 		CGLShareGroupObj shareGroup = CGLGetShareGroup(glContext);
-#endif
 
-#if defined(__APPLE__) || defined(__MACOSX)
-#pragma OPENCL EXTENSION cl_APPLE_gl_sharing : enable
-		cl_context_properties prop[5] = { 
+		cl_context_properties prop[] = { 
 			CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
-			(cl_context_properties) shareGroup,
-/* omit the CL_CONTEXT_PLATFORM on OS X according to:
-   http://stackoverflow.com/questions/10756993/getting-current-opengl-context-on-os-x */
-			CL_CONTEXT_PLATFORM, 
-			(cl_context_properties)(platforms[0]),
+			(intptr_t) shareGroup,
+			0 };
+
+		/* omit the device, according to this:
+		   http://www.khronos.org/message_boards/viewtopic.php?f=28&t=2548 */
+		context_ = clCreateContext(prop, 0, NULL, 0, 0, &err_);
+		CHECK_CL
+
+		size_t num_gl_devices;
+		err_ = clGetGLContextInfoAPPLE(
+					context_, glContext,
+					CL_CGL_DEVICE_FOR_CURRENT_VIRTUAL_SCREEN_APPLE,
+					1, devices_, &num_gl_devices);
+
+		if (num_gl_devices < 1) ERROR("no OpenCL GPU device found");
 #elif defined(_WIN32)
 #pragma OPENCL EXTENSION cl_khr_gl_sharing : enable
 		cl_context_properties prop[7] = { 
@@ -266,6 +281,10 @@ void init()
 			(cl_context_properties) wglGetCurrentDC(),
 			CL_CONTEXT_PLATFORM, 
 			(cl_context_properties)(platforms[0]),
+			0 };
+
+		context_ = clCreateContext(prop, 1, devices_, NULL, NULL, &err_);
+		CHECK_CL
 #else
 #pragma OPENCL EXTENSION cl_khr_gl_sharing : enable
 		cl_context_properties prop[7] = { 
@@ -275,11 +294,11 @@ void init()
 			(cl_context_properties)glXGetCurrentDisplay(),
 			CL_CONTEXT_PLATFORM, 
 			(cl_context_properties)(platforms[0]),
-#endif
 			0 };
 
 		context_ = clCreateContext(prop, 1, devices_, NULL, NULL, &err_);
 		CHECK_CL
+#endif
 
 		/* create command queue */
 

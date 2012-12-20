@@ -8,7 +8,7 @@ LIBS = ../libautoscoper.a -ltiff
 # Test OS
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
-LIBS += -framework OpenCL -framework OpenGL
+LIBS += -framework OpenCL -framework OpenGL -framework GLUT
 else
 LIBS += -L$(OPENCL_DIR)/lib64 -lOpenCL -lGL
 endif
@@ -17,7 +17,7 @@ endif
 
 all:	$(TARGETS)
 
-filters: filters.cpp
+filters: filters.cpp ../libautoscoper.a
 	$(CXX) $(CXXFLAGS) $(INCLUDES) filters.cpp -o $@ $(LIBS)
 
 clean:

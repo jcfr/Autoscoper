@@ -43,6 +43,7 @@
 #include <string>
 #include <iostream>
 #include <stdexcept>
+#include <GLUT/glut.h>
 
 #include "TiffImage.h"
 #include "SobelFilter.hpp"
@@ -133,6 +134,10 @@ void testGaussian()
 
 int main(int argc, char** argv)
 {
+	glutInit(&argc, (char**)argv);
+	glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
+	glutCreateWindow( "OpenCL <-> OpenGL Test" );
+
 	TIFFSetWarningHandler(0);
 	TIFF* tif = TIFFOpen(TESTFILE ".tiff", "r");
 	if (!tif) {
