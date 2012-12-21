@@ -1,22 +1,22 @@
 // ----------------------------------
 // Copyright (c) 2011, Brown University
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 // (1) Redistributions of source code must retain the above copyright
 // notice, this list of conditions and the following disclaimer.
-// 
+//
 // (2) Redistributions in binary form must reproduce the above copyright
 // notice, this list of conditions and the following disclaimer in the
 // documentation and/or other materials provided with the distribution.
-// 
+//
 // (3) Neither the name of Brown University nor the names of its
 // contributors may be used to endorse or promote products derived from
 // this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY BROWN UNIVERSITY “AS IS” WITH NO
 // WARRANTIES OR REPRESENTATIONS OF ANY KIND WHATSOEVER EITHER EXPRESS OR
 // IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTY OF DESIGN OR
@@ -36,43 +36,24 @@
 // THEIR USE OF THE SOFTWARE.
 // ---------------------------------
 
-/// \file RadRenderer.hpp
-/// \author Andy Loomis, Mark Howison
+/// \file Backtrace.h
+/// \author Mark Howison
 
-#ifndef XROMM_OPENCL_RAD_RENDERER_HPP
-#define XROMM_OPENCL_RAD_RENDERER_HPP
+// Signal handler that prints backtraces during segfaults. Adapted from:
+// http://stackoverflow.com/questions/3151779
 
-#include <string>
+#ifndef XROMM_BACKTRACE_HPP
+#define XROMM_BACKTRACE_HPP
 
-#include "OpenCL.hpp"
+#include <signal.h>
 
-namespace xromm { namespace opencl
-{
+namespace xromm {
 
-class RadRenderer
-{
-public:
-    RadRenderer();
-    ~RadRenderer();
+void bt();
+void bt_sighandler(int sig, siginfo_t *info, void *secret);
+void register_bt_sighandler();
 
-    void set_rad(const void* data, size_t width, size_t height, size_t bps);
-    void set_image_plane(float x, float y, float width, float height);
-    void set_viewport(float x, float y, float width, float height); 
-    void render(const Buffer* buffer, unsigned width, unsigned height) const;
-    const std::string& getName() const { return name_; }
-    void setName(const std::string& name) { name_ = name; }
+} // xromm
 
-private:
-    RadRenderer(const RadRenderer& renderer);
-    RadRenderer& operator=(const RadRenderer& renderer);
-
-	Image* image_;
-    float image_plane_[4];
-    float viewport_[4];
-    std::string name_;
-};
-
-} } // namespace xromm::opencl
-
-#endif // XROMM_OPENCL_RAD_RENDERER_HPP
+#endif // XROMM_BACKTRACE_HPP
 

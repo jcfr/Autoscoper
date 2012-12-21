@@ -228,8 +228,8 @@ VolumeDescription::VolumeDescription(const Volume& volume)
 	cl_image_format format;
 	format.image_channel_order = CL_R;
     switch (volume.bps()) {
-        case 8:  format.image_channel_data_type = CL_UNSIGNED_INT8; break;
-        case 16: format.image_channel_data_type = CL_UNSIGNED_INT16; break;
+        case 8:  format.image_channel_data_type = CL_UNORM_INT8; break;
+        case 16: format.image_channel_data_type = CL_UNORM_INT16; break;
         default:
             cerr << "VolumeDescription(): unsupported bit depth "
                  << volume.bps() << endl;

@@ -1,10 +1,12 @@
 __kernel
-void rad_render_kernel(__global float* output, int width, int height, float u0,
-						 float v0, float u1, float v1, float u2, float v2,
-						 float u3, float v3, __read_only image2d_t image)
+void rad_render_kernel(__global float* output,
+                       unsigned width, unsigned height,
+                       float u0, float v0, float u1, float v1,
+                       float u2, float v2, float u3, float v3,
+                       __read_only image2d_t image)
 {
-	const int x = get_global_id(0);
-	const int y = get_global_id(1);
+	const uint x = get_global_id(0);
+	const uint y = get_global_id(1);
 
 	const sampler_t sampler = CLK_NORMALIZED_COORDS_TRUE |
 	                          CLK_ADDRESS_CLAMP_TO_EDGE |

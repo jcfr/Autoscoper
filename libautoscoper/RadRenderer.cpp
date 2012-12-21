@@ -87,9 +87,8 @@ RadRenderer::set_rad(const void* data, size_t width, size_t height, size_t bps)
 	cl_image_format format;
 	format.image_channel_order = CL_R;
     switch (bps) {
-        case 8:  format.image_channel_data_type = CL_UNSIGNED_INT8; break;
-        case 16: format.image_channel_data_type = CL_UNSIGNED_INT16; break;
-        case 32: format.image_channel_data_type = CL_UNSIGNED_INT32; break;
+        case 8:  format.image_channel_data_type = CL_UNORM_INT8; break;
+        case 16: format.image_channel_data_type = CL_UNORM_INT16; break;
         default:
             cerr << "RadRenderer::rad(): Unsupported bit depth "
                  << bps << endl;
@@ -121,7 +120,7 @@ RadRenderer::set_viewport(float x, float y, float width, float height)
 }
 
 void
-RadRenderer::render(const Buffer* buffer, size_t width, size_t height) const
+RadRenderer::render(const Buffer* buffer, unsigned width, unsigned height) const
 {
 	Kernel* kernel = rad_renderer_program_.compile(
 										RadRenderer_cl, "rad_render_kernel");

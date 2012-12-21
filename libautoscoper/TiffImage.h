@@ -37,13 +37,13 @@
 // ---------------------------------
 
 /// \file TiffImage.h
-/// \author Andy Loomis
+/// \author Andy Loomis, Mark Howison
 
 // Simple interface for reading and writing multiformat TIFF images using the
 // libtiff library.
 
-#ifndef TIFF_IMAGE_H
-#define TIFF_IMAGE_H
+#ifndef XROMM_TIFF_IMAGE_H
+#define XROMM_TIFF_IMAGE_H
 
 #include <tiffio.h>
 

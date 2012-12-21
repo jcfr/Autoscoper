@@ -61,6 +61,7 @@
 
 #include "interface.hpp"
 #include "support.hpp"
+#include "Backtrace.hpp"
 
 /*
 void terminate();
@@ -73,6 +74,8 @@ namespace {
 
 int main(int argc, char *argv[])
 {
+	xromm::register_bt_sighandler();
+
     GtkWidget *window;
     GtkWidget *drawingarea1;
     GtkWidget *drawingarea2;

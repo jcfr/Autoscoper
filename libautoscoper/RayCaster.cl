@@ -28,9 +28,9 @@ void volume_render_kernel(__global float* buffer,
 
     // Calculate the ray in world space.
 	// Origin is the last column of the invModelView matrix
-	float3 ray_origin = (float3)(imv[3], imv[7], imv[11]);
-	// Origin is the invModelView x look
-	float3 ray_direction = (float3)(
+	const float3 ray_origin = (float3)(imv[3], imv[7], imv[11]);
+	// Direction is the invModelView x look
+	const float3 ray_direction = (float3)(
 						dot(look, (float3)(imv[0], imv[1], imv[2])),
 						dot(look, (float3)(imv[4], imv[5], imv[6])),
 						dot(look, (float3)(imv[8], imv[9], imv[10])));
@@ -67,12 +67,12 @@ void volume_render_kernel(__global float* buffer,
     float density = 0.0f;
     while (t > near) {
         const float3 point = ray_origin+t*ray_direction;
-        const float s = read_imagef(image, sampler, (float4)(
+        const float val = read_imagef(image, sampler, (float4)(
                 (flip[0] == 1 ? 1.0f-point.x : point.x),
                 (flip[1] == 1 ? point.y      : 1.0f-point.y),
                 (flip[2] == 1 ? point.z+1.0f : -point.z),
 				0) ).x;
-        density += s > cutoff ? step*s : 0.0f;
+        density += val > cutoff ? step*val : 0.0f;
         t -= 1.0f;
     }
 

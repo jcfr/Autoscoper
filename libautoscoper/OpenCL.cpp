@@ -4,6 +4,7 @@
 #include <fstream>
 
 #include "OpenCL.hpp"
+#include "Backtrace.hpp"
 
 /* OpenCL-OpenGL interoperability */
 #if defined(__APPLE__) || defined(__MACOSX)
@@ -22,6 +23,7 @@
 #define ERROR(msg) do{\
 	cerr << "Error at " << __FILE__ << ':' << __LINE__ \
 	     << "\n  " << msg << endl; \
+	xromm::bt(); \
 	exit(1); \
 	}while(0)
 
@@ -29,6 +31,7 @@
 	if (err_ != CL_SUCCESS) {\
 		cerr << "OpenCL error at " << __FILE__ << ':' << __LINE__ \
 	         << "\n  " << err_ << ' ' << opencl_error(err_) << endl; \
+		xromm::bt(); \
 		exit(1); \
 	}
 

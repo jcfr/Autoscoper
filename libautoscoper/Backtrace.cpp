@@ -1,22 +1,22 @@
 // ----------------------------------
 // Copyright (c) 2011, Brown University
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
 // met:
-// 
+//
 // (1) Redistributions of source code must retain the above copyright
 // notice, this list of conditions and the following disclaimer.
-// 
+//
 // (2) Redistributions in binary form must reproduce the above copyright
 // notice, this list of conditions and the following disclaimer in the
 // documentation and/or other materials provided with the distribution.
-// 
+//
 // (3) Neither the name of Brown University nor the names of its
 // contributors may be used to endorse or promote products derived from
 // this software without specific prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY BROWN UNIVERSITY “AS IS” WITH NO
 // WARRANTIES OR REPRESENTATIONS OF ANY KIND WHATSOEVER EITHER EXPRESS OR
 // IMPLIED, INCLUDING WITHOUT LIMITATION ANY WARRANTY OF DESIGN OR
@@ -36,43 +36,58 @@
 // THEIR USE OF THE SOFTWARE.
 // ---------------------------------
 
-/// \file RadRenderer.hpp
-/// \author Andy Loomis, Mark Howison
+/// \file Backtrace.cpp
+/// \author Mark Howison
 
-#ifndef XROMM_OPENCL_RAD_RENDERER_HPP
-#define XROMM_OPENCL_RAD_RENDERER_HPP
+#include <stdlib.h>
+#include <stdio.h>
+#include <execinfo.h>
 
-#include <string>
+#include "Backtrace.hpp"
 
-#include "OpenCL.hpp"
+namespace xromm {
 
-namespace xromm { namespace opencl
+void bt()
 {
+	void* trace[16];
+	char** messages = (char**)NULL;
+	int trace_size = 0;
 
-class RadRenderer
+	trace_size = backtrace(trace, 16);
+
+	/* overwrite sigaction with caller's address */
+	//if (addr) trace[1] = addr;
+	messages = backtrace_symbols(trace, trace_size);
+
+	/* skip first stack frame (points here) */
+	fprintf(stderr, "[bt] Execution path:\n");
+	for (int i=1; i<trace_size; ++i)
+	{
+		fprintf(stderr, "[bt] #%d %s\n", i, messages[i]);
+	}
+}
+
+void bt_sighandler(int sig, siginfo_t *info, void *secret)
 {
-public:
-    RadRenderer();
-    ~RadRenderer();
+	if (sig == SIGSEGV)
+		printf("Got signal %d, faulty address is %p\n", sig, info->si_addr);
+	else
+		printf("Got signal %d\n", sig);
 
-    void set_rad(const void* data, size_t width, size_t height, size_t bps);
-    void set_image_plane(float x, float y, float width, float height);
-    void set_viewport(float x, float y, float width, float height); 
-    void render(const Buffer* buffer, unsigned width, unsigned height) const;
-    const std::string& getName() const { return name_; }
-    void setName(const std::string& name) { name_ = name; }
+	bt();
+}
 
-private:
-    RadRenderer(const RadRenderer& renderer);
-    RadRenderer& operator=(const RadRenderer& renderer);
+void register_bt_sighandler()
+{
+	/* Install our signal handler */
+	struct sigaction sa;
 
-	Image* image_;
-    float image_plane_[4];
-    float viewport_[4];
-    std::string name_;
-};
+	sa.sa_sigaction = bt_sighandler;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
 
-} } // namespace xromm::opencl
+	sigaction(SIGSEGV, &sa, NULL);
+	sigaction(SIGUSR1, &sa, NULL);
+}
 
-#endif // XROMM_OPENCL_RAD_RENDERER_HPP
-
+} // xromm
