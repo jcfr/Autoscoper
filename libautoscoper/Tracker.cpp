@@ -88,11 +88,6 @@ Tracker::~Tracker()
 {
 }
 
-void Tracker::init()
-{
-	opencl::opencl_global_context();
-}
-
 void Tracker::load(const Trial& trial)
 {
     trial_ = trial;

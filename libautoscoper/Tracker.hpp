@@ -71,7 +71,6 @@ public:
 
     Tracker();
     ~Tracker();
-    void init();
     void load(const Trial& trial);
     Trial* trial() { return &trial_; }
     void optimize(int frame, int dframe, int repeats = 1);

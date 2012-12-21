@@ -99,7 +99,6 @@
 
 using namespace std;
 using namespace xromm;
-using namespace opencl;
 
 static Tracker tracker;
 static Manip3D manip;
@@ -362,12 +361,17 @@ mouse_to_graph(double mouse_x,
 // Initialization function. Sets up the opengl state and other default params.
 static void init()
 {
+	cerr << "Initializing OpenGL..." << endl;
+
 	glewInit();
 
 #ifndef _WIN32
+	cerr << "Initializing GLUT..." << endl;
+
 	int argc = 0;
 	char argv[1] = {'\n'};
 	char* pargv = &argv[0];
+
 	glutInit(&argc,&pargv);
 #endif
 
@@ -388,6 +392,9 @@ static void init()
     glGetIntegerv(GL_MAX_VIEWPORT_DIMS, max_viewport_dims);
 
     reset_graph(&position_graph);
+
+	cerr << "Initializing OpenCL-OpenGL interoperability..." << endl;
+	opencl::opencl_global_gl_context();
 }
 
 static
@@ -2059,7 +2066,7 @@ on_xromm_drr_renderer_properties_dialog_sample_distance_scale_value_changed
 {
     double value = exp(7*gtk_range_get_value(range)-5);
 
-    RayCaster* rayCaster = (RayCaster*)data;
+	opencl::RayCaster* rayCaster = (opencl::RayCaster*)data;
     rayCaster->setSampleDistance(value);
 
     redraw_drawingarea(drawingarea1);
@@ -2073,7 +2080,7 @@ on_xromm_drr_renderer_properties_dialog_intensity_scale_value_changed
 {
     double value = exp(15*gtk_range_get_value(range)-5);
 
-    RayCaster* rayCaster = (RayCaster*)data;
+    opencl::RayCaster* rayCaster = (opencl::RayCaster*)data;
     rayCaster->setRayIntensity(value);
 
     redraw_drawingarea(drawingarea1);
@@ -2086,7 +2093,7 @@ on_xromm_drr_renderer_properties_dialog_cutoff_scale_value_changed
                                         (GtkRange*      range,
                                          gpointer       data)
 {
-    RayCaster* rayCaster = (RayCaster*)data;
+    opencl::RayCaster* rayCaster = (opencl::RayCaster*)data;
     float value = gtk_range_get_value(range);
 
     rayCaster->setCutoff(value*(rayCaster->getMaxCutoff()-
@@ -2102,7 +2109,7 @@ on_xromm_sobel_properties_dialog_scale_scale_value_changed
                                         (GtkRange*      range,
                                          gpointer       data)
 {
-    SobelFilter* sobelFilter = (SobelFilter*)data;
+	opencl::SobelFilter* sobelFilter = (opencl::SobelFilter*)data;
     sobelFilter->setScale(gtk_range_get_value(range));
 
     redraw_drawingarea(drawingarea1);
@@ -2114,7 +2121,7 @@ on_xromm_sobel_properties_dialog_blend_scale_value_changed
                                         (GtkRange*      range,
                                          gpointer       data)
 {
-    SobelFilter* sobelFilter = (SobelFilter*)data;
+	opencl::SobelFilter* sobelFilter = (opencl::SobelFilter*)data;
     sobelFilter->setBlend(gtk_range_get_value(range));
 
     redraw_drawingarea(drawingarea1);
@@ -2126,7 +2133,7 @@ on_xromm_contrast_properties_dialog_alpha_scale_value_changed
                                         (GtkRange*      range,
                                          gpointer       data)
 {
-    ContrastFilter* contrastFilter = (ContrastFilter*)data;
+	opencl::ContrastFilter* contrastFilter = (opencl::ContrastFilter*)data;
     contrastFilter->set_alpha(gtk_range_get_value(range));
 
     redraw_drawingarea(drawingarea1);
@@ -2138,7 +2145,7 @@ on_xromm_gaussian_properties_dialog_radius_scale_value_changed
                                         (GtkRange*      range,
                                          gpointer       data)
 {
-    GaussianFilter* gaussianFilter = (GaussianFilter*)data;
+    opencl::GaussianFilter* gaussianFilter = (opencl::GaussianFilter*)data;
     gaussianFilter->set_radius(gtk_range_get_value(range));
 
     redraw_drawingarea(drawingarea1);
@@ -2150,7 +2157,7 @@ on_xromm_sharpen_properties_dialog_radius_scale_value_changed
                                         (GtkRange*      range,
                                          gpointer       data)
 {
-    SharpenFilter* sharpenFilter = (SharpenFilter*)data;
+    opencl::SharpenFilter* sharpenFilter = (opencl::SharpenFilter*)data;
     sharpenFilter->set_radius(gtk_range_get_value(range));
 
     redraw_drawingarea(drawingarea1);
@@ -2162,7 +2169,7 @@ on_xromm_sharpen_properties_dialog_contrast_scale_value_changed
                                         (GtkRange*      range,
                                          gpointer       data)
 {
-    SharpenFilter* sharpenFilter = (SharpenFilter*)data;
+    opencl::SharpenFilter* sharpenFilter = (opencl::SharpenFilter*)data;
     sharpenFilter->set_contrast(gtk_range_get_value(range));
 
     redraw_drawingarea(drawingarea1);
@@ -2175,7 +2182,7 @@ on_xromm_contrast_properties_dialog_beta_scale_value_changed
                                         (GtkRange*      range,
                                          gpointer       data)
 {
-    ContrastFilter* contrastFilter = (ContrastFilter*)data;
+    opencl::ContrastFilter* contrastFilter = (opencl::ContrastFilter*)data;
     contrastFilter->set_beta(gtk_range_get_value(range));
 
     redraw_drawingarea(drawingarea1);
@@ -2185,7 +2192,7 @@ on_xromm_contrast_properties_dialog_beta_scale_value_changed
 void
 on_toggle_filter(gpointer filter, bool toggled)
 {
-    ((Filter*)filter)->set_enabled(toggled);
+    ((opencl::Filter*)filter)->set_enabled(toggled);
 
     redraw_drawingarea(drawingarea1);
     redraw_drawingarea(drawingarea2);
@@ -2195,10 +2202,10 @@ void
 on_toggle_renderer(gpointer view, gint type, bool toggled)
 {
     if (type == 0) {
-        ((View*)view)->drr_enabled = toggled;
+        ((opencl::View*)view)->drr_enabled = toggled;
     }
     else if (type == 1) {
-        ((View*)view)->rad_enabled = toggled;
+        ((opencl::View*)view)->rad_enabled = toggled;
     }
 
     redraw_drawingarea(drawingarea1);
@@ -2209,7 +2216,7 @@ void
 on_remove_filter_activate(GtkWidget* menu_item, gpointer data)
 {
     Args* args = static_cast<Args*>(data);
-    vector<Filter*>::iterator it = args->filters->begin();
+    vector<opencl::Filter*>::iterator it = args->filters->begin();
     for (; it != args->filters->end(); ++it) {
         if (*it == args->filter) {
             it = args->filters->erase(it);
@@ -2225,20 +2232,21 @@ on_remove_filter_activate(GtkWidget* menu_item, gpointer data)
 void
 on_new_filter_activate(GtkWidget* menu_item, gpointer data)
 {
-    vector<Filter*>* filters = static_cast<vector<Filter*>*>(data);
+    vector<opencl::Filter*>* filters =
+								static_cast<vector<opencl::Filter*>*>(data);
     string new_filter_name(gtk_label_get_text(
         GTK_LABEL(gtk_bin_get_child(GTK_BIN(menu_item)))));
     if (new_filter_name.compare("Sobel") == 0) {
-        filters->push_back(new SobelFilter());
+        filters->push_back(new opencl::SobelFilter());
     }
     else if (new_filter_name.compare("Contrast") == 0) {
-        filters->push_back(new ContrastFilter());
+        filters->push_back(new opencl::ContrastFilter());
     }
     else if (new_filter_name.compare("Gaussian") == 0) {
-        filters->push_back(new GaussianFilter());
+        filters->push_back(new opencl::GaussianFilter());
     }
     else if (new_filter_name.compare("Sharpen") == 0) {
-        filters->push_back(new SharpenFilter());
+        filters->push_back(new opencl::SharpenFilter());
     }
 
     fill_notebook();
@@ -2261,8 +2269,8 @@ on_export_view_activate                 (GtkWidget*     menu_item,
         return;
     }
 
-    View* view = (View*)data;
-    vector<Filter*>::const_iterator iter;
+    opencl::View* view = (opencl::View*)data;
+    vector<opencl::Filter*>::const_iterator iter;
 
     file << "DrrRenderer_begin" << endl;
     file << "SampleDistance " << view->drrRenderer()->getSampleDistance() << endl;
@@ -2274,16 +2282,20 @@ on_export_view_activate                 (GtkWidget*     menu_item,
          iter != view->drrFilters().end();
          ++iter) {
         switch ((*iter)->type()) {
-            case Filter::XROMM_OPENCL_SOBEL_FILTER:
+            case opencl::Filter::XROMM_OPENCL_SOBEL_FILTER:
                 file << "SobelFilter_begin" << endl;
-                file << "Scale " << ((SobelFilter*)(*iter))->scale() << endl;
-                file << "Blend " << ((SobelFilter*)(*iter))->blend() << endl;
+                file << "Scale "
+				     << ((opencl::SobelFilter*)(*iter))->scale() << endl;
+                file << "Blend "
+				     << ((opencl::SobelFilter*)(*iter))->blend() << endl;
                 file << "SobelFilter_end" << endl;
                 break;
-            case Filter::XROMM_OPENCL_CONTRAST_FILTER:
+            case opencl::Filter::XROMM_OPENCL_CONTRAST_FILTER:
                 file << "ContrastFilter_begin" << endl;
-                file << "Alpha " << ((ContrastFilter*)(*iter))->alpha() << endl;
-                file << "Beta " << ((ContrastFilter*)(*iter))->beta() << endl;
+                file << "Alpha "
+				     << ((opencl::ContrastFilter*)(*iter))->alpha() << endl;
+                file << "Beta "
+				     << ((opencl::ContrastFilter*)(*iter))->beta() << endl;
                 file << "ContrastFilter_end" << endl;
                 break;
             default: break;
@@ -2295,16 +2307,20 @@ on_export_view_activate                 (GtkWidget*     menu_item,
          iter != view->radFilters().end();
          ++iter) {
         switch ((*iter)->type()) {
-            case Filter::XROMM_OPENCL_SOBEL_FILTER:
+            case opencl::Filter::XROMM_OPENCL_SOBEL_FILTER:
                 file << "SobelFilter_begin" << endl;
-                file << "Scale " << ((SobelFilter*)(*iter))->scale() << endl;
-                file << "Blend " << ((SobelFilter*)(*iter))->blend() << endl;
+                file << "Scale "
+				     << ((opencl::SobelFilter*)(*iter))->scale() << endl;
+                file << "Blend "
+				     << ((opencl::SobelFilter*)(*iter))->blend() << endl;
                 file << "SobelFilter_end" << endl;
                 break;
-            case Filter::XROMM_OPENCL_CONTRAST_FILTER:
+            case opencl::Filter::XROMM_OPENCL_CONTRAST_FILTER:
                 file << "ContrastFilter_begin" << endl;
-                file << "Alpha " << ((ContrastFilter*)(*iter))->alpha() << endl;
-                file << "Beta " << ((ContrastFilter*)(*iter))->beta() << endl;
+                file << "Alpha "
+				     << ((opencl::ContrastFilter*)(*iter))->alpha() << endl;
+                file << "Beta "
+				     << ((opencl::ContrastFilter*)(*iter))->beta() << endl;
                 file << "ContrastFilter_end" << endl;
                 break;
             default: break;
@@ -2332,7 +2348,7 @@ on_import_view_activate                 (GtkWidget*     menu_item,
         return;
     }
 
-    View* view = (View*)data;
+    opencl::View* view = (opencl::View*)data;
 
     string line, key;
     while (getline(file,line)) {
@@ -2361,7 +2377,7 @@ on_import_view_activate                 (GtkWidget*     menu_item,
             view->drrFilters().clear(); //XXX Memory Leak
             while (getline(file,line) && line.compare("DrrFilters_end") != 0) {
                 if (line.compare("SobelFilter_begin") == 0) {
-                    SobelFilter* filter = new SobelFilter();
+                    opencl::SobelFilter* filter = new opencl::SobelFilter();
                     while (getline(file,line) && line.compare("SobelFilter_end") != 0) {
                         istringstream lineStream(line);
                         lineStream >> key;
@@ -2379,7 +2395,7 @@ on_import_view_activate                 (GtkWidget*     menu_item,
                     view->drrFilters().push_back(filter);
                 }
                 else if (line.compare("ContrastFilter_begin") == 0) {
-                    ContrastFilter* filter = new ContrastFilter();
+                    opencl::ContrastFilter* filter = new opencl::ContrastFilter();
                     while (getline(file,line) && line.compare("ContrastFilter_end") != 0) {
                         istringstream lineStream(line);
                         lineStream >> key;
@@ -2402,7 +2418,7 @@ on_import_view_activate                 (GtkWidget*     menu_item,
             view->radFilters().clear(); //XXX Memory Leak
             while (getline(file,line) && line.compare("RadFilters_end") != 0) {
                 if (line.compare("SobelFilter_begin") == 0) {
-                    SobelFilter* filter = new SobelFilter();
+                    opencl::SobelFilter* filter = new opencl::SobelFilter();
                     while (getline(file,line) && line.compare("SobelFilter_end") != 0) {
                         istringstream lineStream(line);
                         lineStream >> key;
@@ -2420,7 +2436,7 @@ on_import_view_activate                 (GtkWidget*     menu_item,
                     view->radFilters().push_back(filter);
                 }
                 else if (line.compare("ContrastFilter_begin") == 0) {
-                    ContrastFilter* filter = new ContrastFilter();
+                    opencl::ContrastFilter* filter = new opencl::ContrastFilter();
                     while (getline(file,line) && line.compare("ContrastFilter_end") != 0) {
                         istringstream lineStream(line);
                         lineStream >> key;
@@ -2498,8 +2514,6 @@ on_xromm_markerless_tracking_drawingarea1_realize
 
         // End opengl calls.
         gdk_gl_drawable_gl_end(gldrawable);
-
-        tracker.init();
 
 		redraw_drawingarea(drawingarea1);
 		redraw_drawingarea(drawingarea2);
@@ -2715,8 +2729,6 @@ on_xromm_markerless_tracking_drawingarea2_realize
 
     // Initialize the opengl context and state if it has not already been done.
     if (glcontext == NULL) {
-
-        tracker.init();
 
         glcontext = gtk_widget_get_gl_context(widget);
         GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable(widget);
@@ -2948,8 +2960,6 @@ on_xromm_markerless_tracking_graph_drawingarea_realize
 
     // Initialize the opengl context and state if it has not already been done.
     if (glcontext == NULL) {
-
-        tracker.init();
 
         glcontext = gtk_widget_get_gl_context(widget);
         GdkGLDrawable *gldrawable = gtk_widget_get_gl_drawable(widget);

@@ -143,7 +143,7 @@ RayCaster::setViewport(float x, float y, float width, float height)
 }
 
 void
-RayCaster::render(const Buffer* buffer, size_t width, size_t height)
+RayCaster::render(const Buffer* buffer, unsigned width, unsigned height)
 {
     if (!volumeDescription_) {
         cerr << "RayCaster: WARNING: No volume loaded. " << endl;

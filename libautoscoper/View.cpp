@@ -47,6 +47,7 @@
 #endif
 
 #include <iostream>
+#include <stdexcept>
 
 #include "Camera.hpp"
 #include "Compositor.hpp"
@@ -73,6 +74,7 @@ View::View(Camera& camera)
 	radBuffer_ = 0;
 	radFilterBuffer_ = 0;
 	filterBuffer_ = 0;
+	inited_ = false;
 }
 
 View::~View()
@@ -99,18 +101,7 @@ View::~View()
 void
 View::renderRad(const Buffer* buffer, unsigned width, unsigned height)
 {
-    init();
-
-    if (width > maxWidth_ || height > maxHeight_) {
-        cerr << "View::renderRad(): ERROR: Buffer too large." << endl;
-    }
-    if (width > maxWidth_) {
-        width = maxWidth_;
-    }
-    if (height > maxHeight_) {
-        height = maxHeight_;
-    }
-
+	init(width, height);
     radRenderer_->render(radBuffer_, width, height);
     filter(radFilters_, radBuffer_, buffer, width, height);
 }
@@ -120,6 +111,7 @@ View::renderRad(GLuint pbo, unsigned width, unsigned height)
 {
 	GLBuffer* buffer = new GLBuffer(pbo, CL_MEM_WRITE_ONLY);
 
+	init(width, height);
     renderRad(radFilterBuffer_, width, height);
     composite(radFilterBuffer_, radFilterBuffer_, buffer, width, height);
 
@@ -129,18 +121,7 @@ View::renderRad(GLuint pbo, unsigned width, unsigned height)
 void
 View::renderDrr(const Buffer* buffer, unsigned width, unsigned height)
 {
-    init();
-
-    if (width > maxWidth_ || height > maxHeight_) {
-        cerr << "View::renderDrr(): ERROR: Buffer too large." << endl;
-    }
-    if (width > maxWidth_) {
-        width = maxWidth_;
-    }
-    if (height > maxHeight_) {
-        height = maxHeight_;
-    }
-
+	init(width, height);
     drrRenderer_->render(drrBuffer_, width, height);
     filter(drrFilters_, drrBuffer_, buffer, width, height);
 }
@@ -150,6 +131,7 @@ View::renderDrr(GLuint pbo, unsigned width, unsigned height)
 {
 	GLBuffer* buffer = new GLBuffer(pbo, CL_MEM_WRITE_ONLY);
 
+	init(width, height);
     renderDrr(drrFilterBuffer_, width, height);
     composite(drrFilterBuffer_, drrFilterBuffer_, buffer, width, height);
 
@@ -159,7 +141,7 @@ View::renderDrr(GLuint pbo, unsigned width, unsigned height)
 void
 View::render(const GLBuffer* buffer, unsigned width, unsigned height)
 {
-    init();
+	init(width, height);
 
     if (drr_enabled) {
         renderDrr(drrFilterBuffer_, width, height);
@@ -183,20 +165,26 @@ View::render(GLuint pbo, unsigned width, unsigned height)
 {
 	GLBuffer* buffer = new GLBuffer(pbo, CL_MEM_WRITE_ONLY);
 
+	init(width, height);
     render(buffer, width, height);
 
 	delete buffer;
 }
 
 void
-View::init()
+View::init(unsigned width, unsigned height)
 {
-    if (!filterBuffer_) {
+    if (width > maxWidth_ || height > maxHeight_) {
+		throw runtime_error("View::renderDrr(): Buffer too large");
+    }
+
+    if (!inited_) {
         filterBuffer_    = new Buffer(maxWidth_*maxHeight_*sizeof(float));
         drrBuffer_       = new Buffer(maxWidth_*maxHeight_*sizeof(float));
         drrFilterBuffer_ = new Buffer(maxWidth_*maxHeight_*sizeof(float));
         radBuffer_       = new Buffer(maxWidth_*maxHeight_*sizeof(float));
         radFilterBuffer_ = new Buffer(maxWidth_*maxHeight_*sizeof(float));
+		inited_ = true;
     }
 }
 

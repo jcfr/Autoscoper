@@ -97,7 +97,7 @@ RadRenderer::set_rad(const void* data, size_t width, size_t height, size_t bps)
     }
 
 	if (image_) delete image_;
-	size_t dims[3] = { width, height, 0 };
+	size_t dims[3] = { width, height, 1 };
 	image_ = new Image(dims, &format, CL_MEM_READ_ONLY);
 	image_->read(data);
 }

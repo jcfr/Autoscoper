@@ -236,7 +236,7 @@ VolumeDescription::VolumeDescription(const Volume& volume)
             return;
     }
 
-	size_t sdim[3] = { dim[0], dim[1], dim[2] };
+	size_t sdim[3] = { (size_t)dim[0], (size_t)dim[1], (size_t)dim[2] };
 	image_ = new Image(sdim, &format, CL_MEM_READ_ONLY);
 	image_->read(&data[0]);
 }

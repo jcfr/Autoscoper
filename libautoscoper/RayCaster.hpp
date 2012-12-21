@@ -58,7 +58,7 @@ public:
     void setVolume(VolumeDescription& volume);
     void setInvModelView(const double* invModelView);
     void setViewport(float x, float y, float width, float height);
-    void render(const Buffer* buffer, size_t width, size_t height);
+    void render(const Buffer* buffer, unsigned width, unsigned height);
 
     float getSampleDistance() const {
         return sampleDistance_;

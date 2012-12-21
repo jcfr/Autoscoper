@@ -67,6 +67,7 @@ struct TiffImage
 
     // Image data
     tdata_t data;
+	size_t dataSize;
 };
 
 // This function reads in the metadata associated with a particular TIFF
@@ -79,6 +80,10 @@ int tiffImageDumpMeta(TiffImage* img);
 // This function reads in the metadata and image data associated with a
 // particular TIFF image. It returns 1 on success and 0 on failure.
 int tiffImageRead(TIFF* tif, TiffImage* img);
+
+// Copy constructor duplicates a TiffImage struct and allocates and copies
+// a new data region.
+TiffImage* tiffImageCopy(TiffImage* img);
 
 // Frees any memory associated with the TiffImage which was allocated during
 // a call to tiffImageRead.

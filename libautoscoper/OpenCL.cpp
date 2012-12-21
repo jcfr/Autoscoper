@@ -35,6 +35,17 @@
 using namespace std;
 
 static bool inited_ = false;
+static bool gl_inited_ = false;
+
+#if defined(__APPLE__) || defined(__MACOSX)
+static CGLShareGroupObj share_group_;
+#elif defined(_WIN32)
+// TODO: implement this
+#else
+static GLXContext glx_context_;
+static Display* glx_display_;
+#endif
+
 static cl_int err_;
 static cl_context context_;
 static cl_device_id devices_[1];
@@ -226,10 +237,29 @@ static void print_device(cl_device_id device)
 
 namespace xromm { namespace opencl {
 
-void opencl_global_context()
+void opencl_global_gl_context()
+{
+#if defined(__APPLE__) || defined(__MACOSX)
+	CGLContextObj glContext = CGLGetCurrentContext();
+	share_group_ = CGLGetShareGroup(glContext);
+	if (!share_group_) ERROR("invalid CGL sharegroup");
+#elif defined(_WIN32)
+// TODO: implement this
+#else
+	glx_context_ = glXGetCurrentContext();
+	if (!glx_context_) ERROR("invalid GLX context");
+	glx_display_ = glXGetCurrentDisplay();
+	if (!glx_display_) ERROR("invalid GLX display");
+#endif
+	gl_inited_ = true;
+}
+
+cl_int opencl_global_context()
 {
 	if (!inited_)
 	{
+		if (!gl_inited_) return CL_INVALID_CONTEXT;
+
 		/* find platform */
 
 		cl_uint num_platforms;
@@ -255,12 +285,9 @@ void opencl_global_context()
 
 #if defined(__APPLE__) || defined(__MACOSX)
 #pragma OPENCL EXTENSION cl_APPLE_gl_sharing : enable
-		CGLContextObj glContext = CGLGetCurrentContext();
-		CGLShareGroupObj shareGroup = CGLGetShareGroup(glContext);
-
 		cl_context_properties prop[] = { 
 			CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
-			(intptr_t) shareGroup,
+			(intptr_t)share_group_,
 			0 };
 
 		/* omit the device, according to this:
@@ -277,7 +304,8 @@ void opencl_global_context()
 		if (num_gl_devices < 1) ERROR("no OpenCL GPU device found");
 #elif defined(_WIN32)
 #pragma OPENCL EXTENSION cl_khr_gl_sharing : enable
-		cl_context_properties prop[7] = { 
+		/* TODO: test this */
+		cl_context_properties prop[] = { 
 			CL_GL_CONTEXT_KHR,
 			(cl_context_properties) wglGetCurrentContext(),
 			CL_WGL_HDC_KHR,
@@ -290,18 +318,11 @@ void opencl_global_context()
 		CHECK_CL
 #else
 #pragma OPENCL EXTENSION cl_khr_gl_sharing : enable
-			/*
-		cl_context_properties prop[7] = { 
+		cl_context_properties prop[] = { 
 			CL_GL_CONTEXT_KHR,
 			(cl_context_properties)glXGetCurrentContext(),
 			CL_GLX_DISPLAY_KHR,
 			(cl_context_properties)glXGetCurrentDisplay(),
-			CL_CONTEXT_PLATFORM, 
-			(cl_context_properties)(platforms[0]),
-			0 };
-			*/
-
-		cl_context_properties prop[] = { 
 			CL_CONTEXT_PLATFORM, 
 			(cl_context_properties)(platforms[0]),
 			0 };
@@ -317,11 +338,13 @@ void opencl_global_context()
 
 		inited_ = true;
 	}
+	return CL_SUCCESS;
 }
 
 Kernel::Kernel(cl_program program, const char* func)
 {
-	opencl_global_context();
+	err_ = opencl_global_context();
+	CHECK_CL
 	reset();
 	kernel_ = clCreateKernel(program, func, &err_);
 	CHECK_CL
@@ -336,7 +359,8 @@ void Kernel::reset()
 
 size_t Kernel::getLocalMemSize()
 {
-	opencl_global_context();
+	err_ = opencl_global_context();
+	CHECK_CL
 	size_t s;
 	err_ = clGetDeviceInfo(devices_[0],
 					CL_DEVICE_LOCAL_MEM_SIZE, sizeof(size_t), &s, NULL);
@@ -346,7 +370,8 @@ size_t Kernel::getLocalMemSize()
 
 size_t* Kernel::getMaxItems()
 {
-	opencl_global_context();
+	err_ = opencl_global_context();
+	CHECK_CL
 	size_t* s = new size_t[3];
 	err_ = clGetDeviceInfo(devices_[0],
 					CL_DEVICE_MAX_WORK_ITEM_SIZES, 3*sizeof(s), s, NULL);
@@ -356,7 +381,8 @@ size_t* Kernel::getMaxItems()
 
 size_t Kernel::getMaxGroups()
 {
-	opencl_global_context();
+	err_ = opencl_global_context();
+	CHECK_CL
 	size_t s;
 	err_ = clGetDeviceInfo(devices_[0],
 					CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t), &s, NULL);
@@ -486,12 +512,15 @@ void Kernel::setArg(cl_uint i, size_t size, const void* value)
 	CHECK_CL
 }
 
-Program::Program() { opencl_global_context(); compiled_ = false; }
+Program::Program() { compiled_ = false; }
 
 Kernel* Program::compile(const char* code, const char* func)
 {
 	if (!compiled_)
 	{
+		err_ = opencl_global_context();
+		CHECK_CL
+
 		size_t len = strlen(code);
 		program_ = clCreateProgramWithSource(context_, 1, &code, &len, &err_);
 		CHECK_CL
@@ -526,7 +555,8 @@ Kernel* Program::compile(const char* code, const char* func)
 
 Buffer::Buffer(size_t size, cl_mem_flags access)
 {
-	opencl_global_context();
+	err_ = opencl_global_context();
+	CHECK_CL
 	size_ = size;
 	access_ = access;
 	buffer_ = clCreateBuffer(context_, access, size, NULL, &err_);
@@ -583,7 +613,8 @@ void Buffer::zero() const
 
 GLBuffer::GLBuffer(GLuint pbo, cl_mem_flags access)
 {
-	opencl_global_context();
+	err_ = opencl_global_context();
+	CHECK_CL
 	access_ = access;
 	buffer_ = clCreateFromGLBuffer(context_, access, pbo, &err_);
 	CHECK_CL
@@ -597,19 +628,20 @@ GLBuffer::~GLBuffer()
 
 Image::Image(size_t* dims, cl_image_format *format, cl_mem_flags access)
 {
-	opencl_global_context();
+	err_ = opencl_global_context();
+	CHECK_CL
 	dims_[0] = dims[0];
 	dims_[1] = dims[1];
 	dims_[2] = dims[2];
 	access_ = access;
 
-	if (dims[0] == 0 || dims[1] == 0)
-		ERROR("Image object must have at least two non-zero dimensions");
+	if (dims[0] == 0 || dims[1] == 0 || dims[2] == 0)
+		ERROR("Image object must have non-zero dimensions");
 
 #ifdef CL_VERSION_1_2
 	cl_image_desc desc;
 
-	if (dims[2] == 0) {
+	if (dims[2] == 1) {
 		desc.image_type  = CL_MEM_OBJECT_IMAGE2D;
 	} else {
 		desc.image_type  = CL_MEM_OBJECT_IMAGE3D;
@@ -626,7 +658,7 @@ Image::Image(size_t* dims, cl_image_format *format, cl_mem_flags access)
 
 	image_ = clCreateImage(context_, access, format, &desc, NULL, &err_);
 #else
-	if (dims[2] == 0) {
+	if (dims[2] == 1) {
 		image_ = clCreateImage2D(context_,
 					access, format, dims[0], dims[1], 0, NULL, &err_);	
 	} else {

@@ -102,7 +102,7 @@ public:
 
 private:
 
-    void init();
+	void init(unsigned width, unsigned height);
 
     void filter(const std::vector<Filter*>& filters,
                 const Buffer* input,
@@ -125,6 +125,8 @@ private:
     Buffer* radBuffer_;
     Buffer* radFilterBuffer_;
     Buffer* filterBuffer_;
+
+	bool inited_;
 };
 
 } } //namespace xromm::opencl

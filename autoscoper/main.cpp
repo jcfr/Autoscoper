@@ -57,6 +57,7 @@
 
 #include <gtk/gtk.h>
 #include <gtk/gtkgl.h>
+#include <GL/glx.h>
 
 #include "interface.hpp"
 #include "support.hpp"

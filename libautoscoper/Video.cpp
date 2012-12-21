@@ -96,18 +96,14 @@ Video::Video(const string& dirname)
 Video::Video(const Video& video)
     : dirname_(video.dirname_),
       filenames_(video.filenames_),
-      frame_(),
-      image_(new TiffImage())
+      frame_()
 {
-    *image_ = *video.image_;
-    size_t size = image_->width*image_->height*(image_->bitsPerSample/8);
-    image_->data = malloc(size);
-    memcpy(image_->data, video.image_->data, size);
+    image_ = tiffImageCopy(video.image_);
 }
 
 Video::~Video()
 {
-    tiffImageFree(image_);
+    if (image_) tiffImageFree(image_);
 }
 
 Video&
@@ -117,12 +113,8 @@ Video::operator=(const Video& video)
     filenames_ = video.filenames_;
     frame_     = video.frame_;
 
-    tiffImageFree(image_);
-
-    *image_ = *video.image_;
-    size_t size = image_->width*image_->height*(image_->bitsPerSample/8);
-    image_->data = malloc(size);
-    memcpy(image_->data, video.image_->data, size);
+    if (image_) tiffImageFree(image_);
+    image_ = tiffImageCopy(video.image_);
 
     return *this;
 }
