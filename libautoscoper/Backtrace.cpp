@@ -75,6 +75,8 @@ void bt_sighandler(int sig, siginfo_t *info, void *secret)
 		printf("Got signal %d\n", sig);
 
 	bt();
+
+	exit(EXIT_FAILURE);
 }
 
 void register_bt_sighandler()
