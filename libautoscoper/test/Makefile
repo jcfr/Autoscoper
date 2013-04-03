@@ -1,4 +1,4 @@
-TARGETS = filters ncc
+TARGETS = filters ncc render
 
 CXX = g++
 CXXFLAGS = -Wall -g -O2
@@ -8,9 +8,9 @@ LIBS = ../libautoscoper.a -ltiff
 # Test OS
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
-LIBS += -framework OpenCL -framework OpenGL -framework GLUT
+LIBS += -framework OpenCL -framework OpenGL -framework GLUT -L/opt/X11/lib
 else
-LIBS += -lOpenCL -lglut -lGL
+LIBS += -lOpenCL -lglut
 endif
 
 .PHONY:	clean
@@ -22,6 +22,9 @@ filters: filters.cpp ../libautoscoper.a
 
 ncc: ncc.cpp ../libautoscoper.a
 	$(CXX) $(CXXFLAGS) $(INCLUDES) ncc.cpp -o $@ $(LIBS)
+
+render: render.cpp ../libautoscoper.a
+	$(CXX) $(CXXFLAGS) $(INCLUDES) render.cpp -o $@ $(LIBS)
 
 clean:
 	rm -f $(TARGETS) $(OBJDIR)/*.o
