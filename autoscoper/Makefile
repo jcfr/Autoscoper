@@ -5,10 +5,10 @@ CXXFLAGS = -Wall -g -m64
 LDFLAGS =
 
 GTK_PACKAGE := gtkglext-x11-1.0
-GTK_PACKAGE_TEST = $(shell pkg-config --print-errors $(GTK_PACKAGE); echo $$?)
+GTK_PACKAGE_TEST = $(shell pkg-config --libs --cflags --print-errors $(GTK_PACKAGE); echo $$?)
 
 GTHREAD_PACKAGE := gthread-2.0
-GTHREAD_PACKAGE_TEST = $(shell pkg-config --print-errors $(GTHREAD_PACKAGE); echo $$?)
+GTHREAD_PACKAGE_TEST = $(shell pkg-config --libs --cflags --print-errors $(GTHREAD_PACKAGE); echo $$?)
 
 INCLUDES = \
 	$(shell pkg-config --cflags $(GTK_PACKAGE) $(GTHREAD_PACKAGE)) \
@@ -24,8 +24,7 @@ LIBS = \
 # Test OS
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
-LDFLAGS += -frameworks OpenCL -L/System/Library/Frameworks/OpenGL.framework/Libraries -framework GLUT
-LIBS += -L$(CUDA_DIR)/lib -lcudart -L/opt/X11/lib
+LIBS += -framework OpenCL -framework OpenGL -framework GLUT -L/opt/X11/lib
 else
 LIBS += -lOpenCL -lglut
 endif
@@ -34,7 +33,7 @@ OBJDIR = obj
 CXXFILES = $(shell ls *.cpp)
 OBJS = $(CXXFILES:%.cpp=$(OBJDIR)/%.cpp.o)
 
-.PHONE:	check-gtk clean
+.PHONY:	check-gtk clean
 
 all:	$(TARGET)
 
@@ -42,7 +41,7 @@ check-gtk:
 ifeq ($(GTK_PACKAGE_TEST), 1)
 	$(error pkg-config could not find GTK with gtkglext support)
 endif
-ifeq ($(GTHREAD_PACKAGE), 1)
+ifeq ($(GTHREAD_PACKAGE_TEST), 1)
 	$(error pkg-config could not find the gthread library from glib)
 endif
 

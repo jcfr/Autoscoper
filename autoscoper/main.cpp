@@ -57,7 +57,6 @@
 
 #include <gtk/gtk.h>
 #include <gtk/gtkgl.h>
-#include <GL/glx.h>
 
 #include "interface.hpp"
 #include "support.hpp"
@@ -74,7 +73,10 @@ namespace {
 
 int main(int argc, char *argv[])
 {
+#if defined(__APPLE__) || defined(__MACOSX)
+#else
 	xromm::register_bt_sighandler();
+#endif
 
     GtkWidget *window;
     GtkWidget *drawingarea1;

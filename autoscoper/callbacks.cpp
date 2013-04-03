@@ -60,7 +60,7 @@
 #define GL_GLEXT_PROTOTYPES 1
 #include <GL/glew.h>
 
-#ifdef _MACOSX
+#if defined(__APPLE__) || defined(__MACOSX)
 #include <GLUT/glut.h>
 #else
 #include <GL/glut.h>

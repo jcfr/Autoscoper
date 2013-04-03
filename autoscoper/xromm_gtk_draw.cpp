@@ -51,7 +51,7 @@
 
 #define GL_GLEXT_PROTOTYPES 1
 
-#ifdef _MACOSX
+#if defined(__APPLE__) || defined(__MACOSX)
 #include <OpenGL/gl.h>
 #else
 #include <GL/gl.h>
