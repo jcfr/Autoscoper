@@ -1,5 +1,3 @@
-~~~~~~~~ README ~~~~~~~~
-
 Author: Andy Loomis
 Date: 6/12/2012
 
@@ -9,7 +7,7 @@ sequences and a volumetric bone model. It is designed to be used in conjunction
 with the XrayProject. More information about these programs can be found online
 at the sits below:
 
-www.xromm.org
+www.xromm.org  
 www.xromm.org/wiki
 
 The rest of this document is organized into the following sections:
@@ -18,7 +16,7 @@ The rest of this document is organized into the following sections:
 2. Building on Unix
 3. Building on Windows
 
-~~~~~~~~ 1. Prerequisites ~~~~~~~~
+# Prerequisites
 
 The autoscoper software has several dependencies. The first is that you must
 have a cuda capable NVIDIA graphics card, and you  must update your graphics
@@ -28,7 +26,7 @@ found at www.nvidia.com. In addition, the autoscoper is built using GTK, so you
 must download and install compatible gtk libraries. On unix systems this can
 usually be accomplished using your systems default package manager.
 
-~~~~~~~~ 2. Building on Unix ~~~~~~~~
+# Building on Unix
 
 The autoscoper is built in 2 steps. You can use the top level Makefile to
 perform both of those steps. First you must compile the autoscoper libraries in
@@ -37,18 +35,18 @@ directory to point to nvcc (nvidia c compiler). Once libautoscoper is built you
 can build the autoscoper application itself. You may need to point that Makefile
 at the correct locations for GTK and several other libraries.
 
-~~~~~~~~ 3. Building on Windows ~~~~~~~~
+# Building on Windows
 
 Some limited testing has been done building the autoscoper under windows. The
 testing was done on Windows 7 using Visual C++ 2010. The solution files can be
 found in the win32/autoscoper subdirectory. It is likely that these files will
 need to be modified to get this to build on other systems.
 
-~~~~~~~~ 4. Building on OS X 10.8 ~~~~~~~~
+# Building on OS X 10.8
 
-Install XQuartz.
+Install XQuartz.  
 Install prerequisites with Homebrew:
 
- brew install gtk+ gtkglext glew
+    brew install gtk+ gtkglext glew
 
 
