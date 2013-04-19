@@ -147,14 +147,14 @@ View::render(const GLBuffer* buffer, unsigned width, unsigned height)
         renderDrr(drrFilterBuffer_, width, height);
     }
     else {
-		drrFilterBuffer_->zero();
+		drrFilterBuffer_->fill(0x00);
     }
 
     if (rad_enabled) {
         renderRad(radFilterBuffer_, width, height);
     }
     else {
-		radFilterBuffer_->zero();
+		radFilterBuffer_->fill(0x00);
     }
 
     composite(drrFilterBuffer_, radFilterBuffer_, buffer, width, height);
