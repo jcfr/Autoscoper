@@ -9,7 +9,7 @@ void rad_render_kernel(__global float* output,
 	const uint y = get_global_id(1);
 
 	const sampler_t sampler = CLK_NORMALIZED_COORDS_TRUE |
-	                          CLK_ADDRESS_CLAMP_TO_EDGE |
+	                          CLK_ADDRESS_CLAMP |
 	                          CLK_FILTER_LINEAR;
 
 	if (x > width-1 || y > height-1) {

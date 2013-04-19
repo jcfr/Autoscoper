@@ -62,7 +62,7 @@ static int num_ray_casters = 0;
 
 RayCaster::RayCaster() : volumeDescription_(0),
                          sampleDistance_(0.5f),
-                         rayIntensity_(10.0f),
+                         rayIntensity_(10.f),
                          cutoff_(0.0f),
                          name_("")
 {
@@ -129,6 +129,14 @@ RayCaster::setInvModelView(const double* invModelView)
     invModelView_[13] = invModelView[13]; 
     invModelView_[14] = invModelView[14]; 
     invModelView_[15] = invModelView[15];
+
+#if DEBUG
+	fprintf(stdout, "RayCaster: new invModelView:\n %f, %f, %f, %f\n %f, %f, %f, %f\n %f, %f, %f, %f\n %f, %f, %f, %f\n",
+			invModelView[0], invModelView[1], invModelView[2], invModelView[3],
+			invModelView[4], invModelView[5], invModelView[6], invModelView[7],
+			invModelView[8], invModelView[9], invModelView[10], invModelView[11],
+			invModelView[12], invModelView[13], invModelView[14], invModelView[15]);
+#endif
 }
 
 void
@@ -139,6 +147,11 @@ RayCaster::setViewport(float x, float y, float width, float height)
     viewport_[2] = width;
     viewport_[3] = height;
 
+#if DEBUG
+	fprintf(stdout, "RayCaster: new viewport: %f, %f, %f, %f\n",
+			viewport_[0], viewport_[1], viewport_[2], viewport_[3]);
+#endif
+
 	b_viewport_->read(viewport_);
 }
 
@@ -146,13 +159,13 @@ void
 RayCaster::render(const Buffer* buffer, unsigned width, unsigned height)
 {
     if (!volumeDescription_) {
-        cerr << "RayCaster: WARNING: No volume loaded. " << endl;
+        cerr << "RayCaster: WARNING: No volume loaded." << endl;
         return;
     }
-  
+
 	Kernel* kernel = raycaster_program_.compile(
 									RayCaster_cl, "volume_render_kernel");
-    
+
 	Buffer* b_flip = new Buffer(3*sizeof(int), CL_MEM_READ_ONLY);
 	b_flip->read(volumeDescription_->flips());
 
@@ -162,7 +175,7 @@ RayCaster::render(const Buffer* buffer, unsigned width, unsigned height)
     // Calculate the block and grid sizes.
 	kernel->block2d(BX, BY);
     kernel->grid2d((width+BX-1)/BX, (height+BY-1)/BY);
-   
+
 	kernel->addBufferArg(buffer);
 	kernel->addArg(width);
 	kernel->addArg(height);
