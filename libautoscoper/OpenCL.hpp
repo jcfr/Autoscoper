@@ -77,13 +77,11 @@ public:
 	void read(const void* buf, size_t size=0) const;
 	void write(void* buf, size_t size=0) const;
 	void copy(const Buffer* dst, size_t size=0) const;
-	void zero() const;
+	void fill(const char c) const;
 
 	friend class Kernel;
 
 protected:
-	void fill(const void* pattern, size_t pattern_size);
-
 	size_t size_;
 	cl_mem buffer_;
 	cl_mem_flags access_;

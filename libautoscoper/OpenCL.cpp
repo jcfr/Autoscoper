@@ -546,6 +546,9 @@ void Kernel::launch()
 
 		delete gl_mem;
 	}
+
+	err_ = clFinish(queue_);
+	CHECK_CL
 }
 
 void Kernel::setArg(cl_uint i, size_t size, const void* value)
@@ -633,19 +636,18 @@ void Buffer::copy(const Buffer* dst, size_t size) const
 	if (size > dst->size_)
 		ERROR("Destination buffer does not have enough room!");
 	err_ = clEnqueueCopyBuffer(
-			queue_, dst->buffer_, buffer_, 0, 0, size, 0, NULL, NULL);
+			queue_, buffer_, dst->buffer_, 0, 0, size, 0, NULL, NULL);
 	CHECK_CL
 }
 
-void Buffer::zero() const
+void Buffer::fill(const char c) const
 {
 #ifdef CL_VERSION_1_2
-	char c = 0x00;
 	err_ = clEnqueueFillBuffer(queue_, buffer_, &c, 1, 0, size_, 0, NULL, NULL);
 	CHECK_CL
 #else
 	char* tmp = (char*)new char[size_];
-	memset(tmp, 0x00, size_);
+	memset(tmp, c, size_);
 	err_ = clEnqueueWriteBuffer(
 			queue_, buffer_, CL_TRUE, 0, size_, (void*)tmp, 0, NULL, NULL);
 	CHECK_CL
