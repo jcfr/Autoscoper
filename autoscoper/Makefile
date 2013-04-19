@@ -1,7 +1,7 @@
 TARGET = autoscoper
 
 CXX = g++
-CXXFLAGS = -Wall -g -m64
+CXXFLAGS = -Wall -g -m64 -DGLDEBUG
 LDFLAGS =
 
 GTK_PACKAGE := gtkglext-x11-1.0

@@ -97,6 +97,18 @@
 #include "Manip3D.hpp"
 #include "new_trial_dialog.hpp"
 
+// OpenGL error checking
+#if defined GLDEBUG  
+#define CALL_GL(exp) do{ \
+    exp; \
+    if (glGetError() != GL_NO_ERROR) \
+        cerr << "Error in OpenGL call at " \
+	         << __FILE__ << ':' << __LINE__ << endl; \
+}while(0)
+#else  
+#define CALL_GL(exp) exp  
+#endif  
+
 using namespace std;
 using namespace xromm;
 
@@ -724,19 +736,19 @@ static void resize_view(ViewData* view, int width, int height)
     view->ratio = (float)view->window_width/(float)view->window_height;
 
     // Unregister and delete the pixel buffer if it already exists.
-    if (!glIsBufferARB(view->pbo)) {
-        //glDeleteBuffersARB(1, &view->pbo);
-        glGenBuffersARB(1, &view->pbo);
+    if (!glIsBuffer(view->pbo)) {
+        CALL_GL(glDeleteBuffersARB(1, &view->pbo));
+        CALL_GL(glGenBuffers(1, &view->pbo));
     }
 
     // Create a pixel buffer object.
     //glGenBuffersARB(1, &view->pbo);
-    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, view->pbo);
-    glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB,
+    CALL_GL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, view->pbo));
+    CALL_GL(glBufferData(GL_PIXEL_UNPACK_BUFFER,
                 3*view->window_width*view->window_height*sizeof(float),
                 0,
-                GL_STREAM_DRAW_ARB);
-    glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+                GL_STREAM_DRAW));
+    CALL_GL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
 
     if (view->viewport_width < view->window_width) {
         view->viewport_width = view->window_width;
@@ -1794,15 +1806,15 @@ draw_view(const ViewData* view)
             glEnable(GL_BLEND);
             glBlendFunc(GL_ONE,GL_ONE);
 
-            glRasterPos2i(0, 0);
-            glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, view->pbo);
-            glDrawPixels(view->window_width,
+            CALL_GL(glRasterPos2i(0, 0));
+            CALL_GL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, view->pbo));
+            CALL_GL(glDrawPixels(view->window_width,
                          view->window_height,
-                         GL_RGB, GL_FLOAT, 0);
-            glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+                         GL_RGB, GL_FLOAT, 0));
+            CALL_GL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
 
-            glDisable(GL_BLEND);
-            glEnable(GL_DEPTH_TEST);
+            CALL_GL(glDisable(GL_BLEND));
+            CALL_GL(glEnable(GL_DEPTH_TEST));
         }
         return;
     }
@@ -1841,11 +1853,11 @@ draw_view(const ViewData* view)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glDisable(GL_DEPTH_TEST);
         glRasterPos2i(0, 0);
-        glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, view->pbo);
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, view->pbo);
         glDrawPixels(view->window_width,
                      view->window_height,
                      GL_RGB, GL_FLOAT, 0);
-        glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
         glEnable(GL_DEPTH_TEST);
 
 

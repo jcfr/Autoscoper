@@ -106,6 +106,10 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+#ifdef GLDEBUG
+	std::cerr << "OpenGL debugging enabled" << std::endl;
+#endif
+
     // The following code was added by Glade to create one of each component
     // (except popup menus), just so that you see something after building
     // the project. Delete any components that you don't want shown initially.
