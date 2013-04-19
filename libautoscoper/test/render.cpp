@@ -78,6 +78,8 @@ int main(int argc, char** argv)
 	const size_t h = 1024;
 
 	Volume vol(TESTFILE ".tif");
+	vol.flipX(true);
+	vol.flipY(true);
 
 	cout << "Volume dimensions: " << vol.width() << " x " << vol.height() << " x " << vol.depth() << " (" << vol.bps() << " bps)\n";
 
@@ -86,7 +88,29 @@ int main(int argc, char** argv)
 	opencl::Buffer* buf = new opencl::Buffer(sizeof(float)*w*h);
 
 	rc.setVolume(vd);
+	double view[16] = {
+		0.707107, -0.405580, 0.579228, 250.000000,
+        0.000000, 0.819152, 0.573576, 250.000000,
+       -0.707107, -0.405580, 0.579228, 250.000000,
+        0.000000, 0.000000, 0.000000, 1.0
+	};
+
+	double view2[16] = { 0.772409, 0.576666, -0.266161, -114.097438,
+		  -0.596309, 0.514191, -0.616460, -265.904840,
+		   -0.218634, 0.634873, 0.741037, 322.143432,
+		    0.000000, 0.000000, 0.000000, 1.000000};
+
+	double view3[16] =  { 0.885746, 0.090143, 0.455332, 1004.191210,
+		  -0.353100, 0.767583, 0.534917, 1181.029445,
+		   -0.301286, -0.634579, 0.711714, 1568.067008,
+		    0.000000, 0.000000, 0.000000, 1.00000};
+	rc.setInvModelView(view);
+	rc.setViewport(-1.173121, -1.000000, 2.346241, 2.000000);
+	rc.setRayIntensity(10.f);
+	//rc.setSampleDistance(0.1f);
 	rc.render(buf, w, h);
+
+	cout << "ray intensity: " << rc.getRayIntensity() << endl;
 
 	TiffImage img;
 	img.width = w;
@@ -107,10 +131,15 @@ int main(int argc, char** argv)
 	buf->write(buf_cpu); 
 	delete buf;
 
+	float m = 0.f;
+	for (size_t i=0; i<w*h; i++) m = max(m, buf_cpu[i]);
+	cout << "max pixel value: " << m << endl;
+	float norm = 255.f / m;
+
 	unsigned char* data = (unsigned char*)img.data;
 	FILE* outputLog = fopen(TESTFILE ".render.txt", "w");
 	for (size_t i=0; i<w*h; i++) {
-		data[i] = (unsigned char)(255.f * buf_cpu[i]);
+		data[i] = (unsigned char)(norm * buf_cpu[i]);
 		fprintf(outputLog, "%f\n", buf_cpu[i]);
 	}
 	delete buf_cpu;
