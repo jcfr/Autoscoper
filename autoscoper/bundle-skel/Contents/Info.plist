@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<plist version="1.0">
+  <dict>
+    <key>CFBundleName</key>
+    <string>XROMM Autoscoper</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.14</string>
+    <key>CFBundleGetInfoString</key>
+    <string>XROMM Autoscoper v1.14, Copyright 2011-2013, Brown University</string>
+    <key>CFBundleAllowMixedLocalizations</key>
+    <string>false</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleExecutable</key>
+    <string>launcher</string>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>English</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>CFBundleIconFile</key>
+    <string>autoscoper.icns</string>
+    <key>CFBundleIdentifier</key>
+    <string>edu.brown.xromm.autoscoper</string>
+  </dict>
+</plist>
