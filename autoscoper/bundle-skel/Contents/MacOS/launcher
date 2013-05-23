@@ -1,3 +1,5 @@
 #!/bin/bash
 cd "${0%/*}"
-./autoscoper &
+export DYLD_LIBRARY_PATH="$PWD/Contents/Resources/lib:$DYLD_LIBRARY_PATH"
+echo $DYLD_LIBRARY_PATH
+./autoscoper
