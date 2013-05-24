@@ -34,17 +34,17 @@ do
 	chmod 644 $LIB/`basename $f`
 done
 
-#for f in $LIB/*.dylib
-#do
-#	lib=$f
-#	# Also copy all of the library's dependencies
-#	for f in `dyldinfo -dylibs $lib | grep '/usr/local'`
-#	do
-#		cp $f $LIB/
-#		chmod 644 $LIB/`basename $f`
-#	done
-#done
-#
+for f in $LIB/*.dylib
+do
+	lib=$f
+	# Also copy all of the library's dependencies
+	for f in `dyldinfo -dylibs $lib | grep '/usr/local'`
+	do
+		cp $f $LIB/
+		chmod 644 $LIB/`basename $f`
+	done
+done
+
 # Change absolute library paths to relative paths in each library
 for f in $LIB/*.dylib
 do

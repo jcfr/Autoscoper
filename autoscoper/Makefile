@@ -24,7 +24,7 @@ LIBS = \
 # Test OS
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
-LIBS += -framework OpenCL -framework OpenGL -framework GLUT -L/opt/X11/lib
+LIBS += -framework OpenCL -framework OpenGL -framework GLUT -L/usr/X11/lib
 else
 LIBS += -lOpenCL -lglut
 endif

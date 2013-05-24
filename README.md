@@ -47,6 +47,13 @@ need to be modified to get this to build on other systems.
 Install XQuartz.  
 Install prerequisites with Homebrew:
 
-    brew install gtk+ gtkglext glew
+    brew install gtkglext glew
 
+NOTE: you must modify brew formulae to compile pango with
+"--with-included-modules" and gdk-pixbuf with "--with-included-loaders".
+
+# Building on OS X 10.7
+
+Same as 10.8, except XQuartz does not need to be installed because X11 is
+included with the system.
 
