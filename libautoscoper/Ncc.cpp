@@ -119,8 +119,8 @@ static float ncc_sum(Buffer* f, unsigned n)
 		cerr << "ncc_sum[" << n << "] sizeMem = " << sizeMem << endl;
 #endif
 
-		kernel->block1d(numBlocks);
-		kernel->grid1d(numThreads);
+		kernel->block1d(numThreads);
+		kernel->grid1d(numBlocks);
 
 		kernel->addBufferArg(f);
 		kernel->addBufferArg(d_sums);
@@ -199,8 +199,8 @@ float ncc(Buffer* f, Buffer* g, unsigned n)
 
 	Kernel* kernel = ncc_kernel_.compile(Ncc_cl, "ncc_kernel");
 
-	kernel->block1d(numBlocks);
-	kernel->grid1d(numThreads);
+	kernel->block1d(numThreads);
+	kernel->grid1d(numBlocks);
 
 	kernel->addBufferArg(f);
 	kernel->addArg(meanF);
