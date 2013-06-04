@@ -52,6 +52,10 @@ Install prerequisites with Homebrew:
 NOTE: you must modify brew formulae to compile pango with
 "--with-included-modules" and gdk-pixbuf with "--with-included-loaders".
 
+Before building, set the search path for pkg-config with:
+
+    export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/X11/lib/pkgconfig
+
 # Building on OS X 10.7
 
 Same as 10.8, except XQuartz does not need to be installed because X11 is
