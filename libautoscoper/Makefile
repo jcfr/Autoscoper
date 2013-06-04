@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -g -O2 -fPIC
+CXXFLAGS = -Wall -g -O2 -fPIC -DDEBUG
 AR = ar
 ARFLAGS = cru
 

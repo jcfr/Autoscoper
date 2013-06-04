@@ -76,6 +76,37 @@ double FUNC(double* P) { return g_markerless->minimizationFunc(P+1); }
 
 namespace xromm {
 
+#if DEBUG
+void save_debug_image(const opencl::Buffer* dev_image, int width, int height)
+{
+	static int count = 0;
+	float* host_image = new float[width*height];
+	unsigned char* uchar_image = new unsigned char[width*height];
+
+	// Copy the image to the host
+	dev_image->write(host_image, width*height*sizeof(float));
+	//cudaMemcpy(host_image,dev_image,width*height*sizeof(float),cudaMemcpyDeviceToHost);
+
+	// Copy to a char array
+	for (int i = 0; i < width*height; i++) {
+		uchar_image[i] = (int)(255*host_image[i]);
+	}
+
+	char filename[256];
+	sprintf(filename,"image_%02d.ppm",count++);
+	ofstream file(filename,ios::out);
+	file << "P2" << endl;
+	file << width << " " << height << endl;
+	file << 255 << endl;
+	for (int i = 0; i < width*height; i++) {
+		file << (int)uchar_image[i] << " ";
+	}
+
+	delete[] uchar_image;
+	delete[] host_image;
+}
+#endif
+
 Tracker::Tracker()
     : volumeDescription_(0),
       rendered_drr_(NULL),
@@ -299,8 +330,10 @@ double Tracker::minimizationFunc(const double* values) const
         correlations[i] = 1.0-opencl::ncc(rendered_drr_,rendered_rad_,
                                           render_width*render_height);
 
-        //save_cuda_image(rendered_drr,render_width,render_height);
-        //save_cuda_image(rendered_rad,render_width,render_height);
+#if DEBUG
+        save_debug_image(rendered_drr_,render_width,render_height);
+        save_debug_image(rendered_rad_,render_width,render_height);
+#endif
     }
 
     double correlation = correlations[0];
