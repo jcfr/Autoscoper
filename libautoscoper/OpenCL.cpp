@@ -221,7 +221,7 @@ static void print_device(cl_device_id device)
 	err_ = clGetDeviceInfo(
 		device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t), s, NULL);
 	CHECK_CL
-	cerr << "# Max Groups    : " << s[0] << "\n";
+	cerr << "# Max Group     : " << s[0] << "\n";
 
 	err_ = clGetDeviceInfo(
 		device, CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE, sizeof(ul), &ul, NULL);
@@ -425,7 +425,7 @@ size_t* Kernel::getMaxItems()
 	return s;
 }
 
-size_t Kernel::getMaxGroups()
+size_t Kernel::getMaxGroup()
 {
 	err_ = opencl_global_context();
 	CHECK_CL
@@ -512,8 +512,14 @@ void Kernel::addLocalMem(size_t size)
 
 void Kernel::launch()
 {
-	//cout << grid_[0] << "," << grid_[1] << endl;
-	//cout << block_[0] << "," << block_[1] << endl;
+#if DEBUG
+	cerr << "block:";
+	for (unsigned i=0; i<grid_dim_; i++) cerr << ' ' << block_[i];
+	cerr << endl;
+	cerr << "grid:";
+	for (unsigned i=0; i<grid_dim_; i++) cerr << ' ' << grid_[i];
+	cerr << endl;
+#endif
 	if (!block_dim_) {
 		ERROR("Block dimension is unset");
 	} else if (!grid_dim_) {

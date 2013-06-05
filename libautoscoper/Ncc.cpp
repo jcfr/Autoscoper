@@ -74,12 +74,16 @@ static void get_max_threads()
 {
 	if (!g_maxNumThreads)
 	{
+		g_maxNumThreads = Kernel::getMaxGroup();
 		size_t* max_items = Kernel::getMaxItems();
-		g_maxNumThreads = max_items[0];
-#if DEBUG
-		cerr << "ncc: maxWorkItems = " << max_items[0] << endl;
-#endif
+		if (max_items[0] < g_maxNumThreads)
+			g_maxNumThreads = max_items[0];
 		delete max_items;
+
+		// HACK: automatic detection above is not working on
+		// Granoff iMac 10.7 (reports 1024, but throws
+		// CL_INVALID_WORK_GROUP_SIZE). Hard set to 128 for now.
+		g_maxNumThreads = 128;
 
 		/* reduce threads to fit in local mem */
 		size_t maxLocalMem = Kernel::getLocalMemSize();
@@ -119,8 +123,8 @@ static float ncc_sum(Buffer* f, unsigned n)
 		cerr << "ncc_sum[" << n << "] sizeMem = " << sizeMem << endl;
 #endif
 
-		kernel->block1d(numThreads);
-		kernel->grid1d(numBlocks);
+		kernel->block2d(numThreads, 1);
+		kernel->grid2d(1, numBlocks);
 
 		kernel->addBufferArg(f);
 		kernel->addBufferArg(d_sums);

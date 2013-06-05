@@ -29,7 +29,7 @@ public:
 
 	static size_t getLocalMemSize();
 	static size_t* getMaxItems();
-	static size_t getMaxGroups();
+	static size_t getMaxGroup();
 
 	void grid1d(size_t X);
 	void block1d(size_t X);

@@ -5,7 +5,7 @@ void ncc_sum_kernel(
 		__local float* buffer,
 		unsigned n)
 {
-	unsigned i = get_global_id(0); // global index
+	unsigned i = get_global_id(0) + get_global_id(1)*get_global_size(1); // global index
 	unsigned t = get_local_id(0); // thread index
 
 	buffer[t] = (i < n) ? f[i] : 0.0f;
@@ -19,7 +19,7 @@ void ncc_sum_kernel(
 	}
 
 	if (t == 0) {
-		sums[get_group_id(0)] = buffer[0];
+		sums[get_global_id(1)] = buffer[0];
 	}
 }
 
