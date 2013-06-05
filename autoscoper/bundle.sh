@@ -9,6 +9,7 @@ LIB="$BUILD/Contents/MacOS/lib"
 
 cp -r $SKEL $BUILD
 cp autoscoper $BUILD/Contents/MacOS/
+cp new_trial_dialog.glade $BUILD/Contents/Resources/
 mkdir -p $LIB
 
 # Copy libraries and change absolute library paths to relative paths in
