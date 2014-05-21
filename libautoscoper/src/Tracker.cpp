@@ -53,11 +53,16 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#include "Ncc.hpp"
+#ifdef WITH_CUDA
+#include "gpu/cuda/CudaWrap.hpp"
+#include "gpu/cuda/Ncc_kernels.h"
+#else
+#include "gpu/opencl/Ncc.hpp"
+#endif
+
 #include "VolumeDescription.hpp"
 #include "Video.hpp"
 #include "View.hpp"
-#include "Filter.hpp"
 #include "DownhillSimplex.hpp"
 #include "Camera.hpp"
 #include "CoordFrame.hpp"
@@ -77,7 +82,7 @@ double FUNC(double* P) { return g_markerless->minimizationFunc(P+1); }
 namespace xromm {
 
 #if DEBUG
-void save_debug_image(const opencl::Buffer* dev_image, int width, int height)
+void save_debug_image(const gpu::Buffer* dev_image, int width, int height)
 {
 	static int count = 0;
 	float* host_image = new float[width*height];
@@ -119,23 +124,36 @@ Tracker::~Tracker()
 {
 }
 
+void Tracker::init()
+{
+#ifdef WITH_CUDA
+    gpu::cudaInitWrap();
+#endif
+}
+
 void Tracker::load(const Trial& trial)
 {
     trial_ = trial;
 
-    vector<opencl::View*>::iterator viewIter;
+    vector<gpu::View*>::iterator viewIter;
     for (viewIter = views_.begin(); viewIter != views_.end(); ++viewIter) {
         delete *viewIter;
     }
     views_.clear();
 
     delete volumeDescription_;
-    volumeDescription_ = new opencl::VolumeDescription(trial_.volumes.front());
+    volumeDescription_ = new gpu::VolumeDescription(trial_.volumes.front());
 
 	unsigned npixels = trial_.render_width*trial_.render_height;
-	rendered_drr_ = new opencl::Buffer(npixels*sizeof(float));
-	rendered_rad_ = new opencl::Buffer(npixels*sizeof(float));
-    opencl::ncc_init(npixels);
+#ifdef WITH_CUDA
+	gpu::cudaMallocWrap(rendered_drr_,trial_.render_width*trial_.render_height*sizeof(float));
+    gpu::cudaMallocWrap(rendered_rad_,trial_.render_width*trial_.render_height*sizeof(float));
+#else
+	rendered_drr_ = new gpu::Buffer(npixels*sizeof(float));
+	rendered_rad_ = new gpu::Buffer(npixels*sizeof(float));
+#endif
+
+    gpu::ncc_init(npixels);
 
     for (unsigned int i = 0; i < trial_.cameras.size(); ++i) {
 
@@ -144,7 +162,7 @@ void Tracker::load(const Trial& trial)
 
         video.set_frame(trial_.frame);
 
-        opencl::View* view = new opencl::View(camera);
+        gpu::View* view = new gpu::View(camera);
 
         view->drrRenderer()->setVolume(*volumeDescription_);
 
@@ -327,7 +345,7 @@ double Tracker::minimizationFunc(const double* values) const
         views_[i]->renderRad(rendered_rad_,render_width,render_height);
 
         // Calculate the correlation
-        correlations[i] = 1.0-opencl::ncc(rendered_drr_,rendered_rad_,
+        correlations[i] = 1.0-gpu::ncc(rendered_drr_,rendered_rad_,
                                           render_width*render_height);
 
 #if DEBUG

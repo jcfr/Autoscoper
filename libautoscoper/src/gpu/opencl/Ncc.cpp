@@ -46,7 +46,7 @@
 
 using namespace std;
 
-namespace xromm { namespace opencl {
+namespace xromm { namespace gpu {
 
 //////// Global variables ////////
 
@@ -59,11 +59,8 @@ static Buffer* d_den1s = NULL;
 static Buffer* d_den2s = NULL;
 
 //////// Cuda kernels ////////
-
-static const char Ncc_cl[] =
-#include "Ncc.cl.h"
-static const char NccSum_cl[] =
-#include "NccSum.cl.h"
+#include "gpu/opencl/kernel/Ncc.cl.h"
+#include "gpu/opencl/kernel/NccSum.cl.h"
 
 static Program ncc_kernel_;
 static Program ncc_sum_kernel_;
@@ -228,7 +225,7 @@ float ncc(Buffer* f, Buffer* g, unsigned n)
 	return ncc_sum(d_nums,n)/den;
 }
 
-} // namespace opencl
+} // namespace gpu
 
 } // namespace xromm
 

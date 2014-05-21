@@ -45,10 +45,19 @@
 #include <vector>
 #include <string>
 
-#include "RayCaster.hpp"
-#include "RadRenderer.hpp"
+#include "Filter.hpp"
+
+#ifdef WITH_CUDA
+#include "gpu/cuda/RayCaster.hpp"
+#include "gpu/cuda/RadRenderer.hpp"
+
+#else
+#include "gpu/opencl/RayCaster.hpp"
+#include "gpu/opencl/RadRenderer.hpp"
+#include "gpu/opencl/OpenCL.hpp"
+#endif
 #include "Trial.hpp"
-#include "OpenCL.hpp"
+
 
 namespace xromm
 {
@@ -56,14 +65,14 @@ namespace xromm
 class Camera;
 class CoordFrame;
 
-namespace opencl
+namespace gpu
 {
 
 class Filter;
 class View;
 class VolumeDescription;
 
-} // namespace opencl
+} // namespace gpu
 
 class Tracker
 {
@@ -71,23 +80,29 @@ public:
 
     Tracker();
     ~Tracker();
+	void init();
     void load(const Trial& trial);
     Trial* trial() { return &trial_; }
     void optimize(int frame, int dframe, int repeats = 1);
     double minimizationFunc(const double* values) const;
-    std::vector<opencl::View*>& views() { return views_; }
-    const std::vector<opencl::View*>& views() const { return views_; }
-    opencl::View* view(size_t i) { return views_.at(i); }
-    const opencl::View* view(size_t i) const { return views_.at(i); }
+    std::vector<gpu::View*>& views() { return views_; }
+    const std::vector<gpu::View*>& views() const { return views_; }
+    gpu::View* view(size_t i) { return views_.at(i); }
+    const gpu::View* view(size_t i) const { return views_.at(i); }
 
 private:
     void calculate_viewport(const CoordFrame& modelview, double* viewport) const;
 
     Trial trial_;
-    opencl::VolumeDescription* volumeDescription_;
-    std::vector<opencl::View*> views_;
-	opencl::Buffer* rendered_drr_;
-	opencl::Buffer* rendered_rad_;
+    gpu::VolumeDescription* volumeDescription_;
+    std::vector<gpu::View*> views_;
+#ifdef WITH_CUDA
+	Buffer* rendered_drr_;
+	Buffer* rendered_rad_;
+#else
+	gpu::Buffer* rendered_drr_;
+	gpu::Buffer* rendered_rad_;
+#endif
 };
 
 } // namespace XROMM

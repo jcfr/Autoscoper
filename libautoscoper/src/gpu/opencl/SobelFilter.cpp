@@ -47,16 +47,15 @@ using namespace std;
 #define BX 16
 #define BY 16
 
-namespace xromm { namespace opencl {
+namespace xromm { namespace gpu {
 
-static const char SobelFilter_cl[] = 
-#include "SobelFilter.cl.h"
+#include "gpu/opencl/kernel/SobelFilter.cl.h"
 
 static Program sobel_program_;
 
 static int num_sobel_filters = 0;
 
-SobelFilter::SobelFilter() : Filter(XROMM_OPENCL_SOBEL_FILTER,""),
+SobelFilter::SobelFilter() : Filter(XROMM_GPU_SOBEL_FILTER,""),
 							 scale_(1.0f),
 							 blend_(0.5f)
 {
@@ -68,7 +67,7 @@ SobelFilter::SobelFilter() : Filter(XROMM_OPENCL_SOBEL_FILTER,""),
 void
 SobelFilter::apply(
 		const Buffer* input,
-		const Buffer* output,
+		Buffer* output,
 		int width,
 		int height)
 {

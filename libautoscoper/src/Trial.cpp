@@ -83,7 +83,7 @@ Trial::Trial(const string& filename)
     while (getline(file, line)) {
 
         // Skip blank lines and commented lines.
-        if (line[0] == '\n' || line[0] == '#') {
+        if (line.size() == 0 || line[0] == '\n' || line[0] == '#') {
             continue;
         }
 

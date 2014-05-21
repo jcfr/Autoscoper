@@ -44,10 +44,9 @@
 #define BX 16
 #define BY 16
 
-namespace xromm { namespace opencl {
+namespace xromm { namespace gpu {
 
-static const char Compositor_cl[] =
-#include "Compositor.cl.h"
+#include "gpu/opencl/kernel/Compositor.cl.h"
 
 static Program compositor_kernel_;
 
@@ -74,6 +73,6 @@ void composite(const Buffer* src1,
 	delete kernel;
 }
 
-} // namespace opencl
+} // namespace gpu
 
 } // namespace xromm

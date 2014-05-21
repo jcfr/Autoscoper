@@ -39,15 +39,15 @@
 /// \file RayCaster.hpp
 /// \author Andy Loomis, Mark Howison
 
-#ifndef XROMM_OPENCL_RAY_CASTER_HPP
-#define XROMM_OPENCL_RAY_CASTER_HPP
+#ifndef XROMM_RAY_CASTER_HPP
+#define XROMM_RAY_CASTER_HPP
 
 #include <string>
 
 #include "VolumeDescription.hpp"
 #include "OpenCL.hpp"
 
-namespace xromm { namespace opencl {
+namespace xromm { namespace gpu {
 
 class RayCaster
 {
@@ -113,4 +113,4 @@ private:
 
 } } // namespace xromm::opencl
 
-#endif // XROMM_OPENCL_RAY_CASTER_HPP
+#endif // XROMM_RAY_CASTER_HPP

@@ -49,11 +49,10 @@
 
 using namespace std;
 
-namespace xromm { namespace opencl
+namespace xromm { namespace gpu
 {
 
-static const char RadRenderer_cl[] =
-#include "RadRenderer.cl.h"
+#include "gpu/opencl/kernel/RadRenderer.cl.h"
 
 static Program rad_renderer_program_;
 

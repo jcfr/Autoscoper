@@ -13,12 +13,10 @@
 #include <iostream>
 
 #ifdef __APPLE__
-#include <GLUT/glut.h>
 #else
 #include <GL/glew.h> // For windows to support glMultTransposeMatrix
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include <GL/glut.h>
 #endif
 
 #include "Manip3D.hpp"
@@ -95,7 +93,9 @@ static double safe_acos(double x)
 
 Manip3D::Manip3D()
 
-    : is_visible_(true),
+    : movePivot_(false),
+	  pivotSize_(0.25f),
+	  is_visible_(true),
       is_locked_(false),
       transform1_(Mat4d::eye()),
       transform2_(Mat4d::eye()),
@@ -197,7 +197,6 @@ void Manip3D::draw()
     glEnable(GL_DEPTH_TEST);
 
     // Add the manipulator's transformation to the stack
-
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glMultTransposeMatrixd(transform1_*transform2_);
@@ -210,7 +209,6 @@ void Manip3D::draw()
     }
 
     // Return to the previous state
-
     glPopMatrix();
     glPopAttrib();
 }

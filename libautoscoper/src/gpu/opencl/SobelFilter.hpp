@@ -39,15 +39,15 @@
 /// \file SobelFilter.hpp
 /// \author Andy Loomis
 
-#ifndef XROMM_OPENCL_SOBEL_FILTER_HPP
-#define XROMM_OPENCL_SOBEL_FILTER_HPP
+#ifndef XROMM_GPU_SOBEL_FILTER_HPP
+#define XROMM_GPU_SOBEL_FILTER_HPP
 
 #include <string>
 
 #include "Filter.hpp"
 #include "OpenCL.hpp"
 
-namespace xromm { namespace opencl {
+namespace xromm { namespace gpu {
 
 class SobelFilter : public Filter
 {
@@ -57,15 +57,15 @@ public:
 
     // Apply the filter to the input image
     virtual void apply(const Buffer* input,
-                       const Buffer* output,
+                       Buffer* output,
                        int width,
                        int height);
 
     // Accessors and mutators
-    float scale() const { return scale_; }
+    float getScale() const { return scale_; }
     void setScale(float scale) { scale_ = scale; }
 
-    float blend() const { return blend_; }
+    float getBlend() const { return blend_; }
     void setBlend(float blend) { blend_ = blend; }
 
 private:
@@ -75,4 +75,4 @@ private:
 
 } } // namespace xromm::opencl
 
-#endif // XROMM_OPENCL_SOBEL_FILTER_HPP
+#endif // XROMM_GPU_SOBEL_FILTER_HPP

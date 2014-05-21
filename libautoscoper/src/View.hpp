@@ -39,19 +39,23 @@
 /// \file View.hpp
 /// \author Andy Loomis, Mark Howison
 
-#ifndef XROMM_OPENCL_VIEW_HPP
-#define XROMM_OPENCL_VIEW_HPP
+#ifndef XROMM_GPU_VIEW_HPP
+#define XROMM_GPU_VIEW_HPP
 
 #include <vector>
-
-#include "OpenCL.hpp"
+#ifdef WITH_CUDA
+typedef float Buffer;
+typedef float GLBuffer;
+#else
+#include "gpu/opencl/OpenCL.hpp"
+#endif
 
 namespace xromm
 {
 
 class Camera;
 
-namespace opencl
+namespace gpu
 {
 
 class RayCaster;
@@ -88,25 +92,28 @@ public:
     const std::vector<Filter*>& radFilters() const { return radFilters_; }
 
     // Rendering functions
-    void renderRad(const Buffer* buffer, unsigned width, unsigned height);
-    void renderRad(GLuint pbo, unsigned width, unsigned height);
+    void renderRad(Buffer* buffer, unsigned int width, unsigned int height);
+    void renderRad(unsigned int pbo, unsigned int width, unsigned int height);
 
-    void renderDrr(const Buffer* buffer, unsigned width, unsigned height);
-    void renderDrr(GLuint pbo, unsigned width, unsigned height);
+    void renderDrr(Buffer* buffer, unsigned int width, unsigned int height);
+    void renderDrr(unsigned int  pbo, unsigned int width, unsigned int height);
 
-    void render(const GLBuffer* buffer, unsigned width, unsigned height);
-    void render(GLuint pbo, unsigned width, unsigned height);
+    void render(GLBuffer* buffer, unsigned int width, unsigned int height);
+    void render(unsigned int  pbo, unsigned int width, unsigned int height);
 
     bool drr_enabled;
     bool rad_enabled;
 
 private:
-
+#ifdef WITH_CUDA
+	void init();
+#else
 	void init(unsigned width, unsigned height);
+#endif
 
     void filter(const std::vector<Filter*>& filters,
                 const Buffer* input,
-                const Buffer* output,
+                Buffer* output,
                 unsigned width,
                 unsigned height);
 
@@ -131,4 +138,4 @@ private:
 
 } } //namespace xromm::opencl
 
-#endif // XROMM_OPENCL_VIEW_HPP
+#endif // XROMM_GPU_VIEW_HPP

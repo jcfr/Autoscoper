@@ -13,6 +13,17 @@
 #elif defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+typedef CL_API_ENTRY cl_int (CL_API_CALL *clGetGLContextInfoKHR_fn)(
+   const cl_context_properties *properties,
+   cl_gl_context_info param_name,
+   size_t param_value_size,
+   void *param_value,
+   size_t *param_value_size_ret);
+ 
+// Rename references to this dynamically linked function to avoid
+// collision with static link version
+#define clGetGLContextInfoKHR clGetGLContextInfoKHR_proc
+static clGetGLContextInfoKHR_fn clGetGLContextInfoKHR;
 #else
 #include <GL/glx.h>
 #include <CL/cl_gl.h>
@@ -51,7 +62,8 @@ static Display* glx_display_;
 
 static cl_int err_;
 static cl_context context_;
-static cl_device_id devices_[1];
+static cl_device_id devices_[10];
+static int count;
 static cl_command_queue queue_;
 
 static const char* opencl_error(cl_int err)
@@ -279,16 +291,18 @@ static void print_device(cl_device_id device)
 	cerr << "# Extensions    : " << buffer << "\n";
 }
 
-namespace xromm { namespace opencl {
+namespace xromm { namespace gpu {
 
 void opencl_global_gl_context()
 {
 #if defined(__APPLE__) || defined(__MACOSX)
-	CGLContextObj glContext = CGLGetCurrentContext();
+	CGLContextObj glContext = f();
 	share_group_ = CGLGetShareGroup(glContext);
 	if (!share_group_) ERROR("invalid CGL sharegroup");
 #elif defined(_WIN32)
 // TODO: implement this
+
+
 #else
 	glx_context_ = glXGetCurrentContext();
 	if (!glx_context_) ERROR("invalid GLX context");
@@ -307,23 +321,26 @@ cl_int opencl_global_context()
 		/* find platform */
 
 		cl_uint num_platforms;
-		cl_platform_id platforms[1];
-		err_ = clGetPlatformIDs(1, platforms, &num_platforms);
+		cl_platform_id platforms[2];
+		err_ = clGetPlatformIDs(2, platforms, &num_platforms);
 		CHECK_CL
 
 		if (num_platforms < 1) ERROR("no OpenCL platforms found");
 
-		print_platform(platforms[0]);
-
-		/* find GPU device */
-
-		cl_uint num_devices;
-		err_ = clGetDeviceIDs(platforms[0], TYPE, 1, devices_, &num_devices);
-		CHECK_CL
-
-		if (num_devices < 1) ERROR("no OpenCL GPU device found");
-
-		print_device(devices_[0]);
+		for (int i = 0 ; i < num_platforms; i ++){
+			/* find GPU device */
+			cl_uint num_devices;
+			err_ = clGetDeviceIDs(platforms[i], TYPE, 1, devices_, &num_devices);
+			CHECK_CL
+			if (num_devices < 1) ERROR("no OpenCL GPU device found");
+			for(int d = 0 ; d <num_devices; d++){
+				cerr << endl;
+				print_platform(platforms[i]);
+				print_device(devices_[d]);
+				cerr << endl;
+			}
+			
+		}
 
 		/* create context */
 
@@ -339,28 +356,40 @@ cl_int opencl_global_context()
 		context_ = clCreateContext(prop, 0, NULL, 0, 0, &err_);
 		CHECK_CL
 
-#if 0
-		size_t num_gl_devices;
-		err_ = clGetGLContextInfoAPPLE(
-					context_, glContext,
-					CL_CGL_DEVICE_FOR_CURRENT_VIRTUAL_SCREEN_APPLE,
-					1, devices_, &num_gl_devices);
-
-		if (num_gl_devices < 1) ERROR("no OpenCL GPU device found");
-#endif
+//#if 0
+//		size_t num_gl_devices;
+//		err_ = clGetGLContextInfoAPPLE(
+//					context_, glContext,
+//					CL_CGL_DEVICE_FOR_CURRENT_VIRTUAL_SCREEN_APPLE,
+//					1, devices_, &num_gl_devices);
+//
+//		if (num_gl_devices < 1) ERROR("no OpenCL GPU device found");
+//#endif
 #elif defined(_WIN32)
 #pragma OPENCL EXTENSION cl_khr_gl_sharing : enable
 		/* TODO: test this */
 		cl_context_properties prop[] = { 
-			CL_GL_CONTEXT_KHR,
-			(cl_context_properties) wglGetCurrentContext(),
-			CL_WGL_HDC_KHR,
-			(cl_context_properties) wglGetCurrentDC(),
-			CL_CONTEXT_PLATFORM, 
-			(cl_context_properties)(platforms[0]),
+			CL_GL_CONTEXT_KHR, (cl_context_properties) wglGetCurrentContext(),
+			CL_WGL_HDC_KHR, (cl_context_properties) wglGetCurrentDC(),
+			CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[1]),
 			0 };
 
-		context_ = clCreateContext(prop, 1, devices_, NULL, NULL, &err_);
+			if (!clGetGLContextInfoKHR)
+			{
+				clGetGLContextInfoKHR = (clGetGLContextInfoKHR_fn)clGetExtensionFunctionAddress("clGetGLContextInfoKHR");
+				if (!clGetGLContextInfoKHR)
+				{
+					 std::cout << "Failed to query proc address for clGetGLContextInfoKHR." << std::endl;
+					exit(EXIT_FAILURE);
+				}
+			}
+			size_t size;
+			clGetGLContextInfoKHR(prop, CL_DEVICES_FOR_GL_CONTEXT_KHR, 10 * sizeof(cl_device_id), devices_, &size);
+			// Create a context using the supported devices
+			count = size / sizeof(cl_device_id);
+			print_device(devices_[count-1]);
+			
+		context_ = clCreateContext(prop, count, devices_, NULL, NULL, &err_);
 		CHECK_CL
 #else
 #pragma OPENCL EXTENSION cl_khr_gl_sharing : enable
@@ -379,7 +408,7 @@ cl_int opencl_global_context()
 
 		/* create command queue */
 
-		queue_ = clCreateCommandQueue(context_, devices_[0], 0, &err_);
+		queue_ = clCreateCommandQueue(context_, devices_[count-1], 0, &err_);
 		CHECK_CL
 
 		inited_ = true;
@@ -407,9 +436,9 @@ size_t Kernel::getLocalMemSize()
 {
 	err_ = opencl_global_context();
 	CHECK_CL
-	size_t s;
-	err_ = clGetDeviceInfo(devices_[0],
-					CL_DEVICE_LOCAL_MEM_SIZE, sizeof(size_t), &s, NULL);
+	cl_ulong s;
+	err_ = clGetDeviceInfo(devices_[count-1],
+					CL_DEVICE_LOCAL_MEM_SIZE, sizeof(cl_ulong), &s, NULL);
 	CHECK_CL
 	return s;
 }
@@ -419,7 +448,7 @@ size_t* Kernel::getMaxItems()
 	err_ = opencl_global_context();
 	CHECK_CL
 	size_t* s = new size_t[3];
-	err_ = clGetDeviceInfo(devices_[0],
+	err_ = clGetDeviceInfo(devices_[count-1],
 					CL_DEVICE_MAX_WORK_ITEM_SIZES, 3*sizeof(s), s, NULL);
 	CHECK_CL
 	return s;
@@ -430,7 +459,7 @@ size_t Kernel::getMaxGroup()
 	err_ = opencl_global_context();
 	CHECK_CL
 	size_t s;
-	err_ = clGetDeviceInfo(devices_[0],
+	err_ = clGetDeviceInfo(devices_[count-1],
 					CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t), &s, NULL);
 	CHECK_CL
 	return s;

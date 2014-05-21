@@ -39,14 +39,14 @@
 /// \file Ncc_kernels.h
 /// \author Andy Loomis
 
-#ifndef XROMM_OPENCL_NCC_HPP
-#define XROMM_OPENCL_NCC_HPP
+#ifndef XROMM_NCC_HPP
+#define XROMM_NCC_HPP
 
 #include "OpenCL.hpp"
 
 namespace xromm {
 
-namespace opencl {
+namespace gpu {
 
 void ncc_init(unsigned max_n);
 
@@ -54,8 +54,8 @@ void ncc_deinit();
 
 float ncc(Buffer* f, Buffer* g, unsigned n);
 
-} // namespace opencl
+} // namespace gpu
 
 } // namespace xromm
 
-#endif // XROMM_OPENCL_NCC_HPP
+#endif // XROMM_NCC_HPP

@@ -45,20 +45,20 @@
 
 using namespace std;
 
-namespace xromm { namespace opencl {
+namespace xromm { namespace gpu {
 
 #define KERNEL_X 16
 #define KERNEL_Y 16
 #define KERNEL_CODE GaussianFilter_cl
 #define KERNEL_NAME "gaussian_filter_kernel"
-static const char KERNEL_CODE[] =
-#include "GaussianFilter.cl.h"
+
+#include "gpu/opencl/kernel/GaussianFilter.cl.h"
 
 static int num_gaussian_filters = 0;
 static Program gaussian_program_;
 
 GaussianFilter::GaussianFilter()
-	: Filter(XROMM_OPENCL_GAUSSIAN_FILTER,""),
+	: Filter(XROMM_GPU_GAUSSIAN_FILTER,""),
 	  gaussian_(NULL)
 {
 	stringstream name_stream;
@@ -124,7 +124,7 @@ void GaussianFilter::set_radius(float radius)
 
 void
 GaussianFilter::apply(const Buffer* input,
-					  const Buffer* output,
+					  Buffer* output,
 					  int width,
 					  int height)
 {
@@ -135,7 +135,7 @@ GaussianFilter::apply(const Buffer* input,
 	}
 	else
 	{
-		Kernel* kernel = gaussian_program_.compile(KERNEL_CODE, KERNEL_NAME);
+		Kernel* kernel = gaussian_program_.compile(GaussianFilter_cl, KERNEL_NAME);
 
 		kernel->block2d(KERNEL_X, KERNEL_Y);
 		kernel->grid2d((width-1)/KERNEL_X+1, (height-1)/KERNEL_Y+1);

@@ -1,5 +1,5 @@
-#ifndef XROMM_OPENCL_HPP
-#define XROMM_OPENCL_HPP
+#ifndef XROMM_HPP
+#define XROMM_HPP
 
 #include <iostream>
 #include <vector>
@@ -8,11 +8,12 @@
 #include <OpenCL/opencl.h>
 #include <OpenGL/OpenGL.h>
 #else
+#include <windows.h>
 #include <CL/opencl.h>
 #include <GL/gl.h>
 #endif
 
-namespace xromm { namespace opencl {
+namespace xromm { namespace gpu {
 
 void opencl_global_gl_context();
 cl_int opencl_global_context();
@@ -118,4 +119,4 @@ protected:
 
 } } // namespace xromm::opencl
 
-#endif // XROMM_OPENCL_HPP
+#endif // XROMM_HPP

@@ -39,25 +39,31 @@
 /// \file Filter.hpp
 /// \author Andy Loomis, Mark Howison
 
-#ifndef XROMM_OPENCL_FILTER_HPP
-#define XROMM_OPENCL_FILTER_HPP
+#ifndef XROMM_GPU_FILTER_HPP
+#define XROMM_GPU_FILTER_HPP
 
 #include <string>
 
-#include "OpenCL.hpp"
+#ifdef WITH_CUDA
+typedef float Buffer;
+#else
+#include "gpu/opencl/OpenCL.hpp"
+#endif
 
-namespace xromm { namespace opencl {
+
+
+namespace xromm { namespace gpu {
 
 class Filter
 {
 public:
     enum
     {
-        XROMM_OPENCL_CONTRAST_FILTER,
-        XROMM_OPENCL_SOBEL_FILTER,
-        XROMM_OPENCL_MEDIAN_FILTER,
-        XROMM_OPENCL_GAUSSIAN_FILTER,
-        XROMM_OPENCL_SHARPEN_FILTER
+        XROMM_GPU_CONTRAST_FILTER,
+        XROMM_GPU_SOBEL_FILTER,
+        XROMM_GPU_MEDIAN_FILTER,
+        XROMM_GPU_GAUSSIAN_FILTER,
+        XROMM_GPU_SHARPEN_FILTER
     };
 
     Filter(int type, const std::string& name)
@@ -67,9 +73,10 @@ public:
 
     // Apply the filter to the input image
     virtual void apply(const Buffer* input,
-                       const Buffer* output,
+                       Buffer* output,
                        int width,
                        int height) = 0;
+
 
     // Accessors and mutators
     int type() const { return type_; }
@@ -88,4 +95,4 @@ protected:
 
 } } // namespace xromm::opencl
 
-#endif // XROMM_OPENCL_FILTER_HPP
+#endif // XROMM_GPU_FILTER_HPP

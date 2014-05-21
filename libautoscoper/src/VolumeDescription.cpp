@@ -39,13 +39,24 @@
 /// \file VolumeDescription.cpp
 /// \author Andy Loomis, Mark Howison
 
+
+
 #include <iostream>
 #include <limits>
 #include <fstream>
 #include <vector>
 
+#ifdef WITH_CUDA
+#include <cuda.h>
+#include <cutil_inline.h>
+#include <cutil_math.h>
+#endif
+
 #include "Volume.hpp"
 #include "VolumeDescription.hpp"
+
+#undef max
+#undef min
 
 using namespace std;
 
@@ -128,7 +139,7 @@ void copyVolume(T* dest,
     }
 }
 
-namespace xromm { namespace opencl
+namespace xromm { namespace gpu
 {
 
 VolumeDescription::VolumeDescription(const Volume& volume)
@@ -221,7 +232,36 @@ VolumeDescription::VolumeDescription(const Volume& volume)
     flips_[1] = volume.flipY();
     flips_[2] = volume.flipZ();
 
+
     // Free any previously allocated memory.
+	
+#ifdef WITH_CUDA
+	// Free any previously allocated memory.
+    cutilSafeCall(cudaFreeArray(image_));
+
+    // Create a 3D array.
+    cudaChannelFormatDesc desc;
+    switch(volume.bps()) {
+        case 8: desc = cudaCreateChannelDesc<unsigned char>(); break;
+        case 16: desc = cudaCreateChannelDesc<unsigned short>(); break;
+        default:
+                 cerr << "VolumeDescription(): Unsupported bit-depth "
+                                               << volume.bps() << endl;
+                 exit(0);
+    }
+    cudaExtent extent = make_cudaExtent(dim[0], dim[1], dim[2]);
+    cutilSafeCall(cudaMalloc3DArray(&image_, &desc, extent));
+
+    // Copy volume to 3D array.
+    cudaMemcpy3DParms copyParams = {0};
+    copyParams.srcPtr = make_cudaPitchedPtr(&data[0],
+            extent.width*(volume.bps()/8),
+            extent.width, extent.height);
+    copyParams.dstArray = image_;
+    copyParams.extent = extent;
+    copyParams.kind = cudaMemcpyHostToDevice;
+    cutilSafeCall(cudaMemcpy3D(&copyParams));
+#else
 	if (image_) delete image_;
 
     // Create a 3D array.
@@ -239,11 +279,16 @@ VolumeDescription::VolumeDescription(const Volume& volume)
 	size_t sdim[3] = { (size_t)dim[0], (size_t)dim[1], (size_t)dim[2] };
 	image_ = new Image(sdim, &format, CL_MEM_READ_ONLY);
 	image_->read(&data[0]);
+#endif
 }
 
 VolumeDescription::~VolumeDescription()
 {
+#ifdef WITH_CUDA
+	cutilSafeCall(cudaFreeArray(image_));
+#else
 	if (image_) delete image_;
+#endif
 }
 
 } } // namespace xromm::opencl

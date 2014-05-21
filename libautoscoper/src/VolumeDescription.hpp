@@ -39,16 +39,21 @@
 /// \file VolumeDescription.hpp
 /// \author Andy Loomis, Mark Howison
 
-#ifndef XROMM_OPENCL_VOLUME_DESCRIPTION_HPP
-#define XROMM_OPENCL_VOLUME_DESCRIPTION_HPP
+#ifndef XROMM_GPU_VOLUME_DESCRIPTION_HPP
+#define XROMM_GPU_VOLUME_DESCRIPTION_HPP
 
-#include "OpenCL.hpp"
+#ifdef WITH_CUDA
+struct cudaArray;
+typedef cudaArray Image;
+#else
+#include "gpu/opencl/OpenCL.hpp"
+#endif
 
 namespace xromm {
 
 class Volume;
 
-namespace opencl {
+namespace gpu {
 
 // The VolumeDescription class provides an abstraction between the volume as it
 // is stored in CPU memory and the volume as it is stored in GPU memory. When it
@@ -66,7 +71,9 @@ public:
     const int* flips() const { return flips_; }
     float minValue() const { return minValue_; }
     float maxValue() const { return maxValue_; }
+
     const Image* image() const { return image_; }
+
 
 private:
     VolumeDescription(const VolumeDescription&);
@@ -82,4 +89,4 @@ private:
 
 } } // namespace xromm::opencl
 
-#endif // XROMM_OPENCL_VOLUME_DESCRIPTION_HPP
+#endif // XROMM_GPU_VOLUME_DESCRIPTION_HPP

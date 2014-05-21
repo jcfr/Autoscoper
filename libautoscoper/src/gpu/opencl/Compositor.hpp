@@ -39,12 +39,12 @@
 /// \file Compositor.h
 /// \author Andy Loomis, Mark Howison
 
-#ifndef XROMM_OPENCL_COMPOSITOR_H
-#define XROMM_OPENCL_COMPOSITOR_H
+#ifndef XROMM_COMPOSITOR_H
+#define XROMM_COMPOSITOR_H
 
 #include "OpenCL.hpp"
 
-namespace xromm { namespace opencl {
+namespace xromm { namespace gpu {
 
 void composite(const Buffer* src1,
                const Buffer* src2,
@@ -54,4 +54,4 @@ void composite(const Buffer* src1,
 
 } } // namespace xromm::opencl
 
-#endif // XROMM_OPENCL_COMPOSITOR_H
+#endif // XROMM_COMPOSITOR_H

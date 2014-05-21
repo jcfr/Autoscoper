@@ -39,14 +39,14 @@
 /// \file RadRenderer.hpp
 /// \author Andy Loomis, Mark Howison
 
-#ifndef XROMM_OPENCL_RAD_RENDERER_HPP
-#define XROMM_OPENCL_RAD_RENDERER_HPP
+#ifndef XROMM_RAD_RENDERER_HPP
+#define XROMM_RAD_RENDERER_HPP
 
 #include <string>
 
-#include "OpenCL.hpp"
+#include "gpu/opencl/OpenCL.hpp"
 
-namespace xromm { namespace opencl
+namespace xromm { namespace gpu
 {
 
 class RadRenderer
@@ -74,5 +74,5 @@ private:
 
 } } // namespace xromm::opencl
 
-#endif // XROMM_OPENCL_RAD_RENDERER_HPP
+#endif // XROMM_RAD_RENDERER_HPP
 

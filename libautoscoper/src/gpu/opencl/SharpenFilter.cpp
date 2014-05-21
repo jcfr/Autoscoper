@@ -49,17 +49,17 @@
 
 using namespace std;
 
-namespace xromm { namespace opencl {
+namespace xromm { namespace gpu {
 
-extern const char SharpenFilter_cl[] = 
-#include "SharpenFilter.cl.h"
+
+#include "gpu/opencl/kernel/SharpenFilter.cl.h"
 
 static Program sharpen_program_;
 
 static int num_sharpen_filters = 0;
 
 SharpenFilter::SharpenFilter()
-	: Filter(XROMM_OPENCL_SHARPEN_FILTER,""),
+	: Filter(XROMM_GPU_SHARPEN_FILTER,""),
 	  radius_(1),
 	  contrast_(1),
 	  sharpen_(NULL)
@@ -146,7 +146,7 @@ void SharpenFilter::makeFilter()
 void
 SharpenFilter::apply(
 		const Buffer* input,
-		const Buffer* output,
+		Buffer* output,
 		int width,
 		int height)
 {

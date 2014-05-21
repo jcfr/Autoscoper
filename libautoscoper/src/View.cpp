@@ -50,14 +50,26 @@
 #include <stdexcept>
 
 #include "Camera.hpp"
-#include "Compositor.hpp"
+
+#ifdef WITH_CUDA
+#include <cutil_inline.h>
+#include <cutil_gl_inline.h>
+
+#include "gpu/cuda/Compositor_kernels.h"
+#include "gpu/cuda/RayCaster.hpp"
+#include "gpu/cuda/RadRenderer.hpp"
+#else
+#include "gpu/opencl/Compositor.hpp"
+#include "gpu/opencl/RayCaster.hpp"
+#include "gpu/opencl/RadRenderer.hpp"
+#endif
+
 #include "Filter.hpp"
-#include "RayCaster.hpp"
-#include "RadRenderer.hpp"
+
 
 using namespace std;
 
-namespace xromm { namespace opencl
+namespace xromm { namespace gpu
 {
 
 View::View(Camera& camera)
@@ -90,25 +102,71 @@ View::~View()
     for (iter = radFilters_.begin(); iter != radFilters_.end(); ++iter) {
         delete *iter;
     }
-
+#ifdef WITH_CUDA
+	cutilSafeCall(cudaFree(filterBuffer_));
+    cutilSafeCall(cudaFree(drrBuffer_));
+    cutilSafeCall(cudaFree(drrFilterBuffer_));
+    cutilSafeCall(cudaFree(radBuffer_));
+    cutilSafeCall(cudaFree(radFilterBuffer_));
+#else
     delete filterBuffer_;
     delete drrBuffer_;
     delete drrFilterBuffer_;
     delete radBuffer_;
     delete radFilterBuffer_;
+#endif
 }
 
 void
-View::renderRad(const Buffer* buffer, unsigned width, unsigned height)
+View::renderRad(Buffer* buffer, unsigned width, unsigned height)
 {
+#ifdef WITH_CUDA
+	init();
+
+    if (width > maxWidth_ || height > maxHeight_) {
+        cerr << "View::renderRad(): ERROR: Buffer too large." << endl;
+    }
+    if (width > maxWidth_) {
+        width = maxWidth_;
+    }
+    if (height > maxHeight_) {
+        height = maxHeight_;
+    }
+
+    radRenderer_->render(radBuffer_, width, height);
+    filter(radFilters_, radBuffer_, buffer, width, height);
+#else
 	init(width, height);
     radRenderer_->render(radBuffer_, width, height);
     filter(radFilters_, radBuffer_, buffer, width, height);
+#endif
 }
 
 void
-View::renderRad(GLuint pbo, unsigned width, unsigned height)
+View::renderRad(unsigned int pbo, unsigned width, unsigned height)
 {
+#ifdef WITH_CUDA
+	struct cudaGraphicsResource* pboCudaResource;
+    cutilSafeCall(cudaGraphicsGLRegisterBuffer(&pboCudaResource, pbo,
+        cudaGraphicsMapFlagsWriteDiscard));
+
+    float* buffer = NULL;
+    size_t numOfBytes;
+    cutilSafeCall(cudaGraphicsMapResources(1, &pboCudaResource, 0));
+    cutilSafeCall(cudaGraphicsResourceGetMappedPointer((void**)&buffer,
+                                                       &numOfBytes,
+                                                       pboCudaResource));
+
+    renderRad(radFilterBuffer_, width, height);
+    gpu::composite(radFilterBuffer_,
+                    radFilterBuffer_,
+                    buffer,
+                    width,
+                    height);
+
+    cutilSafeCall(cudaGraphicsUnmapResources(1, &pboCudaResource, 0));
+    cutilSafeCall(cudaGraphicsUnregisterResource(pboCudaResource));
+#else
 	GLBuffer* buffer = new GLBuffer(pbo, CL_MEM_WRITE_ONLY);
 
 	init(width, height);
@@ -116,19 +174,59 @@ View::renderRad(GLuint pbo, unsigned width, unsigned height)
     composite(radFilterBuffer_, radFilterBuffer_, buffer, width, height);
 
 	delete buffer;
+#endif
 }
 
 void
-View::renderDrr(const Buffer* buffer, unsigned width, unsigned height)
+View::renderDrr(Buffer* buffer, unsigned width, unsigned height)
 {
+#ifdef WITH_CUDA
+	init();
+
+    if (width > maxWidth_ || height > maxHeight_) {
+        cerr << "View::renderDrr(): ERROR: Buffer too large." << endl;
+    }
+    if (width > maxWidth_) {
+        width = maxWidth_;
+    }
+    if (height > maxHeight_) {
+        height = maxHeight_;
+    }
+
+    drrRenderer_->render(drrBuffer_, width, height);
+    filter(drrFilters_, drrBuffer_, buffer, width, height);
+#else
 	init(width, height);
     drrRenderer_->render(drrBuffer_, width, height);
     filter(drrFilters_, drrBuffer_, buffer, width, height);
+#endif
 }
 
 void
-View::renderDrr(GLuint pbo, unsigned width, unsigned height)
+View::renderDrr(unsigned int pbo, unsigned width, unsigned height)
 {
+#ifdef WITH_CUDA
+	struct cudaGraphicsResource* pboCudaResource;
+    cutilSafeCall(cudaGraphicsGLRegisterBuffer(&pboCudaResource, pbo,
+        cudaGraphicsMapFlagsWriteDiscard));
+
+    float* buffer = NULL;
+    size_t numOfBytes;
+    cutilSafeCall(cudaGraphicsMapResources(1, &pboCudaResource, 0));
+    cutilSafeCall(cudaGraphicsResourceGetMappedPointer((void**)&buffer,
+                                                       &numOfBytes,
+                                                       pboCudaResource));
+
+    renderDrr(drrFilterBuffer_, width, height);
+    gpu::composite(drrFilterBuffer_,
+                    drrFilterBuffer_,
+                    buffer,
+                    width,
+                    height);
+
+    cutilSafeCall(cudaGraphicsUnmapResources(1, &pboCudaResource, 0));
+    cutilSafeCall(cudaGraphicsUnregisterResource(pboCudaResource));
+#else
 	GLBuffer* buffer = new GLBuffer(pbo, CL_MEM_WRITE_ONLY);
 
 	init(width, height);
@@ -136,11 +234,35 @@ View::renderDrr(GLuint pbo, unsigned width, unsigned height)
     composite(drrFilterBuffer_, drrFilterBuffer_, buffer, width, height);
 
 	delete buffer;
+#endif
 }
 
 void
-View::render(const GLBuffer* buffer, unsigned width, unsigned height)
+View::render(GLBuffer* buffer, unsigned width, unsigned height)
 {
+#ifdef WITH_CUDA
+	init();
+
+    if (drr_enabled) {
+        renderDrr(drrFilterBuffer_, width, height);
+    }
+    else {
+        cudaMemset(drrFilterBuffer_,0,width*height*sizeof(float));
+    }
+
+    if (rad_enabled) {
+        renderRad(radFilterBuffer_, width, height);
+    }
+    else {
+        cudaMemset(radFilterBuffer_,0,width*height*sizeof(float));
+    }
+
+    gpu::composite(drrFilterBuffer_,
+                    radFilterBuffer_,
+                    buffer,
+                    width,
+                    height);
+#else
 	init(width, height);
 
     if (drr_enabled) {
@@ -158,19 +280,57 @@ View::render(const GLBuffer* buffer, unsigned width, unsigned height)
     }
 
     composite(drrFilterBuffer_, radFilterBuffer_, buffer, width, height);
+#endif
 }
 
 void
-View::render(GLuint pbo, unsigned width, unsigned height)
+View::render(unsigned int pbo, unsigned width, unsigned height)
 {
+#ifdef WITH_CUDA
+	struct cudaGraphicsResource* pboCudaResource;
+	cutilSafeCall(cudaGraphicsGLRegisterBuffer(&pboCudaResource, pbo,
+        cudaGraphicsMapFlagsWriteDiscard));
+
+    float* buffer = NULL;
+    size_t numOfBytes;
+    cutilSafeCall(cudaGraphicsMapResources(1, &pboCudaResource, 0));
+    cutilSafeCall(cudaGraphicsResourceGetMappedPointer((void**)&buffer,
+                                                       &numOfBytes,
+						                               pboCudaResource));
+
+    render(buffer, width, height);
+
+    cutilSafeCall(cudaGraphicsUnmapResources(1, &pboCudaResource, 0));
+	cutilSafeCall(cudaGraphicsUnregisterResource(pboCudaResource));
+#else
 	GLBuffer* buffer = new GLBuffer(pbo, CL_MEM_WRITE_ONLY);
 
 	init(width, height);
     render(buffer, width, height);
 
 	delete buffer;
+#endif
 }
 
+
+#ifdef WITH_CUDA
+void
+View::init()
+{
+    if (!filterBuffer_) {
+        cutilSafeCall(cudaMalloc((void**)&filterBuffer_,
+                                 maxWidth_*maxHeight_*sizeof(float)));
+        cutilSafeCall(cudaMalloc((void**)&drrBuffer_,
+                                 maxWidth_*maxHeight_*sizeof(float)));
+        cutilSafeCall(cudaMalloc((void**)&drrFilterBuffer_,
+                                 maxWidth_*maxHeight_*sizeof(float)));
+        cutilSafeCall(cudaMalloc((void**)&radBuffer_,
+                                 maxWidth_*maxHeight_*sizeof(float)));
+        cutilSafeCall(cudaMalloc((void**)&radFilterBuffer_,
+                                 maxWidth_*maxHeight_*sizeof(float)));
+    }
+}
+#else
 void
 View::init(unsigned width, unsigned height)
 {
@@ -187,14 +347,65 @@ View::init(unsigned width, unsigned height)
 		inited_ = true;
     }
 }
+#endif
 
 void
 View::filter(const std::vector<Filter*>& filters,
              const Buffer* input,
-             const Buffer* output,
+             Buffer* output,
              unsigned width,
              unsigned height)
 {
+
+#ifdef WITH_CUDA
+	// If there are no filters simply copy the input to the output
+    if (filters.size() == 0) {
+        cudaMemcpy(output,
+                   input,
+                   width*height*sizeof(float),
+                   cudaMemcpyDeviceToDevice);
+        return;
+    }
+
+    // Determine which buffer will be used first so that the final
+    // filter will place the results into output.
+    float* buffer1;
+    float* buffer2;
+    if (filters.size()%2) {
+        buffer1 = output;
+        buffer2 = filterBuffer_;
+    }
+    else {
+        buffer1 = filterBuffer_;
+        buffer2 = output;
+    }
+
+    // Explicitly apply the first filter and altername buffers after
+    vector<Filter*>::const_iterator iter = filters.begin();;
+
+    if ((*iter)->enabled()) {
+        (*iter)->apply(input, buffer1, (int)width, (int)height);
+    }
+    else {
+        cudaMemcpy(buffer1,
+                   input,
+                   width*height*sizeof(float),
+                   cudaMemcpyDeviceToDevice);
+    }
+
+    for (iter += 1; iter != filters.end(); ++iter) {
+        if ((*iter)->enabled()) {
+            (*iter)->apply(buffer1, buffer2, (int)width, (int)height);
+        }
+        else {
+            cudaMemcpy(buffer2,
+                       buffer1,
+                       width*height*sizeof(float),
+                       cudaMemcpyDeviceToDevice);
+        }
+        swap(buffer1, buffer2);
+    }
+#else
     // If there are no filters simply copy the input to the output
     if (filters.size() == 0) {
 		input->copy(output, width*height*sizeof(float));
@@ -203,8 +414,8 @@ View::filter(const std::vector<Filter*>& filters,
 
     // Determine which buffer will be used first so that the final
     // filter will place the results into output.
-    const Buffer* buffer1;
-    const Buffer* buffer2;
+    Buffer* buffer1;
+    Buffer* buffer2;
     if (filters.size()%2) {
         buffer1 = output;
         buffer2 = filterBuffer_;
@@ -233,6 +444,7 @@ View::filter(const std::vector<Filter*>& filters,
         }
         swap(buffer1, buffer2);
     }
+#endif
 }
 
 } } // namespace xromm::opencl

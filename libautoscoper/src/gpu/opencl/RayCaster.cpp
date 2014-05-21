@@ -51,10 +51,9 @@
 
 using namespace std;
 
-namespace xromm { namespace opencl {
+namespace xromm { namespace gpu {
 
-static const char RayCaster_cl[] =
-#include "RayCaster.cl.h"
+#include "gpu/opencl/kernel/RayCaster.cl.h"
 
 static Program raycaster_program_;
 

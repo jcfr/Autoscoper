@@ -39,15 +39,15 @@
 /// \file GaussianFilter.hpp
 /// \author Emily Fu
 
-#ifndef XROMM_OPENCL_GAUSSIAN_FILTER_HPP
-#define XROMM_OPENCL_GAUSSIAN_FILTER_HPP
+#ifndef XROMM_GPU_GAUSSIAN_FILTER_HPP
+#define XROMM_GPU_GAUSSIAN_FILTER_HPP
 
 #include <string>
 
 #include "Filter.hpp"
 #include "OpenCL.hpp"
 
-namespace xromm { namespace opencl {
+namespace xromm { namespace gpu {
 
 class GaussianFilter : public Filter
 {
@@ -57,7 +57,7 @@ public:
 
     // Apply the filter to the input image
     virtual void apply(const Buffer* input,
-                       const Buffer* output,
+                       Buffer* output,
                        int width,
                        int height);
 
@@ -73,4 +73,4 @@ private:
 
 } } // namespace xromm::opencl
 
-#endif // XROMM_OPENCL_GAUSSIAN_FILTER_HPP
+#endif // XROMM_GPU_GAUSSIAN_FILTER_HPP

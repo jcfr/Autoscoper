@@ -38,12 +38,11 @@
 
 /// \file TiffImage.c
 /// \author Andy Loomis
-
-#include "TiffImage.h"
-
 #include <cstring>
 #include <cstdlib>
 #include <iostream>
+
+#include "TiffImage.h"
 
 // Helper Functions
 

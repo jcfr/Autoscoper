@@ -50,7 +50,7 @@
 namespace xromm {
 
 void bt();
-void bt_sighandler(int sig, siginfo_t *info, void *secret);
+//void bt_sighandler(int sig, siginfo_t *info, void *secret);
 void register_bt_sighandler();
 
 } // xromm
