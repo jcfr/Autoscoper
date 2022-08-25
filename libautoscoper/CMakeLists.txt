@@ -1,4 +1,3 @@
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/")
 
 set(libautoscoper_HEADERS
   src/Backtrace.hpp
