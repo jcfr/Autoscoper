@@ -1,4 +1,0 @@
-#!/bin/bash
-mkdir -p ~/.local/share
-cd "${0%/*}"
-./autoscoper
