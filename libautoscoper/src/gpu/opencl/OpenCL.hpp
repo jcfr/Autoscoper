@@ -66,6 +66,7 @@ class Kernel
 {
 public:
   Kernel(const cl::Program& program, const char* func);
+  ~Kernel() {};
   void reset();
 
   static size_t getLocalMemSize();
@@ -90,7 +91,7 @@ public:
 
 protected:
   void setArg(cl_uint i, size_t size, const void* value);
-  cl_kernel kernel_;
+  cl::Kernel kernel_;
   cl_uint arg_index_;
   size_t grid_[3];
   cl_uint grid_dim_;
@@ -103,6 +104,7 @@ class Program
 {
 public:
   Program();
+  ~Program() {};
     Kernel* compile(const char* code, const char* func);
 protected:
   cl::Program program_;
@@ -124,7 +126,7 @@ public:
 
 protected:
   size_t size_;
-  cl_mem buffer_;
+  cl::Buffer buffer_;
   cl_mem_flags access_;
 };
 
@@ -135,14 +137,14 @@ public:
   ~GLBuffer();
   friend class Kernel;
 protected:
-  cl_mem buffer_;
+  cl::BufferGL buffer_;
   cl_mem_flags access_;
 };
 
 class Image
 {
 public:
-  Image(size_t* dims, cl_image_format *format,
+  Image(size_t* dims, cl::ImageFormat format,
         cl_mem_flags access=CL_MEM_READ_WRITE);
   ~Image();
 
@@ -153,7 +155,7 @@ public:
 
 protected:
   size_t dims_[3];
-  cl_mem image_;
+  cl::Image3D image_;
   cl_mem_flags access_;
 };
 

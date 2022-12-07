@@ -309,7 +309,7 @@ VolumeDescription::VolumeDescription(const Volume& volume)
   if (image_) delete image_;
 
     // Create a 3D array.
-  cl_image_format format;
+  cl::ImageFormat format;
   format.image_channel_order = CL_R;
     switch (volume.bps()) {
         case 8:  format.image_channel_data_type = CL_UNORM_INT8; break;
@@ -321,7 +321,7 @@ VolumeDescription::VolumeDescription(const Volume& volume)
     }
 
   size_t sdim[3] = { (size_t)dim[0], (size_t)dim[1], (size_t)dim[2] };
-  image_ = new Image(sdim, &format, CL_MEM_READ_ONLY);
+  image_ = new Image(sdim, format, CL_MEM_READ_ONLY);
   image_->read(&data[0]);
 #endif
 }
