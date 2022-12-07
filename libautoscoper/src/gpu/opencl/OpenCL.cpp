@@ -743,23 +743,23 @@ cl_int opencl_global_context()
       CL_GLX_DISPLAY_KHR,
       (cl_context_properties)glXGetCurrentDisplay(),
       CL_CONTEXT_PLATFORM,
-      (cl_context_properties)(platforms[used_platform]),
+      (cl_context_properties)(platforms[used_platform])(),
       0 };
 
       size_t size;
-      clGetGLContextInfoKHR(prop, CL_DEVICES_FOR_GL_CONTEXT_KHR, 10 * sizeof(cl_device_id), devices_, &size);
+      clGetGLContextInfoKHR(prop, CL_DEVICES_FOR_GL_CONTEXT_KHR, 10 * sizeof(cl_device_id), &devices_, &size);
 
       int _count = size / sizeof(cl_device_id);
       if(used_device >= _count) used_device = 0;
 
-      context_ = clCreateContext(prop, 1, &devices_[used_device], NULL, NULL, &err_);
+      context_ = cl::Context(devices_[used_device], prop);
       CHECK_CL
 #endif
 
           /* create command queue */
 
           //queue_ = clCreateCommandQueue(context_, devices_[used_device], 0, &err_);
-          queue_ = cl::CommandQueue::CommandQueue(context_, devices_[used_device]);
+          queue_ = cl::CommandQueue(context_, devices_[used_device]);
     CHECK_CL
 
     inited_ = true;
@@ -936,8 +936,8 @@ void Kernel::launch()
     CHECK_CL
   }
 
-  cl::NDRange global = cl::NDRange::NDRange(grid_dim_, grid_dim_);
-  cl::NDRange local = cl::NDRange::NDRange(block_dim_, block_dim_);
+  cl::NDRange global = cl::NDRange(grid_dim_, grid_dim_);
+  cl::NDRange local = cl::NDRange(block_dim_, block_dim_);
   /*err_ = clEnqueueNDRangeKernel(
       queue_, kernel_, grid_dim_, NULL,
       grid_, block_, 0, NULL, NULL);*/
@@ -994,7 +994,7 @@ Buffer::Buffer(size_t size, cl_mem_flags access)
   size_ = size;
   access_ = access;
   //buffer_ = clCreateBuffer(context_, access, size, NULL, &err_);
-  buffer_ = cl::Buffer::Buffer(context_, access, size);
+  buffer_ = cl::Buffer(context_, access, size);
   CHECK_CL
 }
 
@@ -1073,7 +1073,7 @@ GLBuffer::GLBuffer(cl_GLuint pbo, cl_mem_flags access)
   CHECK_CL
   access_ = access;
   //buffer_ = clCreateFromGLBuffer(context_, access, pbo, &err_);
-  buffer_ = cl::BufferGL::BufferGL(context_, access, pbo);
+  buffer_ = cl::BufferGL(context_, access, pbo);
   CHECK_CL
 }
 
@@ -1133,7 +1133,7 @@ Image::Image(size_t* dims, cl::ImageFormat format, cl_mem_flags access)
   }
 #endif */
 
-  image_ = cl::Image3D::Image3D(context_, access, format, dims[0], dims[1], dims[2], 0, 0);
+  image_ = cl::Image3D(context_, access, format, dims[0], dims[1], dims[2], 0, 0);
 
   CHECK_CL
 }
