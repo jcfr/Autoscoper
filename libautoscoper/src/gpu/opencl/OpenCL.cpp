@@ -918,7 +918,7 @@ void Kernel::launch()
 
   size_t n_gl_buffers = gl_buffers.size();
   //cl_mem* gl_mem = NULL;
-  vector<cl::Memory> gl_mem_tmp;
+  std::vector<cl::Memory> gl_mem_tmp;
   if (n_gl_buffers)
   {
     //gl_mem = new cl_mem[n_gl_buffers];
@@ -928,7 +928,7 @@ void Kernel::launch()
         gl_mem_tmp.push_back(gl_buffers[i]->buffer_);
     }
 
-    const vector<cl::Memory> gl_mem(gl_mem_tmp.begin(),gl_mem_tmp.end());
+    const std::vector<cl::Memory> gl_mem(gl_mem_tmp.begin(),gl_mem_tmp.end());
 
    /* err_ = clEnqueueAcquireGLObjects(
         queue_, n_gl_buffers, gl_mem, 0, NULL, NULL);*/
@@ -949,7 +949,7 @@ void Kernel::launch()
 
   if (n_gl_buffers)
   {
-      const vector<cl::Memory> gl_mem(gl_mem_tmp.begin(), gl_mem_tmp.end());
+      const std::vector<cl::Memory> gl_mem(gl_mem_tmp.begin(), gl_mem_tmp.end());
     /*err_ = clEnqueueReleaseGLObjects(
         queue_, n_gl_buffers, gl_mem, 0, NULL, NULL);*/
       err_ = queue_.enqueueReleaseGLObjects(&gl_mem);
