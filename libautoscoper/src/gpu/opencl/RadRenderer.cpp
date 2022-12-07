@@ -83,11 +83,10 @@ RadRenderer::~RadRenderer()
 void
 RadRenderer::set_rad(const void* data, size_t width, size_t height, size_t bps)
 {
-  cl_image_format format;
-  format.image_channel_order = CL_R;
+  cl::ImageFormat format;
     switch (bps) {
-        case 8:  format.image_channel_data_type = CL_UNORM_INT8; break;
-        case 16: format.image_channel_data_type = CL_UNORM_INT16; break;
+        case 8:  format = cl::ImageFormat(CL_R,CL_UNORM_INT8); break;
+        case 16: format = cl::ImageFormat(CL_R, CL_UNORM_INT16); break;
         default:
             cerr << "RadRenderer::rad(): Unsupported bit depth "
                  << bps << endl;
@@ -96,7 +95,7 @@ RadRenderer::set_rad(const void* data, size_t width, size_t height, size_t bps)
 
   if (image_) delete image_;
   size_t dims[3] = { width, height, 1 };
-  image_ = new Image(dims, &format, CL_MEM_READ_ONLY);
+  image_ = new Image(dims, format, CL_MEM_READ_ONLY);
   image_->read(data);
 }
 

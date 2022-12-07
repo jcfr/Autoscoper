@@ -237,6 +237,7 @@ void Tracker::load(const Trial& trial)
 {
     trial_ = trial;
 
+
     vector<gpu::View*>::iterator viewIter;
     for (viewIter = views_.begin(); viewIter != views_.end(); ++viewIter) {
         delete *viewIter;

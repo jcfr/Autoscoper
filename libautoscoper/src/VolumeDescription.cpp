@@ -310,10 +310,9 @@ VolumeDescription::VolumeDescription(const Volume& volume)
 
     // Create a 3D array.
   cl::ImageFormat format;
-  format.image_channel_order = CL_R;
     switch (volume.bps()) {
-        case 8:  format.image_channel_data_type = CL_UNORM_INT8; break;
-        case 16: format.image_channel_data_type = CL_UNORM_INT16; break;
+        case 8:  format = cl::ImageFormat(CL_R,CL_UNORM_INT8); break;
+        case 16: format = cl::ImageFormat(CL_R, CL_UNORM_INT16);  break;
         default:
             cerr << "VolumeDescription(): unsupported bit depth "
                  << volume.bps() << endl;
@@ -322,7 +321,7 @@ VolumeDescription::VolumeDescription(const Volume& volume)
 
   size_t sdim[3] = { (size_t)dim[0], (size_t)dim[1], (size_t)dim[2] };
   image_ = new Image(sdim, format, CL_MEM_READ_ONLY);
-  image_->read(&data[0]);
+  std::cout << "here\n";
 #endif
 }
 

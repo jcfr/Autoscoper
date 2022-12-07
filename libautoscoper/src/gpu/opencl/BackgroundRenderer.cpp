@@ -78,14 +78,11 @@ BackgroundRenderer::~BackgroundRenderer()
 void
 BackgroundRenderer::set_back(const void* data, size_t width, size_t height)
 {
-  cl_image_format format;
-  format.image_channel_order = CL_R;
-  format.image_channel_data_type = CL_FLOAT;
-
+  cl::ImageFormat format(CL_R,CL_FLOAT);
 
   if (image_) delete image_;
   size_t dims[3] = { width, height, 1 };
-  image_ = new Image(dims, &format, CL_MEM_READ_ONLY);
+  image_ = new Image(dims, format, CL_MEM_READ_ONLY);
   image_->read(data);
 }
 

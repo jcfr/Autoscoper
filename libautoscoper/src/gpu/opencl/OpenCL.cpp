@@ -384,7 +384,7 @@ std::vector< std::vector<std::string> > get_platforms(){
   /*cl_uint num_platforms;
   cl_platform_id platforms[10];
   err_ = clGetPlatformIDs(10, platforms, &num_platforms);*/
-  cl::Platform platform;
+  cl::Platform platform = cl::Platform();
   vector<cl::Platform> platforms;
   err_ = platform.get(&platforms);
   CHECK_CL
@@ -405,35 +405,38 @@ std::vector< std::vector<std::string> > get_platforms(){
 
       std::string description = "";
       //err_ = clGetDeviceInfo(devices_[d], CL_DEVICE_NAME, sizeof(buffer), buffer, NULL);
-      err_ = devices_[d].getInfo(CL_DEVICE_NAME, buffer);
+      err_ = devices_[d].getInfo(CL_DEVICE_NAME, &buffer);
       description.append(buffer);
       //err_ = clGetPlatformInfo(platforms[i], CL_PLATFORM_VERSION, sizeof(buffer), buffer, NULL);
-      platforms[i].getInfo(CL_PLATFORM_VERSION, buffer);
+      err_ = platforms[i].getInfo(CL_PLATFORM_VERSION, &buffer);
       description.append(" - ");
       description.append(buffer);
       platform_desc.push_back(description);
 
       /* find GPU device */
       //err_ = clGetPlatformInfo(platforms[i], CL_PLATFORM_VERSION, sizeof(buffer), buffer, NULL);
-      err_ = platforms[i].getInfo(CL_PLATFORM_VERSION, buffer);
+      err_ = platforms[i].getInfo(CL_PLATFORM_VERSION, &buffer);
       isvalid = (err_ == CL_SUCCESS) ? isvalid : false;
       std::string version = "# Version    : ";
       version.append(buffer);
       platform_desc.push_back(version);
 
       //err_ = clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(buffer), buffer, NULL);
-      err_ = platforms[i].getInfo(CL_PLATFORM_NAME, buffer);
+      err_ = platforms[i].getInfo(CL_PLATFORM_NAME, &buffer);
       isvalid = (err_ == CL_SUCCESS) ? isvalid : false;
       std::string name = "# Name    : ";
       name.append(buffer);
       platform_desc.push_back(name);
 
       //err_ = clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, sizeof(buffer), buffer, NULL);
-      err_ = platforms[i].getInfo(CL_PLATFORM_VENDOR,buffer);
+      err_ = platforms[i].getInfo(CL_PLATFORM_VENDOR, &buffer);
       isvalid = (err_ == CL_SUCCESS) ? isvalid : false;
       std::string vendor = "# Vendor    : ";
       vendor.append(buffer);
       platform_desc.push_back(vendor);
+      bool is_intel = false;
+      if (buffer[0] == 'I')
+          is_intel = true;
 
       char buffer[1024];
       cl_bool b;
@@ -449,7 +452,7 @@ std::vector< std::vector<std::string> > get_platforms(){
       ss.clear(); // Clear state flags.
 
       //err_ = clGetDeviceInfo(devices_[d], CL_DEVICE_NAME, sizeof(buffer), buffer, NULL);
-      err_ = devices_[d].getInfo(CL_DEVICE_NAME, buffer);
+      err_ = devices_[d].getInfo(CL_DEVICE_NAME, &buffer);
       isvalid = (err_ == CL_SUCCESS) ? isvalid : false;
       ss << "# Name          : " << buffer;
       platform_desc.push_back(ss.str());
@@ -487,7 +490,7 @@ std::vector< std::vector<std::string> > get_platforms(){
       ss.clear(); // Clear state flags.
 
       //err_ = clGetDeviceInfo(devices_[d], CL_DEVICE_VENDOR, sizeof(buffer), buffer, NULL);
-      err_ = devices_[d].getInfo(CL_DEVICE_VENDOR, buffer);
+      err_ = devices_[d].getInfo(CL_DEVICE_VENDOR, &buffer);
       isvalid = (err_ == CL_SUCCESS) ? isvalid : false;
       ss << "# Vendor        : " << buffer;
       platform_desc.push_back(ss.str());
@@ -503,7 +506,7 @@ std::vector< std::vector<std::string> > get_platforms(){
       ss.clear(); // Clear state flags.
 
       //err_ = clGetDeviceInfo(devices_[d], CL_DEVICE_VERSION, sizeof(buffer), buffer, NULL);
-      err_ = devices_[d].getInfo(CL_DEVICE_VERSION, buffer);
+      err_ = devices_[d].getInfo(CL_DEVICE_VERSION, &buffer);
       isvalid = (err_ == CL_SUCCESS) ? isvalid : false;
       ss << "# Version       : " << buffer;
       platform_desc.push_back(ss.str());
@@ -511,7 +514,7 @@ std::vector< std::vector<std::string> > get_platforms(){
       ss.clear(); // Clear state flags.
 
       //err_ = clGetDeviceInfo(devices_[d], CL_DRIVER_VERSION, sizeof(buffer), buffer, NULL);
-      err_ = devices_[d].getInfo(CL_DRIVER_VERSION, buffer);
+      err_ = devices_[d].getInfo(CL_DRIVER_VERSION, &buffer);
       isvalid = (err_ == CL_SUCCESS) ? isvalid : false;
       ss << "# Driver Ver.   : " << buffer;
       platform_desc.push_back(ss.str());
@@ -532,7 +535,7 @@ std::vector< std::vector<std::string> > get_platforms(){
       ss.clear(); // Clear state flags.
 
       //err_ = clGetDeviceInfo(devices_[d], CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(s), s, NULL);
-      err_ = devices_[d].getInfo(CL_DEVICE_MAX_WORK_ITEM_SIZES, s);
+      err_ = devices_[d].getInfo(CL_DEVICE_MAX_WORK_ITEM_SIZES, &s);
       isvalid = (err_ == CL_SUCCESS) ? isvalid : false;
       ss << "# Max Items     : ("<< s[0] << ',' << s[1] << ',' << s[2] << ")";
       platform_desc.push_back(ss.str());
@@ -540,7 +543,7 @@ std::vector< std::vector<std::string> > get_platforms(){
       ss.clear(); // Clear state flags.
 
       //err_ = clGetDeviceInfo(devices_[d], CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t), s, NULL);
-      err_ = devices_[d].getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE, s);
+      err_ = devices_[d].getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE, &s);
       isvalid = (err_ == CL_SUCCESS) ? isvalid : false;
       ss << "# Max Group     : " << s[0];
       platform_desc.push_back(ss.str());
@@ -596,10 +599,12 @@ std::vector< std::vector<std::string> > get_platforms(){
       ss.clear(); // Clear state flags.
 
       //err_ = clGetDeviceInfo(devices_[d], CL_DEVICE_IMAGE2D_MAX_WIDTH, sizeof(size_t), s+0, NULL);
-      err_ = devices_[d].getInfo(CL_DEVICE_IMAGE2D_MAX_WIDTH, s+0);
+      size_t *tmp =  s + 0;
+      err_ = devices_[d].getInfo(CL_DEVICE_IMAGE2D_MAX_WIDTH, &tmp);
       isvalid = (err_ == CL_SUCCESS) ? isvalid : false;
       //err_ = clGetDeviceInfo(devices_[d], CL_DEVICE_IMAGE2D_MAX_HEIGHT, sizeof(size_t), s+1, NULL);
-      err_ = devices_[d].getInfo(CL_DEVICE_IMAGE2D_MAX_HEIGHT, s+1);
+      tmp = s + 1;
+      err_ = devices_[d].getInfo(CL_DEVICE_IMAGE2D_MAX_HEIGHT, &tmp);
       isvalid = (err_ == CL_SUCCESS) ? isvalid : false;
       ss << "# Max 2D Image  : (" << s[0] << ',' << s[1] << ")";
       platform_desc.push_back(ss.str());
@@ -607,26 +612,30 @@ std::vector< std::vector<std::string> > get_platforms(){
       ss.clear(); // Clear state flags.
 
       //err_ = clGetDeviceInfo(devices_[d], CL_DEVICE_IMAGE3D_MAX_WIDTH, sizeof(size_t), s+0, NULL);
-      err_ = devices_[d].getInfo(CL_DEVICE_IMAGE3D_MAX_WIDTH, s+0);
+      tmp = s + 0;
+      err_ = devices_[d].getInfo(CL_DEVICE_IMAGE3D_MAX_WIDTH, &tmp);
       isvalid = (err_ == CL_SUCCESS) ? isvalid : false;
       //err_ = clGetDeviceInfo(devices_[d], CL_DEVICE_IMAGE3D_MAX_HEIGHT, sizeof(size_t), s+1, NULL);
-      err_ = devices_[d].getInfo(CL_DEVICE_IMAGE3D_MAX_HEIGHT, s+1);
+      tmp = s + 1;
+      err_ = devices_[d].getInfo(CL_DEVICE_IMAGE3D_MAX_HEIGHT, &tmp);
       isvalid = (err_ == CL_SUCCESS) ? isvalid : false;
       //err_ = clGetDeviceInfo(devices_[d], CL_DEVICE_IMAGE3D_MAX_DEPTH, sizeof(size_t), s+2, NULL);
-      err_ = devices_[d].getInfo(CL_DEVICE_IMAGE3D_MAX_DEPTH, s+2);
+      tmp = s + 2;
+      err_ = devices_[d].getInfo(CL_DEVICE_IMAGE3D_MAX_DEPTH, &tmp);
       isvalid = (err_ == CL_SUCCESS) ? isvalid : false;
       ss << "# Max 3D Image  : (" << s[0] << ',' << s[1] << ',' << s[2] << ")";
       platform_desc.push_back(ss.str());
       ss.str("");
       ss.clear(); // Clear state flags.
-
       //err_ = clGetDeviceInfo(devices_[d], CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, NULL);
-      err_ = devices_[d].getInfo(CL_DEVICE_EXTENSIONS, buffer);
-      isvalid = (err_ == CL_SUCCESS) ? isvalid : false;
-      ss << "# Extensions    :  "  << buffer;
-      platform_desc.push_back(ss.str());
-      ss.str("");
-      ss.clear(); // Clear state flags.
+      if (!is_intel) {
+          err_ = devices_[d].getInfo(CL_DEVICE_EXTENSIONS, &buffer);
+          isvalid = (err_ == CL_SUCCESS) ? isvalid : false;
+          ss << "# Extensions    :  " << buffer;
+          platform_desc.push_back(ss.str());
+          ss.str("");
+          ss.clear(); // Clear state flags.
+      }
 
       if(isvalid){
         platforms_desc.push_back(platform_desc);
@@ -712,28 +721,30 @@ cl_int opencl_global_context()
 #pragma OPENCL EXTENSION cl_khr_gl_sharing : enable
     /* TODO: test this */
     cl_context_properties prop[] = {
-      CL_GL_CONTEXT_KHR, (cl_context_properties) wglGetCurrentContext(),
-      CL_WGL_HDC_KHR, (cl_context_properties) wglGetCurrentDC(),
+      CL_GL_CONTEXT_KHR, (cl_context_properties)wglGetCurrentContext(),
+      CL_WGL_HDC_KHR, (cl_context_properties)wglGetCurrentDC(),
       CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[used_platform])(),
       0 };
-
-      //if (!clGetGLContextInfoKHR)
-      //{
-      //  clGetGLContextInfoKHR = (clGetGLContextInfoKHR_fn)clGetExtensionFunctionAddress("clGetGLContextInfoKHR"); // clGetExtensionFunctionAddress is deprecated, not sure what it is replaced with
-      //  if (!clGetGLContextInfoKHR)
-      //  {
-      //     std::cout << "Failed to query proc address for clGetGLContextInfoKHR." << std::endl;
-      //    exit(EXIT_FAILURE);
-      //  }
-      //}
+      /*
+      if (!clGetGLContextInfoKHR)
+      {
+        clGetGLContextInfoKHR = (clGetGLContextInfoKHR_fn)clGetExtensionFunctionAddress("clGetGLContextInfoKHR"); // clGetExtensionFunctionAddress is deprecated, not sure what it is replaced with
+        if (!clGetGLContextInfoKHR)
+        {
+           std::cout << "Failed to query proc address for clGetGLContextInfoKHR." << std::endl;
+          exit(EXIT_FAILURE);
+        }
+      }
       size_t size;
-      clGetGLContextInfoKHR(prop, CL_DEVICES_FOR_GL_CONTEXT_KHR, 10 * sizeof(cl_device_id), &devices_, &size);
+      clGetGLContextInfoKHR(prop, CL_DEVICES_FOR_GL_CONTEXT_KHR, 10 * sizeof(cl::Device), &devices_, &size);
       // Create a context using the supported devices
-      size_t _count = size / sizeof(cl::Device);
+      size_t _count = size / sizeof(cl::Device); */
+    size_t _count = devices_.size();
       if(used_device >= _count) used_device = 0;
+
       //fprintf(stderr,"%d Devices \n",_count);
       //context_ = clCreateContext(prop, 1, &devices_[used_device], NULL, NULL, &err_);
-      context_ = cl::Context::Context(devices_[used_device], prop);
+      context_ = cl::Context(devices_[used_device], prop);
       CHECK_CL
 #else
 #pragma OPENCL EXTENSION cl_khr_gl_sharing : enable
