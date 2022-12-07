@@ -103,7 +103,7 @@ protected:
 class Program
 {
 public:
-  Program();
+    Program() { compiled_ = false; };
   ~Program() {};
     Kernel* compile(const char* code, const char* func);
 protected:
