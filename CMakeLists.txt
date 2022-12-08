@@ -80,7 +80,7 @@ if(Autoscoper_RENDERING_BACKEND STREQUAL "OpenCL")
   mark_as_superbuild(Autoscoper_OpenCL_MINIMUM_REQUIRED_VERSION:STRING)
   message(STATUS "Setting Autoscoper_OpenCL_MINIMUM_REQUIRED_VERSION to ${Autoscoper_OpenCL_MINIMUM_REQUIRED_VERSION}")
 
-  set(Autoscoper_CL_TARGET_OPENCL_VERSION "120")
+  set(Autoscoper_CL_TARGET_OPENCL_VERSION "300")
   mark_as_superbuild(Autoscoper_CL_TARGET_OPENCL_VERSION:STRING)
   message(STATUS "Setting Autoscoper_CL_TARGET_OPENCL_VERSION to ${Autoscoper_CL_TARGET_OPENCL_VERSION}")
 endif()

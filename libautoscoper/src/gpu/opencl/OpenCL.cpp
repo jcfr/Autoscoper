@@ -723,7 +723,8 @@ cl_int opencl_global_context()
     cl_context_properties prop[] = {
       CL_GL_CONTEXT_KHR, (cl_context_properties)wglGetCurrentContext(),
       CL_WGL_HDC_KHR, (cl_context_properties)wglGetCurrentDC(),
-      CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[used_platform])(),
+      //CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[used_platform])(),
+      CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platforms[used_platform]()),
       0 };
       /*
       if (!clGetGLContextInfoKHR)
@@ -744,7 +745,7 @@ cl_int opencl_global_context()
 
       //fprintf(stderr,"%d Devices \n",_count);
       //context_ = clCreateContext(prop, 1, &devices_[used_device], NULL, NULL, &err_);
-      context_ = cl::Context(devices_[used_device], prop);
+      context_ = cl::Context(devices_[used_device], prop,NULL,NULL,&err_);
       CHECK_CL
 #else
 #pragma OPENCL EXTENSION cl_khr_gl_sharing : enable
@@ -770,7 +771,7 @@ cl_int opencl_global_context()
           /* create command queue */
 
           //queue_ = clCreateCommandQueue(context_, devices_[used_device], 0, &err_);
-          queue_ = cl::CommandQueue(context_, devices_[used_device]);
+          queue_ = cl::CommandQueue(context_, devices_[used_device],0,&err_);
     CHECK_CL
 
     inited_ = true;

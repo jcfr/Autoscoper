@@ -321,7 +321,6 @@ VolumeDescription::VolumeDescription(const Volume& volume)
 
   size_t sdim[3] = { (size_t)dim[0], (size_t)dim[1], (size_t)dim[2] };
   image_ = new Image(sdim, format, CL_MEM_READ_ONLY);
-  std::cout << "here\n";
 #endif
 }
 
