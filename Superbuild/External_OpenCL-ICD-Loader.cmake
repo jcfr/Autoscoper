@@ -52,7 +52,7 @@ if(NOT DEFINED OpenCLICDLoader_DIR AND NOT Autoscoper_USE_SYSTEM_${proj})
     DEPENDS
       ${${proj}_DEPENDENCIES}
     )
-  set(OpenCLICDLoader_DIR ${EP_BINARY_DIR}/OpenCLHeaders)
+  set(OpenCLICDLoader_DIR ${EP_BINARY_DIR}/OpenCLICDLoader)
 
 endif()
 
