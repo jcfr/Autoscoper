@@ -115,12 +115,14 @@ if(Autoscoper_RENDERING_BACKEND STREQUAL "CUDA")
     ${CUDA_LIBRARIES}
   )
 elseif(Autoscoper_RENDERING_BACKEND STREQUAL "OpenCL")
-  find_package(OpenCL ${Autoscoper_OpenCL_MINIMUM_REQUIRED_VERSION} REQUIRED)
+  #find_package(OpenCL ${Autoscoper_OpenCL_MINIMUM_REQUIRED_VERSION} REQUIRED)
   find_package(OpenCLHeaders REQUIRED)
   find_package(OpenCLHeadersCpp REQUIRED)
+  find_package(OpenCLICDLoader REQUIRED)
   #target_include_directories(autoscoper PUBLIC ${OPENCL_INCLUDE_DIRS})
   set(GPU_LIBRARIES
-    ${OpenCL_LIBRARIES}
+    #${OpenCL_LIBRARIES}
+    OpenCL::OpenCL
     OpenCL::HeadersCpp
   )
   target_compile_definitions(autoscoper PRIVATE

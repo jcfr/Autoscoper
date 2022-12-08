@@ -55,20 +55,12 @@
 #elif defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-typedef CL_API_ENTRY cl_int (CL_API_CALL *clGetGLContextInfoKHR_fn)(
-   const cl_context_properties *properties,
-   cl_gl_context_info param_name,
-   size_t param_value_size,
-   void *param_value,
-   size_t *param_value_size_ret);
-
-// Rename references to this dynamically linked function to avoid
-// collision with static link version
-#define clGetGLContextInfoKHR clGetGLContextInfoKHR_proc
-static clGetGLContextInfoKHR_fn clGetGLContextInfoKHR;
+#include <CL/cl_gl.h>
+static clGetGLContextInfoKHR_fn pfn_clGetGLContextInfoKHR;
 #else
 #include <GL/glx.h>
 #include <CL/cl_gl.h>
+static clGetGLContextInfoKHR_fn pfn_clGetGLContextInfoKHR;
 #endif
 
 #define TYPE CL_DEVICE_TYPE_GPU
@@ -727,17 +719,17 @@ cl_int opencl_global_context()
       CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platforms[used_platform]()),
       0 };
       /*
-      if (!clGetGLContextInfoKHR)
+      if (!pfn_clGetGLContextInfoKHR)
       {
-        clGetGLContextInfoKHR = (clGetGLContextInfoKHR_fn)clGetExtensionFunctionAddress("clGetGLContextInfoKHR"); // clGetExtensionFunctionAddress is deprecated, not sure what it is replaced with
-        if (!clGetGLContextInfoKHR)
+        pfn_clGetGLContextInfoKHR = (clGetGLContextInfoKHR_fn)clGetExtensionFunctionAddress("clGetGLContextInfoKHR"); // clGetExtensionFunctionAddress is deprecated, not sure what it is replaced with
+        if (!pfn_clGetGLContextInfoKHR)
         {
            std::cout << "Failed to query proc address for clGetGLContextInfoKHR." << std::endl;
           exit(EXIT_FAILURE);
         }
       }
       size_t size;
-      clGetGLContextInfoKHR(prop, CL_DEVICES_FOR_GL_CONTEXT_KHR, 10 * sizeof(cl::Device), &devices_, &size);
+      pfn_clGetGLContextInfoKHR(prop, CL_DEVICES_FOR_GL_CONTEXT_KHR, 10 * sizeof(cl::Device), &devices_, &size);
       // Create a context using the supported devices
       size_t _count = size / sizeof(cl::Device); */
     size_t _count = devices_.size();
@@ -758,8 +750,19 @@ cl_int opencl_global_context()
       (cl_context_properties)(platforms[used_platform])(),
       0 };
 
+      if (!pfn_clGetGLContextInfoKHR)
+      {
+        pfn_clGetGLContextInfoKHR = (clGetGLContextInfoKHR_fn)clGetExtensionFunctionAddress("clGetGLContextInfoKHR");
+        if (!pfn_clGetGLContextInfoKHR)
+        {
+           std::cout << "Failed to query proc address for clGetGLContextInfoKHR." << std::endl;
+          exit(EXIT_FAILURE);
+        }
+      }
+
       size_t size;
-      clGetGLContextInfoKHR(prop, CL_DEVICES_FOR_GL_CONTEXT_KHR, 10 * sizeof(cl_device_id), &devices_, &size);
+      pfn_clGetGLContextInfoKHR(prop, CL_DEVICES_FOR_GL_CONTEXT_KHR, 10 * sizeof(cl::Device), &devices_, &size);
+
 
       int _count = size / sizeof(cl_device_id);
       if(used_device >= _count) used_device = 0;

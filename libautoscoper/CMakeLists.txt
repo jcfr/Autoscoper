@@ -39,15 +39,17 @@ if(Autoscoper_RENDERING_BACKEND STREQUAL "CUDA")
   CUDA_ADD_LIBRARY(libautoscoper STATIC ${libautoscoper_SOURCES} ${libautoscoper_HEADERS} ${cuda_HEADERS} ${cuda_SOURCES} ${cuda_KERNEL_HEADERS} ${cuda_KERNEL})
   target_include_directories(libautoscoper PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/gpu/cuda/cutil)
 elseif(Autoscoper_RENDERING_BACKEND STREQUAL "OpenCL")
-  find_package(OpenCL ${Autoscoper_OpenCL_MINIMUM_REQUIRED_VERSION} REQUIRED)
+  #find_package(OpenCL ${Autoscoper_OpenCL_MINIMUM_REQUIRED_VERSION} REQUIRED)
   find_package(OpenCLHeaders REQUIRED)
   find_package(OpenCLHeadersCpp REQUIRED)
+  find_package(OpenCLICDLoader REQUIRED)
   include(${CMAKE_CURRENT_SOURCE_DIR}/src/gpu/opencl/CMakeLists.txt)
   add_library(libautoscoper STATIC ${libautoscoper_SOURCES} ${libautoscoper_HEADERS} ${opencl_SOURCES} ${opencl_HEADERS})
   #target_include_directories(libautoscoper PUBLIC  ${OpenCL_INCLUDE_DIRS})
   add_dependencies(libautoscoper ${SHADER_TO_HEADER})
   target_link_libraries(libautoscoper PUBLIC
     OpenCL::HeadersCpp
+    OpenCL::OpenCL
   )
   target_compile_definitions(libautoscoper PRIVATE
     CL_TARGET_OPENCL_VERSION=${Autoscoper_CL_TARGET_OPENCL_VERSION}
