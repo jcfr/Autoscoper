@@ -105,7 +105,7 @@ class Program
 public:
     Program() { compiled_ = false; };
   ~Program() {};
-    Kernel* compile(const char* code, const char* func);
+    Kernel* compile(const std::string code, const char* func);
 protected:
   cl::Program program_;
   bool compiled_;

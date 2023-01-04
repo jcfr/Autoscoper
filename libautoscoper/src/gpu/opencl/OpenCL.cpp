@@ -716,7 +716,7 @@ cl_int opencl_global_context()
       CL_GL_CONTEXT_KHR, (cl_context_properties)wglGetCurrentContext(),
       CL_WGL_HDC_KHR, (cl_context_properties)wglGetCurrentDC(),
       //CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[used_platform])(),
-      CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platforms[used_platform]()),
+      CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platforms[0]()),
       0 };
       /*
       if (!pfn_clGetGLContextInfoKHR)
@@ -986,20 +986,48 @@ void Kernel::setArg(cl_uint i, size_t size, const void* value)
   CHECK_CL
 }
 
-Kernel* Program::compile(const char* code, const char* func)
+Kernel* Program::compile(const std::string code, const char* func)
 {
-  if (!compiled_)
-  {
-      err_ = program_.compile(code);
-    if ( err_ != CL_SUCCESS)
+    if (!compiled_)
     {
-      /*cerr << "OpenCL build failure for kernel function '" << func
-           << "':\n" << program_.getBuildInfo(err_) << endl;*/
-      exit(1);
+        err_ = opencl_global_context();
+        CHECK_CL
+
+        //program_ = clCreateProgramWithSource(context_, 1, &code, &len, &err_);
+        program_ = cl::Program(context_, code, &err_);
+        CHECK_CL
+
+        //err_ = clBuildProgram(program_, 1, devices_, NULL, NULL, NULL);
+        err_ = program_.build(devices_);
+        if (err_ == CL_BUILD_PROGRAM_FAILURE) {
+            //size_t log_size;
+            /*err_ = clGetProgramBuildInfo(
+                program_, devices_[0], CL_PROGRAM_BUILD_LOG,
+                0, NULL, &log_size);*/
+            char* build_log;
+            err_ = program_.getBuildInfo(devices_[0],CL_PROGRAM_BUILD_LOG, build_log);
+            CHECK_CL
+                //char* build_log = (char*)malloc(log_size + 1);
+            if (!build_log) ERROR("malloc for build log");
+            /*err_ = clGetProgramBuildInfo(
+                program_, devices_[0], CL_PROGRAM_BUILD_LOG,
+                log_size, build_log, NULL);*/
+            err_ = program_.getBuildInfo(devices_[0], CL_PROGRAM_BUILD_LOG, build_log);
+            CHECK_CL
+                //build_log[log_size] = '\0';
+            cerr << "OpenCL build failure for kernel function '" << func
+                << "':\n" << build_log << endl;
+            free(build_log);
+            exit(1);
+        }
+        else {
+            CHECK_CL
+        }
+
+        compiled_ = true;
     }
-    compiled_ = true;
-  }
-  return new Kernel(program_, func);
+
+    return new Kernel(program_, func);
 }
 
 Buffer::Buffer(size_t size, cl_mem_flags access)
